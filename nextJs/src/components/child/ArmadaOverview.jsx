@@ -184,7 +184,6 @@ const buildDistinctColors = (count) => {
 };
 
 const ArmadaOverview = () => {
-  // ✅ efek masuk
   const [pageIn, setPageIn] = useState(false);
   useEffect(() => {
     const t = requestAnimationFrame(() => setPageIn(true));
@@ -286,7 +285,6 @@ const ArmadaOverview = () => {
     const centerTextColor = isLightMode ? "#000000" : "#ffffff";
     const colors = buildDistinctColors(armadaMetaList.length);
 
-    const CHART_HEIGHT = 296;
     const renderHeight = 290;
 
     const options = {
@@ -295,7 +293,7 @@ const ArmadaOverview = () => {
       legend: { show: false },
       chart: {
         type: "donut",
-        height: CHART_HEIGHT,
+        height: 296,
         sparkline: { enabled: true },
         toolbar: { show: false },
       },
@@ -364,9 +362,7 @@ const ArmadaOverview = () => {
 
   return (
     <>
-      <div
-        className={`col-xxl-5 col-xl-12 page-in ${pageIn ? "is-in" : ""}`}
-      >
+      <div className={`col-xxl-5 col-xl-12 page-in ${pageIn ? "is-in" : ""}`}>
         <div className="card h-100 radius-8 border-0 overflow-hidden">
           <div className="card-body p-24">
             <div className="d-flex align-items-center flex-wrap gap-2 justify-content-between mb-3">
@@ -420,36 +416,11 @@ const ArmadaOverview = () => {
             )}
           </div>
         </div>
-
-        <style jsx global>{`
-          .cvant-donut-center-fix .apexcharts-datalabels,
-          .cvant-donut-center-fix .apexcharts-datalabel,
-          .cvant-donut-center-fix .apexcharts-datalabel-label,
-          .cvant-donut-center-fix .apexcharts-datalabel-value {
-            display: block !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-          }
-
-          html[data-bs-theme="light"] .cvant-donut-center-fix .apexcharts-datalabel-label,
-          html[data-bs-theme="light"] .cvant-donut-center-fix .apexcharts-datalabel-value,
-          html[data-theme="light"] .cvant-donut-center-fix .apexcharts-datalabel-label,
-          html[data-theme="light"] .cvant-donut-center-fix .apexcharts-datalabel-value {
-            fill: #636872 !important;
-            color: #636872 !important;
-          }
-
-          html[data-bs-theme="dark"] .cvant-donut-center-fix .apexcharts-datalabel-label,
-          html[data-bs-theme="dark"] .cvant-donut-center-fix .apexcharts-datalabel-value,
-          html[data-theme="dark"] .cvant-donut-center-fix .apexcharts-datalabel-label,
-          html[data-theme="dark"] .cvant-donut-center-fix .apexcharts-datalabel-value {
-            fill: #ffffff !important;
-            color: #ffffff !important;
-          }
-        `}</style>
       </div>
 
-      <style jsx>{`
+      {/* ✅ SATU style saja (global) agar tidak kena nested styled-jsx */}
+      <style jsx global>{`
+        /* animasi masuk */
         .page-in {
           opacity: 0;
           transform: translateY(10px);
@@ -467,6 +438,48 @@ const ArmadaOverview = () => {
             transform: none !important;
             opacity: 1 !important;
           }
+        }
+
+        /* fix donut center labels */
+        .cvant-donut-center-fix .apexcharts-datalabels,
+        .cvant-donut-center-fix .apexcharts-datalabel,
+        .cvant-donut-center-fix .apexcharts-datalabel-label,
+        .cvant-donut-center-fix .apexcharts-datalabel-value {
+          display: block !important;
+          opacity: 1 !important;
+          visibility: visible !important;
+        }
+
+        html[data-bs-theme="light"]
+          .cvant-donut-center-fix
+          .apexcharts-datalabel-label,
+        html[data-bs-theme="light"]
+          .cvant-donut-center-fix
+          .apexcharts-datalabel-value,
+        html[data-theme="light"]
+          .cvant-donut-center-fix
+          .apexcharts-datalabel-label,
+        html[data-theme="light"]
+          .cvant-donut-center-fix
+          .apexcharts-datalabel-value {
+          fill: #636872 !important;
+          color: #636872 !important;
+        }
+
+        html[data-bs-theme="dark"]
+          .cvant-donut-center-fix
+          .apexcharts-datalabel-label,
+        html[data-bs-theme="dark"]
+          .cvant-donut-center-fix
+          .apexcharts-datalabel-value,
+        html[data-theme="dark"]
+          .cvant-donut-center-fix
+          .apexcharts-datalabel-label,
+        html[data-theme="dark"]
+          .cvant-donut-center-fix
+          .apexcharts-datalabel-value {
+          fill: #ffffff !important;
+          color: #ffffff !important;
         }
       `}</style>
     </>

@@ -7,6 +7,13 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import { api } from "@/lib/api";
 
 export default function CalendarMainLayer() {
+  // ✅ efek masuk (tanpa ubah style existing)
+  const [pageIn, setPageIn] = useState(false);
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setPageIn(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
+
   const [invoices, setInvoices] = useState([]);
   const [expenses, setExpenses] = useState([]);
 
@@ -325,7 +332,8 @@ export default function CalendarMainLayer() {
 
   return (
     <>
-      <div className="row gy-4">
+      {/* ✅ efek-in ditempel ke wrapper root */}
+      <div className={`row gy-4 page-in ${pageIn ? "is-in" : ""}`}>
         <div className="col-xxl-3 col-lg-4">
           <div className="card h-100 p-0">
             <div
@@ -534,6 +542,28 @@ export default function CalendarMainLayer() {
           </div>
         </div>
       </div>
+
+      {/* ✅ CSS animasi scoped (bukan global.css) */}
+      <style jsx>{`
+        .page-in {
+          opacity: 0;
+          transform: translateY(10px);
+          transition: opacity 450ms ease, transform 450ms ease;
+          will-change: opacity, transform;
+        }
+        .page-in.is-in {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .page-in,
+          .page-in.is-in {
+            transition: none !important;
+            transform: none !important;
+            opacity: 1 !important;
+          }
+        }
+      `}</style>
 
       <style jsx global>{`
         .cvant-eye-btn:hover .cvant-eye-icon {
