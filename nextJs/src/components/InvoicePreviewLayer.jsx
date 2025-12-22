@@ -5,7 +5,21 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import Image from "next/image";
 
+function useCvAntPageIn() {
+  const [pageIn, setPageIn] = useState(false);
+
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setPageIn(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
+
+  return pageIn;
+}
+
+
 export default function InvoicePreviewLayer() {
+  const pageIn = useCvAntPageIn();
+
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
 
@@ -199,6 +213,7 @@ export default function InvoicePreviewLayer() {
 
   return (
     <>
+      <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
       <div className="d-flex justify-content-end gap-3 no-print">
         <button
           className="btn btn-sm btn-outline-primary"
@@ -692,6 +707,30 @@ export default function InvoicePreviewLayer() {
           th {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+          }
+        }
+      `}</style>
+
+      </div>
+      <style jsx>{`
+        .cvant-page-in {
+          opacity: 0;
+          transform: translateY(10px);
+          transition: opacity 450ms ease, transform 450ms ease;
+          will-change: opacity, transform;
+        }
+      
+        .cvant-page-in.is-in {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      
+        @media (prefers-reduced-motion: reduce) {
+          .cvant-page-in,
+          .cvant-page-in.is-in {
+            transition: none !important;
+            transform: none !important;
+            opacity: 1 !important;
           }
         }
       `}</style>

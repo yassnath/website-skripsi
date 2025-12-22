@@ -83,6 +83,13 @@ const pickFirstDate = (obj, keys) => {
 // Component
 // -----------------------------
 const RecentActivity = () => {
+  // ✅ efek masuk
+  const [pageIn, setPageIn] = useState(false);
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setPageIn(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
+
   const [invoices, setInvoices] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [armadas, setArmadas] = useState([]);
@@ -368,83 +375,108 @@ const RecentActivity = () => {
   const dividerColor = "var(--border-color, rgba(0,0,0,0.12))";
 
   return (
-    <div className="col-xxl-4 col-xl-12">
-      <div className="card h-100">
-        <div className="card-body p-24">
-          <div className="d-flex align-items-center flex-wrap gap-2 justify-content-between mb-16">
-            <h6 className="mb-2 fw-bold text-lg mb-0">Recent Activity</h6>
+    <>
+      <div
+        className={`col-xxl-4 col-xl-12 page-in ${pageIn ? "is-in" : ""}`}
+      >
+        <div className="card h-100">
+          <div className="card-body p-24">
+            <div className="d-flex align-items-center flex-wrap gap-2 justify-content-between mb-16">
+              <h6 className="mb-2 fw-bold text-lg mb-0">Recent Activity</h6>
 
-            <Link
-              href="/calendar"
-              className="text-primary-600 hover-text-primary d-flex align-items-center gap-1"
-            >
-              View All
-              <Icon icon="solar:alt-arrow-right-linear" className="icon" />
-            </Link>
+              <Link
+                href="/calendar"
+                className="text-primary-600 hover-text-primary d-flex align-items-center gap-1"
+              >
+                View All
+                <Icon icon="solar:alt-arrow-right-linear" className="icon" />
+              </Link>
+            </div>
+
+            {err && <p className="text-danger text-sm mt-2 mb-0">{err}</p>}
+
+            {loading ? (
+              <div className="d-flex justify-content-center align-items-center py-4 mt-12">
+                <span className="text-secondary-light text-sm">
+                  Loading activity...
+                </span>
+              </div>
+            ) : activity.length === 0 ? (
+              <div className="d-flex justify-content-center align-items-center py-4 mt-12">
+                <span className="text-secondary-light text-sm">
+                  Tidak ada aktivitas.
+                </span>
+              </div>
+            ) : (
+              <div
+                className="table-responsive scroll-sm mt-12 pt-2"
+                style={{
+                  maxHeight: "388px",
+                  paddingRight: "14px",
+                }}
+              >
+                <ul className="list-unstyled mb-0 d-flex flex-column">
+                  {activity.map((a, idx) => {
+                    const isLast = idx === activity.length - 1;
+                    return (
+                      <li
+                        key={a.key}
+                        style={{
+                          borderBottom: isLast
+                            ? "none"
+                            : `1px solid ${dividerColor}`,
+                          paddingBottom: isLast ? 0 : "6.9px",
+                          marginBottom: isLast ? 0 : "6.9px",
+                        }}
+                      >
+                        <div className="d-flex align-items-start justify-content-between gap-12">
+                          <span className="fw-medium text-md">{a.title}</span>
+                          <div className="text-end">
+                            <span className="text-secondary-light text-sm">
+                              {a.dateLabel}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="fw-medium text-md">{renderLine1(a)}</div>
+
+                        {a.actor ? (
+                          <div className="text-secondary-light text-sm">
+                            oleh:{" "}
+                            <span className="text-primary-light">{a.actor}</span>
+                          </div>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
           </div>
-
-          {err && <p className="text-danger text-sm mt-2 mb-0">{err}</p>}
-
-          {loading ? (
-            <div className="d-flex justify-content-center align-items-center py-4 mt-12">
-              <span className="text-secondary-light text-sm">
-                Loading activity...
-              </span>
-            </div>
-          ) : activity.length === 0 ? (
-            <div className="d-flex justify-content-center align-items-center py-4 mt-12">
-              <span className="text-secondary-light text-sm">
-                Tidak ada aktivitas.
-              </span>
-            </div>
-          ) : (
-            <div
-              className="table-responsive scroll-sm mt-12 pt-2"
-              style={{
-                maxHeight: "388px",
-                paddingRight: "14px",
-              }}
-            >
-              <ul className="list-unstyled mb-0 d-flex flex-column">
-                {activity.map((a, idx) => {
-                  const isLast = idx === activity.length - 1;
-                  return (
-                    <li
-                      key={a.key}
-                      style={{
-                        borderBottom: isLast
-                          ? "none"
-                          : `1px solid ${dividerColor}`,
-                        paddingBottom: isLast ? 0 : "6.9px",
-                        marginBottom: isLast ? 0 : "6.9px",
-                      }}
-                    >
-                      <div className="d-flex align-items-start justify-content-between gap-12">
-                        <span className="fw-medium text-md">{a.title}</span>
-                        <div className="text-end">
-                          <span className="text-secondary-light text-sm">
-                            {a.dateLabel}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="fw-medium text-md">{renderLine1(a)}</div>
-
-                      {a.actor ? (
-                        <div className="text-secondary-light text-sm">
-                          oleh:{" "}
-                          <span className="text-primary-light">{a.actor}</span>
-                        </div>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )}
         </div>
       </div>
-    </div>
+
+      <style jsx>{`
+        .page-in {
+          opacity: 0;
+          transform: translateY(10px);
+          transition: opacity 450ms ease, transform 450ms ease;
+          will-change: opacity, transform;
+        }
+        .page-in.is-in {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .page-in,
+          .page-in.is-in {
+            transition: none !important;
+            transform: none !important;
+            opacity: 1 !important;
+          }
+        }
+      `}</style>
+    </>
   );
 };
 

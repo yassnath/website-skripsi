@@ -33,6 +33,13 @@ const parseTanggal = (str) => {
 };
 
 const IncomeVsExpense = () => {
+  // ✅ efek masuk
+  const [pageIn, setPageIn] = useState(false);
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setPageIn(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
+
   const [series, setSeries] = useState([
     { name: "Income", data: [] },
     { name: "Expense", data: [] },
@@ -127,45 +134,70 @@ const IncomeVsExpense = () => {
   }, []);
 
   return (
-    <div className="col-xxl-7 col-xl-12">
-      <div className="card h-100">
-        <div className="card-body p-24 mb-8">
-          <div className="d-flex align-items-center flex-wrap gap-2 justify-content-between">
-            <h6 className="mb-2 fw-bold text-lg mb-0">Income Vs Expense</h6>
-          </div>
+    <>
+      <div
+        className={`col-xxl-7 col-xl-12 page-in ${pageIn ? "is-in" : ""}`}
+      >
+        <div className="card h-100">
+          <div className="card-body p-24 mb-8">
+            <div className="d-flex align-items-center flex-wrap gap-2 justify-content-between">
+              <h6 className="mb-2 fw-bold text-lg mb-0">Income Vs Expense</h6>
+            </div>
 
-          <ul className="d-flex flex-wrap align-items-center justify-content-center my-3 gap-24">
-            <li className="d-flex flex-column gap-1">
-              <div className="d-flex align-items-center gap-2">
-                <span className="w-8-px h-8-px rounded-pill bg-primary-600" />
-                <span className="text-secondary-light text-lg fw-semibold">
-                  Income
-                </span>
-              </div>
-            </li>
+            <ul className="d-flex flex-wrap align-items-center justify-content-center my-3 gap-24">
+              <li className="d-flex flex-column gap-1">
+                <div className="d-flex align-items-center gap-2">
+                  <span className="w-8-px h-8-px rounded-pill bg-primary-600" />
+                  <span className="text-secondary-light text-lg fw-semibold">
+                    Income
+                  </span>
+                </div>
+              </li>
 
-            <li className="d-flex flex-column gap-1">
-              <div className="d-flex align-items-center gap-2">
-                <span className="w-8-px h-8-px rounded-pill bg-warning-600" />
-                <span className="text-secondary-light text-lg fw-semibold">
-                  Expense
-                </span>
-              </div>
-            </li>
-          </ul>
+              <li className="d-flex flex-column gap-1">
+                <div className="d-flex align-items-center gap-2">
+                  <span className="w-8-px h-8-px rounded-pill bg-warning-600" />
+                  <span className="text-secondary-light text-lg fw-semibold">
+                    Expense
+                  </span>
+                </div>
+              </li>
+            </ul>
 
-          <div id="incomeExpense" className="apexcharts-tooltip-style-1">
-            <ReactApexChart
-              options={options}
-              series={series}
-              type="area"
-              height={278}
-              width={"100%"}
-            />
+            <div id="incomeExpense" className="apexcharts-tooltip-style-1">
+              <ReactApexChart
+                options={options}
+                series={series}
+                type="area"
+                height={278}
+                width={"100%"}
+              />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <style jsx>{`
+        .page-in {
+          opacity: 0;
+          transform: translateY(10px);
+          transition: opacity 450ms ease, transform 450ms ease;
+          will-change: opacity, transform;
+        }
+        .page-in.is-in {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .page-in,
+          .page-in.is-in {
+            transition: none !important;
+            transform: none !important;
+            opacity: 1 !important;
+          }
+        }
+      `}</style>
+    </>
   );
 };
 

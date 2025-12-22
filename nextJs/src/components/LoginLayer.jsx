@@ -42,7 +42,8 @@ const LoginLayer = () => {
   const showPopup = (type, message, autoCloseMs = 0) => {
     setPopup({ show: true, type, message });
 
-    window.clearTimeout(showPopup._t);
+    // clear timeout sebelumnya (kalau ada)
+    if (showPopup._t) window.clearTimeout(showPopup._t);
 
     if (autoCloseMs > 0) {
       showPopup._t = window.setTimeout(() => {
@@ -79,9 +80,7 @@ const LoginLayer = () => {
       const { token, user } = res || {};
 
       if (!token || !user) {
-        throw new Error(
-          "Login failed. Please Check your username and password!"
-        );
+        throw new Error("Login failed. Please Check your username and password!");
       }
 
       localStorage.setItem("token", token);
@@ -89,6 +88,7 @@ const LoginLayer = () => {
       localStorage.setItem("role", user.role || "");
       localStorage.setItem("username", user.username || "");
 
+      // token cookie untuk middleware Next.js (cookie-based)
       document.cookie = `token=${token}; path=/; SameSite=Lax;`;
 
       showPopup("success", "Login successful! Redirecting to dashboard...", 5000);
@@ -96,9 +96,9 @@ const LoginLayer = () => {
       setTimeout(() => {
         router.push("/");
       }, 5000);
-    } catch (e) {
+    } catch (e2) {
       const msg = sanitizeLoginError(
-        e?.message || "Login failed. Please Check your username and password!"
+        e2?.message || "Login failed. Please Check your username and password!"
       );
       showPopup("danger", msg, 0);
     } finally {
@@ -107,8 +107,6 @@ const LoginLayer = () => {
   };
 
   const popupAccent = popup.type === "success" ? "#22c55e" : "#ef4444";
-  const popupBg = "#1b2431";
-  const popupBorder = popup.type === "success" ? "#22c55e" : "#ef4444";
 
   return (
     <>
@@ -130,13 +128,11 @@ const LoginLayer = () => {
           --cv-glow3: rgba(34, 211, 238, 0.12);
         }
 
-        /* Smooth rendering */
         * {
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
         }
 
-        /* --- Base animations --- */
         .cvant-animate-in {
           opacity: 0;
           transform: translateY(14px);
@@ -201,7 +197,6 @@ const LoginLayer = () => {
           }
         }
 
-        /* --- Popup anim --- */
         @keyframes cvantPopupIn {
           from {
             opacity: 0;
@@ -218,7 +213,6 @@ const LoginLayer = () => {
           animation: cvantPopupIn 0.22s ease-out forwards;
         }
 
-        /* --- Button micro-interaction --- */
         .cvant-btn-pop {
           transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.2s ease;
         }
@@ -230,13 +224,11 @@ const LoginLayer = () => {
           box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
         }
 
-        /* --- Modern focus ring --- */
         .cvant-focus-ring:focus {
           box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.25) !important;
           border-color: rgba(91, 140, 255, 0.75) !important;
         }
 
-        /* =============== Futuristic Background =============== */
         .cvant-auth-bg {
           position: relative;
           overflow: hidden;
@@ -258,7 +250,6 @@ const LoginLayer = () => {
             linear-gradient(180deg, #0f1623 0%, #0b1220 100%);
         }
 
-        /* floating neon blobs */
         .cvant-blob {
           position: absolute;
           border-radius: 999px;
@@ -308,7 +299,6 @@ const LoginLayer = () => {
           }
         }
 
-        /* glass panel */
         .cvant-glass {
           background: linear-gradient(
             180deg,
@@ -324,7 +314,6 @@ const LoginLayer = () => {
           overflow: hidden;
         }
 
-        /* subtle top highlight */
         .cvant-glass::before {
           content: "";
           position: absolute;
@@ -342,7 +331,6 @@ const LoginLayer = () => {
           pointer-events: none;
         }
 
-        /* soften the left image panel look */
         .cvant-left-panel {
           position: relative;
         }
@@ -358,48 +346,27 @@ const LoginLayer = () => {
           );
           pointer-events: none;
         }
-
-        /* popup premium */
-        .cvant-popup-premium {
-          position: relative;
-          border-radius: 14px;
-          background: linear-gradient(180deg, rgba(39, 49, 66, 0.86), rgba(27, 36, 49, 0.84));
-          border: 2px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 22px 55px rgba(0, 0, 0, 0.55);
-          overflow: hidden;
-        }
-        .cvant-popup-premium::before {
-          content: "";
-          position: absolute;
-          inset: -2px;
-          background: radial-gradient(
-            700px 140px at 20% 0%,
-            rgba(91, 140, 255, 0.22),
-            transparent 55%
-          );
-          pointer-events: none;
-        }
       `}</style>
 
-      {/* POPUP */}
+      {/* POPUP (DIUBAH: BACKGROUND PANEL SAMA SEPERTI ARMADA POPUP) */}
       {popup.show && (
         <div
           className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
           style={{
             zIndex: 9999,
-            background: "rgba(0,0,0,0.65)",
+            background: "rgba(0,0,0,0.55)", // sama seperti ArmadaListLayer
             padding: "16px",
           }}
           onClick={() => setPopup((p) => ({ ...p, show: false }))}
         >
           <div
-            className="p-24 cvant-popup-panel cvant-popup-premium"
+            className="radius-12 shadow-sm p-24 cvant-popup-panel"
             style={{
               width: "100%",
               maxWidth: "600px",
-              // border glow sesuai status
-              borderColor: popupBorder,
-              boxShadow: `0 22px 55px rgba(0,0,0,0.55), 0 0 0 1px ${popupBorder}, 0 0 28px rgba(91,140,255,0.14)`,
+              backgroundColor: "#1b2431", // ✅ persis seperti ArmadaListLayer
+              border: `2px solid ${popupAccent}`, // ✅ persis seperti ArmadaListLayer
+              boxShadow: "0 22px 55px rgba(0,0,0,0.55)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -458,8 +425,7 @@ const LoginLayer = () => {
                 } radius-12 px-16 cvant-btn-pop`}
                 onClick={() => setPopup((p) => ({ ...p, show: false }))}
                 style={{
-                  border: `2px solid ${popupBorder}`,
-                  boxShadow: `0 0 0 1px ${popupBorder}`,
+                  border: `2px solid ${popupAccent}`,
                 }}
               >
                 OK
@@ -470,15 +436,27 @@ const LoginLayer = () => {
       )}
 
       {/* PAGE */}
-      <section className="auth bg-base d-flex flex-wrap cvant-auth-bg" style={{ height: "100vh" }}>
+      <section
+        className="auth bg-base d-flex flex-wrap cvant-auth-bg"
+        style={{ height: "100vh" }}
+      >
         {/* Neon blobs */}
         <div className="cvant-blob b1" />
         <div className="cvant-blob b2" />
         <div className="cvant-blob b3" />
 
-        <div className="auth-left d-lg-block d-none cvant-animate-left cvant-left-panel" style={{ height: "100%" }}>
+        <div
+          className="auth-left d-lg-block d-none cvant-animate-left cvant-left-panel"
+          style={{ height: "100%" }}
+        >
           <div className="d-flex align-items-center flex-column h-100 justify-content-center">
-            <img src="/assets/images/big-icon.png" alt="" style={{ filter: "drop-shadow(0 18px 24px rgba(0,0,0,0.35))" }} />
+            <img
+              src="/assets/images/big-icon.png"
+              alt=""
+              style={{
+                filter: "drop-shadow(0 18px 24px rgba(0,0,0,0.35))",
+              }}
+            />
           </div>
         </div>
 
@@ -486,13 +464,22 @@ const LoginLayer = () => {
           className="auth-right py-32 px-24 d-flex flex-column justify-content-center cvant-animate-right"
           style={{ backgroundColor: "transparent", height: "100%" }}
         >
-          <div className="max-w-464-px mx-auto w-100 cvant-glass" style={{ padding: "28px" }}>
+          <div
+            className="max-w-464-px mx-auto w-100 cvant-glass"
+            style={{ padding: "28px" }}
+          >
             <div>
               <Link
                 href="/"
                 className="mb-24 max-w-290-px d-inline-block cvant-animate-in cvant-delay-1"
               >
-                <img src="/assets/images/logo.png" alt="" style={{ filter: "drop-shadow(0 10px 14px rgba(0,0,0,0.35))" }} />
+                <img
+                  src="/assets/images/logo.png"
+                  alt=""
+                  style={{
+                    filter: "drop-shadow(0 10px 14px rgba(0,0,0,0.35))",
+                  }}
+                />
               </Link>
 
               <h4 className="mb-10 text-white cvant-animate-in cvant-delay-2">

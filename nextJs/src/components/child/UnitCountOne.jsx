@@ -38,6 +38,13 @@ const formatRupiah = (n) =>
   }).format(n || 0);
 
 const UnitCountOne = () => {
+  // ✅ efek masuk (tanpa ubah style existing)
+  const [pageIn, setPageIn] = useState(false);
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setPageIn(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
+
   const [items, setItems] = useState([]); // unified invoices + expenses
   const [loading, setLoading] = useState(true);
 
@@ -129,81 +136,108 @@ const UnitCountOne = () => {
   }, [items]);
 
   return (
-    <div className="row row-cols-xxxl-3 row-cols-lg-3 row-cols-sm-2 row-cols-1 gy-4">
-      {/* CUSTOMERS */}
-      <div className="col">
-        <div className="card shadow-none border bg-gradient-start-1 h-100">
-          <div className="card-body p-20">
-            <div className="d-flex justify-content-between align-items-center gap-3">
-              <div>
-                <p className="fw-medium text-primary-light mb-1">
-                  Total Customers
-                </p>
-                <h6 className="mb-0">{loading ? "-" : totalCustomers}</h6>
+    <>
+      <div
+        className={`row row-cols-xxxl-3 row-cols-lg-3 row-cols-sm-2 row-cols-1 gy-4 page-in ${
+          pageIn ? "is-in" : ""
+        }`}
+      >
+        {/* CUSTOMERS */}
+        <div className="col">
+          <div className="card shadow-none border bg-gradient-start-1 h-100">
+            <div className="card-body p-20">
+              <div className="d-flex justify-content-between align-items-center gap-3">
+                <div>
+                  <p className="fw-medium text-primary-light mb-1">
+                    Total Customers
+                  </p>
+                  <h6 className="mb-0">{loading ? "-" : totalCustomers}</h6>
+                </div>
+                <div className="w-50-px h-50-px bg-cyan rounded-circle d-flex justify-content-center align-items-center">
+                  <Icon
+                    icon="gridicons:multiple-users"
+                    className="text-white text-2xl"
+                  />
+                </div>
               </div>
-              <div className="w-50-px h-50-px bg-cyan rounded-circle d-flex justify-content-center align-items-center">
-                <Icon
-                  icon="gridicons:multiple-users"
-                  className="text-white text-2xl"
-                />
-              </div>
+              <p className="fw-medium text-sm text-primary-light mt-12 mb-0">
+                Last 30 days customers
+              </p>
             </div>
-            <p className="fw-medium text-sm text-primary-light mt-12 mb-0">
-              Last 30 days customers
-            </p>
+          </div>
+        </div>
+
+        {/* INCOME */}
+        <div className="col">
+          <div className="card shadow-none border bg-gradient-start-4 h-100">
+            <div className="card-body p-20">
+              <div className="d-flex justify-content-between align-items-center gap-3">
+                <div>
+                  <p className="fw-medium text-primary-light mb-1">Total Income</p>
+                  <h6 className="mb-0">
+                    {loading ? "-" : formatRupiah(totalIncome)}
+                  </h6>
+                </div>
+                <div className="w-50-px h-50-px bg-success-main rounded-circle d-flex justify-content-center align-items-center">
+                  <Icon icon="solar:wallet-bold" className="text-white text-2xl" />
+                </div>
+              </div>
+              <p className="fw-medium text-sm text-primary-light mt-12 mb-0">
+                Last 30 days income
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* EXPENSE */}
+        <div className="col">
+          <div className="card shadow-none border bg-gradient-start-5 h-100">
+            <div className="card-body p-20">
+              <div className="d-flex justify-content-between align-items-center gap-3">
+                <div>
+                  <p className="fw-medium text-primary-light mb-1">
+                    Total Expense
+                  </p>
+                  <h6 className="mb-0">
+                    {loading ? "-" : formatRupiah(totalExpense)}
+                  </h6>
+                </div>
+                <div className="w-50-px h-50-px bg-red rounded-circle d-flex justify-content-center align-items-center">
+                  <Icon
+                    icon="fa6-solid:file-invoice-dollar"
+                    className="text-white text-2xl"
+                  />
+                </div>
+              </div>
+              <p className="fw-medium text-sm text-primary-light mt-12 mb-0">
+                Last 30 days expense
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* INCOME */}
-      <div className="col">
-        <div className="card shadow-none border bg-gradient-start-4 h-100">
-          <div className="card-body p-20">
-            <div className="d-flex justify-content-between align-items-center gap-3">
-              <div>
-                <p className="fw-medium text-primary-light mb-1">Total Income</p>
-                <h6 className="mb-0">
-                  {loading ? "-" : formatRupiah(totalIncome)}
-                </h6>
-              </div>
-              <div className="w-50-px h-50-px bg-success-main rounded-circle d-flex justify-content-center align-items-center">
-                <Icon icon="solar:wallet-bold" className="text-white text-2xl" />
-              </div>
-            </div>
-            <p className="fw-medium text-sm text-primary-light mt-12 mb-0">
-              Last 30 days income
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* EXPENSE */}
-      <div className="col">
-        <div className="card shadow-none border bg-gradient-start-5 h-100">
-          <div className="card-body p-20">
-            <div className="d-flex justify-content-between align-items-center gap-3">
-              <div>
-                <p className="fw-medium text-primary-light mb-1">
-                  Total Expense
-                </p>
-                <h6 className="mb-0">
-                  {loading ? "-" : formatRupiah(totalExpense)}
-                </h6>
-              </div>
-              <div className="w-50-px h-50-px bg-red rounded-circle d-flex justify-content-center align-items-center">
-                <Icon
-                  icon="fa6-solid:file-invoice-dollar"
-                  className="text-white text-2xl"
-                />
-              </div>
-            </div>
-            <p className="fw-medium text-sm text-primary-light mt-12 mb-0">
-              Last 30 days expense
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+      <style jsx>{`
+        .page-in {
+          opacity: 0;
+          transform: translateY(10px);
+          transition: opacity 450ms ease, transform 450ms ease;
+          will-change: opacity, transform;
+        }
+        .page-in.is-in {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .page-in,
+          .page-in.is-in {
+            transition: none !important;
+            transform: none !important;
+            opacity: 1 !important;
+          }
+        }
+      `}</style>
+    </>
   );
 };
 

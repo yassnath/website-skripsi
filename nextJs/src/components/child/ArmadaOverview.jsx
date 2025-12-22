@@ -184,6 +184,13 @@ const buildDistinctColors = (count) => {
 };
 
 const ArmadaOverview = () => {
+  // ✅ efek masuk
+  const [pageIn, setPageIn] = useState(false);
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setPageIn(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
+
   const [invoices, setInvoices] = useState([]);
   const [armadas, setArmadas] = useState([]);
 
@@ -305,7 +312,6 @@ const ArmadaOverview = () => {
           const plat = safeStr(meta?.plat, "-");
           const count = series?.[seriesIndex] ?? 0;
 
-          // ✅ spacing lebih rapat
           return `
             <div class="p-2" style="line-height:1.15;">
               <div style="font-weight:600; margin-bottom:1px;">${nama}</div>
@@ -357,88 +363,113 @@ const ArmadaOverview = () => {
   }, [invoices, armadas, isLightMode]);
 
   return (
-    <div className="col-xxl-5 col-xl-12">
-      <div className="card h-100 radius-8 border-0 overflow-hidden">
-        <div className="card-body p-24">
-          <div className="d-flex align-items-center flex-wrap gap-2 justify-content-between mb-3">
-            <h6 className="fw-bold text-lg mb-0">Armada Overview</h6>
+    <>
+      <div
+        className={`col-xxl-5 col-xl-12 page-in ${pageIn ? "is-in" : ""}`}
+      >
+        <div className="card h-100 radius-8 border-0 overflow-hidden">
+          <div className="card-body p-24">
+            <div className="d-flex align-items-center flex-wrap gap-2 justify-content-between mb-3">
+              <h6 className="fw-bold text-lg mb-0">Armada Overview</h6>
 
-            <Link
-              href="/armada-list"
-              className="text-primary-600 hover-text-primary d-flex align-items-center gap-1"
-            >
-              View All
-              <Icon icon="solar:alt-arrow-right-linear" className="icon" />
-            </Link>
-          </div>
-
-          {error && <p className="text-danger text-sm mt-2 mb-0">{error}</p>}
-
-          {loading ? (
-            <div className="d-flex justify-content-center align-items-center py-5">
-              <span className="text-secondary-light text-sm">
-                Loading fleet usage...
-              </span>
+              <Link
+                href="/armada-list"
+                className="text-primary-600 hover-text-primary d-flex align-items-center gap-1"
+              >
+                View All
+                <Icon icon="solar:alt-arrow-right-linear" className="icon" />
+              </Link>
             </div>
-          ) : armadas.length === 0 ? (
-            <div className="d-flex justify-content-center align-items-center py-5">
-              <span className="text-secondary-light text-sm">
-                fleet data is empty.
-              </span>
-            </div>
-          ) : (
-            <>
-              <div id="armadaOverview" className="apexcharts-tooltip-style-1">
-                <div className="cvant-donut-center-fix">
-                  <ReactApexChart
-                    key={isLightMode ? "light" : "dark"}
-                    options={options}
-                    series={series}
-                    type="donut"
-                    height={renderHeight}
-                  />
-                </div>
+
+            {error && <p className="text-danger text-sm mt-2 mb-0">{error}</p>}
+
+            {loading ? (
+              <div className="d-flex justify-content-center align-items-center py-5">
+                <span className="text-secondary-light text-sm">
+                  Loading fleet usage...
+                </span>
               </div>
+            ) : armadas.length === 0 ? (
+              <div className="d-flex justify-content-center align-items-center py-5">
+                <span className="text-secondary-light text-sm">
+                  fleet data is empty.
+                </span>
+              </div>
+            ) : (
+              <>
+                <div id="armadaOverview" className="apexcharts-tooltip-style-1">
+                  <div className="cvant-donut-center-fix">
+                    <ReactApexChart
+                      key={isLightMode ? "light" : "dark"}
+                      options={options}
+                      series={series}
+                      type="donut"
+                      height={renderHeight}
+                    />
+                  </div>
+                </div>
 
-              <ul className="d-flex flex-wrap align-items-center justify-content-center mt-3 gap-2">
-                <li className="d-flex align-items-center gap-2">
-                  <span className="text-secondary-light text-sm fw-normal">
-                    Total Fleet: {totalArmada}
-                  </span>
-                </li>
-              </ul>
-            </>
-          )}
+                <ul className="d-flex flex-wrap align-items-center justify-content-center mt-3 gap-2">
+                  <li className="d-flex align-items-center gap-2">
+                    <span className="text-secondary-light text-sm fw-normal">
+                      Total Fleet: {totalArmada}
+                    </span>
+                  </li>
+                </ul>
+              </>
+            )}
+          </div>
         </div>
+
+        <style jsx global>{`
+          .cvant-donut-center-fix .apexcharts-datalabels,
+          .cvant-donut-center-fix .apexcharts-datalabel,
+          .cvant-donut-center-fix .apexcharts-datalabel-label,
+          .cvant-donut-center-fix .apexcharts-datalabel-value {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+          }
+
+          html[data-bs-theme="light"] .cvant-donut-center-fix .apexcharts-datalabel-label,
+          html[data-bs-theme="light"] .cvant-donut-center-fix .apexcharts-datalabel-value,
+          html[data-theme="light"] .cvant-donut-center-fix .apexcharts-datalabel-label,
+          html[data-theme="light"] .cvant-donut-center-fix .apexcharts-datalabel-value {
+            fill: #636872 !important;
+            color: #636872 !important;
+          }
+
+          html[data-bs-theme="dark"] .cvant-donut-center-fix .apexcharts-datalabel-label,
+          html[data-bs-theme="dark"] .cvant-donut-center-fix .apexcharts-datalabel-value,
+          html[data-theme="dark"] .cvant-donut-center-fix .apexcharts-datalabel-label,
+          html[data-theme="dark"] .cvant-donut-center-fix .apexcharts-datalabel-value {
+            fill: #ffffff !important;
+            color: #ffffff !important;
+          }
+        `}</style>
       </div>
 
-      <style jsx global>{`
-        .cvant-donut-center-fix .apexcharts-datalabels,
-        .cvant-donut-center-fix .apexcharts-datalabel,
-        .cvant-donut-center-fix .apexcharts-datalabel-label,
-        .cvant-donut-center-fix .apexcharts-datalabel-value {
-          display: block !important;
-          opacity: 1 !important;
-          visibility: visible !important;
+      <style jsx>{`
+        .page-in {
+          opacity: 0;
+          transform: translateY(10px);
+          transition: opacity 450ms ease, transform 450ms ease;
+          will-change: opacity, transform;
         }
-
-        html[data-bs-theme="light"] .cvant-donut-center-fix .apexcharts-datalabel-label,
-        html[data-bs-theme="light"] .cvant-donut-center-fix .apexcharts-datalabel-value,
-        html[data-theme="light"] .cvant-donut-center-fix .apexcharts-datalabel-label,
-        html[data-theme="light"] .cvant-donut-center-fix .apexcharts-datalabel-value {
-          fill: #636872 !important;
-          color: #636872 !important;
+        .page-in.is-in {
+          opacity: 1;
+          transform: translateY(0);
         }
-
-        html[data-bs-theme="dark"] .cvant-donut-center-fix .apexcharts-datalabel-label,
-        html[data-bs-theme="dark"] .cvant-donut-center-fix .apexcharts-datalabel-value,
-        html[data-theme="dark"] .cvant-donut-center-fix .apexcharts-datalabel-label,
-        html[data-theme="dark"] .cvant-donut-center-fix .apexcharts-datalabel-value {
-          fill: #ffffff !important;
-          color: #ffffff !important;
+        @media (prefers-reduced-motion: reduce) {
+          .page-in,
+          .page-in.is-in {
+            transition: none !important;
+            transform: none !important;
+            opacity: 1 !important;
+          }
         }
       `}</style>
-    </div>
+    </>
   );
 };
 

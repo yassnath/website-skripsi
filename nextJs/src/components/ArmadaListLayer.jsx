@@ -5,6 +5,18 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 
+function useCvAntPageIn() {
+  const [pageIn, setPageIn] = useState(false);
+
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setPageIn(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
+
+  return pageIn;
+}
+
+
 function isLightModeNow() {
   if (typeof window === "undefined") return false;
 
@@ -35,6 +47,8 @@ function isLightModeNow() {
 }
 
 export default function ArmadaListLayer() {
+  const pageIn = useCvAntPageIn();
+
   const [rows, setRows] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [q, setQ] = useState("");
@@ -237,6 +251,7 @@ export default function ArmadaListLayer() {
 
   return (
     <>
+      <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
       {popup.show && (
         <div
           className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
@@ -540,6 +555,30 @@ export default function ArmadaListLayer() {
           )}
         </div>
       </div>
+
+      </div>
+      <style jsx>{`
+        .cvant-page-in {
+          opacity: 0;
+          transform: translateY(10px);
+          transition: opacity 450ms ease, transform 450ms ease;
+          will-change: opacity, transform;
+        }
+      
+        .cvant-page-in.is-in {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      
+        @media (prefers-reduced-motion: reduce) {
+          .cvant-page-in,
+          .cvant-page-in.is-in {
+            transition: none !important;
+            transform: none !important;
+            opacity: 1 !important;
+          }
+        }
+      `}</style>
     </>
   );
 }

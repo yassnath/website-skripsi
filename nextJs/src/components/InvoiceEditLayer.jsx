@@ -5,6 +5,18 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
+function useCvAntPageIn() {
+  const [pageIn, setPageIn] = useState(false);
+
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setPageIn(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
+
+  return pageIn;
+}
+
+
 function isLightModeNow() {
   if (typeof window === "undefined") return false;
 
@@ -35,6 +47,8 @@ function isLightModeNow() {
 }
 
 export default function InvoiceEditLayer() {
+  const pageIn = useCvAntPageIn();
+
   const sp = useSearchParams();
   const router = useRouter();
   const id = sp.get("id");
@@ -375,7 +389,10 @@ export default function InvoiceEditLayer() {
     );
   };
 
+  
   return (
+    <>
+      <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
     <div className="container-fluid py-4">
       {popup.show && (
         <div
@@ -795,5 +812,30 @@ export default function InvoiceEditLayer() {
         </div>
       )}
     </div>
+  
+      </div>
+      <style jsx>{`
+        .cvant-page-in {
+          opacity: 0;
+          transform: translateY(10px);
+          transition: opacity 450ms ease, transform 450ms ease;
+          will-change: opacity, transform;
+        }
+      
+        .cvant-page-in.is-in {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      
+        @media (prefers-reduced-motion: reduce) {
+          .cvant-page-in,
+          .cvant-page-in.is-in {
+            transition: none !important;
+            transform: none !important;
+            opacity: 1 !important;
+          }
+        }
+      `}</style>
+    </>
   );
 }
