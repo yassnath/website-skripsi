@@ -69,18 +69,43 @@ const LoginLayer = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setPopup((p) => ({ ...p, show: false }));
+
+    // ✅ VALIDASI INPUT KOSONG (SPESIFIK)
+    const u = (form.username || "").trim();
+    const p = (form.password || "").trim();
+
+    // Jika keduanya kosong
+    if (!u && !p) {
+      showPopup("danger", "Please enter username & password first!", 0);
+      return;
+    }
+
+    // Jika username kosong saja
+    if (!u) {
+      showPopup("danger", "Username is still empty, please fill it first!", 0);
+      return;
+    }
+
+    // Jika password kosong saja
+    if (!p) {
+      showPopup("danger", "Password is still empty, please fill it first!", 0);
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await api.post("/login", {
-        username: form.username,
-        password: form.password,
+        username: u,
+        password: p,
       });
 
       const { token, user } = res || {};
 
       if (!token || !user) {
-        throw new Error("Login failed. Please Check your username and password!");
+        throw new Error(
+          "Login failed. Please Check your username and password!"
+        );
       }
 
       localStorage.setItem("token", token);
@@ -91,7 +116,11 @@ const LoginLayer = () => {
       // token cookie untuk middleware Next.js (cookie-based)
       document.cookie = `token=${token}; path=/; SameSite=Lax;`;
 
-      showPopup("success", "Login successful! Redirecting to dashboard...", 5000);
+      showPopup(
+        "success",
+        "Login successful! Redirecting to dashboard...",
+        5000
+      );
 
       setTimeout(() => {
         router.push("/");
@@ -142,13 +171,15 @@ const LoginLayer = () => {
         .cvant-animate-left {
           opacity: 0;
           transform: translateX(-18px);
-          animation: cvantFadeLeft 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+          animation: cvantFadeLeft 0.9s cubic-bezier(0.2, 0.8, 0.2, 1)
+            forwards;
         }
 
         .cvant-animate-right {
           opacity: 0;
           transform: translateX(18px);
-          animation: cvantFadeRight 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+          animation: cvantFadeRight 0.9s cubic-bezier(0.2, 0.8, 0.2, 1)
+            forwards;
         }
 
         .cvant-delay-1 {
@@ -214,7 +245,8 @@ const LoginLayer = () => {
         }
 
         .cvant-btn-pop {
-          transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.2s ease;
+          transition: transform 0.12s ease, filter 0.12s ease,
+            box-shadow 0.2s ease;
         }
         .cvant-btn-pop:active {
           transform: translateY(1px) scale(0.99);
@@ -265,7 +297,11 @@ const LoginLayer = () => {
           height: 320px;
           left: -90px;
           top: 80px;
-          background: radial-gradient(circle at 30% 30%, rgba(91, 140, 255, 0.9), transparent 60%);
+          background: radial-gradient(
+            circle at 30% 30%,
+            rgba(91, 140, 255, 0.9),
+            transparent 60%
+          );
           animation-duration: 12s;
         }
 
@@ -274,7 +310,11 @@ const LoginLayer = () => {
           height: 360px;
           right: -120px;
           top: 140px;
-          background: radial-gradient(circle at 30% 30%, rgba(168, 85, 247, 0.85), transparent 60%);
+          background: radial-gradient(
+            circle at 30% 30%,
+            rgba(168, 85, 247, 0.85),
+            transparent 60%
+          );
           animation-duration: 14s;
         }
 
@@ -283,7 +323,11 @@ const LoginLayer = () => {
           height: 260px;
           left: 35%;
           bottom: -90px;
-          background: radial-gradient(circle at 30% 30%, rgba(34, 211, 238, 0.8), transparent 60%);
+          background: radial-gradient(
+            circle at 30% 30%,
+            rgba(34, 211, 238, 0.8),
+            transparent 60%
+          );
           animation-duration: 16s;
         }
 
@@ -348,13 +392,13 @@ const LoginLayer = () => {
         }
       `}</style>
 
-      {/* POPUP (DIUBAH: BACKGROUND PANEL SAMA SEPERTI ARMADA POPUP) */}
+      {/* POPUP (BACKGROUND PANEL SAMA SEPERTI ARMADA POPUP) */}
       {popup.show && (
         <div
           className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
           style={{
             zIndex: 9999,
-            background: "rgba(0,0,0,0.55)", // sama seperti ArmadaListLayer
+            background: "rgba(0,0,0,0.55)",
             padding: "16px",
           }}
           onClick={() => setPopup((p) => ({ ...p, show: false }))}
@@ -364,8 +408,8 @@ const LoginLayer = () => {
             style={{
               width: "100%",
               maxWidth: "600px",
-              backgroundColor: "#1b2431", // ✅ persis seperti ArmadaListLayer
-              border: `2px solid ${popupAccent}`, // ✅ persis seperti ArmadaListLayer
+              backgroundColor: "#1b2431",
+              border: `2px solid ${popupAccent}`,
               boxShadow: "0 22px 55px rgba(0,0,0,0.55)",
             }}
             onClick={(e) => e.stopPropagation()}
@@ -440,7 +484,6 @@ const LoginLayer = () => {
         className="auth bg-base d-flex flex-wrap cvant-auth-bg"
         style={{ height: "100vh" }}
       >
-        {/* Neon blobs */}
         <div className="cvant-blob b1" />
         <div className="cvant-blob b2" />
         <div className="cvant-blob b3" />

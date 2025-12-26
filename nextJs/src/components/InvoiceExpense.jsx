@@ -15,7 +15,6 @@ function useCvAntPageIn() {
   return pageIn;
 }
 
-
 function isLightModeNow() {
   if (typeof window === "undefined") return false;
 
@@ -126,7 +125,10 @@ export default function InvoiceExpensePage() {
 
   const totalExpense = useMemo(
     () =>
-      form.rincian.reduce((sum, r) => sum + (parseFloat(r.jumlah) || 0), 0),
+      (form.rincian || []).reduce(
+        (sum, r) => sum + (parseFloat(r.jumlah) || 0),
+        0
+      ),
     [form.rincian]
   );
 
@@ -138,51 +140,54 @@ export default function InvoiceExpensePage() {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
   const updateRincian = (index, key, value) => {
-    const updated = [...form.rincian];
-    updated[index][key] = value;
+    const updated = [...(form.rincian || [])];
+    updated[index] = { ...updated[index], [key]: value };
     setForm((prev) => ({ ...prev, rincian: updated }));
   };
 
   const addRincian = () => {
     setForm((prev) => ({
       ...prev,
-      rincian: [...prev.rincian, { nama: "", jumlah: "" }],
+      rincian: [...(prev.rincian || []), { nama: "", jumlah: "" }],
     }));
   };
 
   const removeRincian = (index) => {
     setForm((prev) => ({
       ...prev,
-      rincian: prev.rincian.filter((_, i) => i !== index),
+      rincian: (prev.rincian || []).filter((_, i) => i !== index),
     }));
   };
 
+  // ✅ VALIDATE POPUP GENERAL (SAMA PERSIS DENGAN INVOICE ADD)
   const validate = () => {
-    const required = ["no_expense", "tanggal"];
-    const empty = required.filter((f) => !form[f]);
-    if (empty.length > 0) {
+    const msgGeneral = "Data is still incomplete, please complete it first!";
+
+    // wajib diisi: no_expense dan tanggal
+    if (!String(form.no_expense || "").trim() || !String(form.tanggal || "").trim()) {
       setErr("");
-      showPopup("danger", `Kolom wajib diisi: ${empty.join(", ")}`, 0);
+      showPopup("danger", msgGeneral, 0);
       return false;
     }
 
+    // rincian harus ada
     if (!Array.isArray(form.rincian) || form.rincian.length === 0) {
       setErr("");
-      showPopup("danger", "Minimal satu rincian pengeluaran harus diisi.", 0);
+      showPopup("danger", msgGeneral, 0);
       return false;
     }
 
-    const cleaned = form.rincian.filter(
-      (r) => (r.nama || "").trim() && (parseFloat(r.jumlah) || 0) > 0
-    );
-    if (cleaned.length === 0) {
-      setErr("");
-      showPopup(
-        "danger",
-        "Minimal satu rincian pengeluaran harus memiliki Nama dan Jumlah > 0.",
-        0
-      );
-      return false;
+    // setiap rincian harus terisi lengkap
+    for (let i = 0; i < form.rincian.length; i++) {
+      const r = form.rincian[i] || {};
+      const namaOk = String(r.nama || "").trim();
+      const jumlahOk = parseFloat(r.jumlah) > 0;
+
+      if (!namaOk || !jumlahOk) {
+        setErr("");
+        showPopup("danger", msgGeneral, 0);
+        return false;
+      }
     }
 
     return true;
@@ -201,9 +206,10 @@ export default function InvoiceExpensePage() {
         total_pengeluaran: totalExpense,
         status: form.status,
         dicatat_oleh: form.dicatat_oleh,
-        rincian: form.rincian.filter(
-          (r) => r.nama.trim() && parseFloat(r.jumlah) > 0
-        ),
+        rincian: (form.rincian || []).map((r) => ({
+          nama: (r.nama || "").trim(),
+          jumlah: parseFloat(r.jumlah) || 0,
+        })),
       };
 
       const saved = await api.post("/expenses", payload);
@@ -219,27 +225,15 @@ export default function InvoiceExpensePage() {
         }, 3000);
       } else {
         setErr("");
-        showPopup("danger", "Expense tersimpan, tapi ID tidak ditemukan.", 0);
+        showPopup("danger", "Expense saved, but the ID was not found.", 0);
       }
     } catch (e) {
-      const msg = e?.message || "Gagal menyimpan pengeluaran";
+      const msg = e?.message || "Failed to save expense.";
       setErr(msg);
       showPopup("danger", msg, 0);
     } finally {
       setSaving(false);
     }
-  };
-
-  const handlePreview = () => {
-    if (!form.no_expense) {
-      showPopup(
-        "danger",
-        "Silakan isi dan simpan dulu data pengeluaran sebelum preview.",
-        0
-      );
-      return;
-    }
-    window.open(`/invoice-preview?type=expense&no=${form.no_expense}`, "_blank");
   };
 
   const formatRupiah = (num) =>
@@ -252,256 +246,255 @@ export default function InvoiceExpensePage() {
   return (
     <>
       <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
-      {popup.show && (
-        <div
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-          style={{
-            zIndex: 9999,
-            background: "rgba(0,0,0,0.55)",
-            padding: "16px",
-          }}
-          onClick={closePopup}
-        >
+        {popup.show && (
           <div
-            className="radius-12 shadow-sm p-24"
+            className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
             style={{
-              width: "100%",
-              maxWidth: "600px",
-              backgroundColor: "#1b2431",
-              border: `2px solid ${popupAccent}`,
+              zIndex: 9999,
+              background: "rgba(0,0,0,0.55)",
+              padding: "16px",
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={closePopup}
           >
-            <div className="d-flex align-items-start justify-content-between gap-2">
-              <div className="d-flex align-items-start gap-12">
-                <span style={{ marginTop: "2px" }}>
+            <div
+              className="radius-12 shadow-sm p-24"
+              style={{
+                width: "100%",
+                maxWidth: "600px",
+                backgroundColor: "#1b2431",
+                border: `2px solid ${popupAccent}`,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="d-flex align-items-start justify-content-between gap-2">
+                <div className="d-flex align-items-start gap-12">
+                  <span style={{ marginTop: "2px" }}>
+                    <Icon
+                      icon={
+                        popup.type === "success"
+                          ? "solar:check-circle-linear"
+                          : "solar:danger-triangle-linear"
+                      }
+                      style={{
+                        fontSize: "28px",
+                        color: popupAccent,
+                      }}
+                    />
+                  </span>
+
+                  <div>
+                    <h5 className="mb-8 fw-bold" style={{ color: "#ffffff" }}>
+                      {popup.type === "success" ? "Success" : "Error"}
+                    </h5>
+                    <p
+                      className="mb-0"
+                      style={{ color: "#cbd5e1", fontSize: "15px" }}
+                    >
+                      {popup.message}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn p-0"
+                  aria-label="Close"
+                  onClick={closePopup}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    lineHeight: 1,
+                  }}
+                >
                   <Icon
-                    icon={
-                      popup.type === "success"
-                        ? "solar:check-circle-linear"
-                        : "solar:danger-triangle-linear"
-                    }
-                    style={{
-                      fontSize: "28px",
-                      color: popupAccent,
-                    }}
+                    icon="solar:close-circle-linear"
+                    style={{ fontSize: 24, color: "#94a3b8" }}
                   />
-                </span>
+                </button>
+              </div>
 
-                <div>
-                  <h5 className="mb-8 fw-bold" style={{ color: "#ffffff" }}>
-                    {popup.type === "success" ? "Success" : "Error"}
-                  </h5>
-                  <p
-                    className="mb-0"
-                    style={{ color: "#cbd5e1", fontSize: "15px" }}
+              <div className="d-flex justify-content-end mt-20">
+                <button
+                  type="button"
+                  className={`btn btn-${
+                    popup.type === "success" ? "primary" : "danger"
+                  } radius-12 px-16`}
+                  onClick={closePopup}
+                  style={{
+                    border: `2px solid ${popupAccent}`,
+                  }}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="container-fluid py-4">
+          <div className="row g-4">
+            <div className="col-lg-12">
+              <div className="card shadow-sm border-0">
+                <div className="card-header bg-transparent d-flex justify-content-end gap-3">
+                  <button
+                    disabled={saving}
+                    onClick={handleSave}
+                    className="btn btn-sm btn-primary"
                   >
-                    {popup.message}
-                  </p>
+                    {saving ? "Saving..." : "Save"}
+                  </button>
                 </div>
-              </div>
 
-              <button
-                type="button"
-                className="btn p-0"
-                aria-label="Close"
-                onClick={closePopup}
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  lineHeight: 1,
-                }}
-              >
-                <Icon
-                  icon="solar:close-circle-linear"
-                  style={{ fontSize: 24, color: "#94a3b8" }}
-                />
-              </button>
-            </div>
+                <div className="card-body">
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">
+                        Nomor Expense
+                      </label>
+                      <input
+                        className="form-control"
+                        value={form.no_expense}
+                        readOnly
+                      />
+                    </div>
 
-            <div className="d-flex justify-content-end mt-20">
-              <button
-                type="button"
-                className={`btn btn-${
-                  popup.type === "success" ? "primary" : "danger"
-                } radius-12 px-16`}
-                onClick={closePopup}
-                style={{
-                  border: `2px solid ${popupAccent}`,
-                }}
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Tanggal</label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={form.tanggal}
+                        onChange={onChange("tanggal")}
+                      />
+                    </div>
 
-      <div className="container-fluid py-4">
-        <div className="row g-4">
-          <div className="col-lg-12">
-            <div className="card shadow-sm border-0">
-              <div className="card-header bg-transparent d-flex justify-content-end gap-3">
-                <button
-                  onClick={handlePreview}
-                  className="btn btn-sm btn-outline-warning"
-                >
-                  Preview
-                </button>
-                <button
-                  disabled={saving}
-                  onClick={handleSave}
-                  className="btn btn-sm btn-primary"
-                >
-                  {saving ? "Saving..." : "Save"}
-                </button>
-              </div>
+                    <div className="col-12">
+                      <hr className="my-2" />
+                    </div>
 
-              <div className="card-body">
-                <div className="row g-3">
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Nomor Expense</label>
-                    <input
-                      className="form-control"
-                      value={form.no_expense}
-                      readOnly
-                    />
-                  </div>
+                    <div className="col-12">
+                      <label className="form-label fw-semibold">
+                        Rincian Pengeluaran
+                      </label>
 
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Tanggal</label>
-                    <input
-                      type="date"
-                      className="form-control"
-                      value={form.tanggal}
-                      onChange={onChange("tanggal")}
-                    />
-                  </div>
+                      {(form.rincian || []).map((r, i) => (
+                        <div
+                          className="row g-2 align-items-center mb-2"
+                          key={i}
+                          style={{ paddingBottom: "6px" }}
+                        >
+                          <div className="col-md-6">
+                            <input
+                              type="text"
+                              className="form-control"
+                              placeholder="Nama pengeluaran (misal: BBM, Tol, Uang Jalan...)"
+                              value={r.nama}
+                              onChange={(e) =>
+                                updateRincian(i, "nama", e.target.value)
+                              }
+                            />
+                          </div>
 
-                  <div className="col-12">
-                    <hr className="my-2" />
-                  </div>
+                          <div className="col-md-4">
+                            <input
+                              type="number"
+                              className="form-control text-end"
+                              placeholder="Jumlah (Rp)"
+                              value={r.jumlah}
+                              onChange={(e) =>
+                                updateRincian(i, "jumlah", e.target.value)
+                              }
+                            />
+                          </div>
 
-                  <div className="col-12">
-                    <label className="form-label fw-semibold">
-                      Rincian Pengeluaran
-                    </label>
+                          <div className="col-md-2 text-end">
+                            {form.rincian.length > 1 && (
+                              <button
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() => removeRincian(i)}
+                              >
+                                Hapus
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
 
-                    {form.rincian.map((r, i) => (
-                      <div
-                        className="row g-2 align-items-center mb-2"
-                        key={i}
-                        style={{ paddingBottom: "6px" }}
+                      <button
+                        className="btn btn-sm btn-outline-primary mt-4"
+                        onClick={addRincian}
                       >
-                        <div className="col-md-6">
-                          <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Nama pengeluaran (misal: BBM, Tol, Uang Jalan...)"
-                            value={r.nama}
-                            onChange={(e) =>
-                              updateRincian(i, "nama", e.target.value)
-                            }
-                          />
-                        </div>
+                        + Tambah Pengeluaran
+                      </button>
+                    </div>
 
-                        <div className="col-md-4">
-                          <input
-                            type="number"
-                            className="form-control text-end"
-                            placeholder="Jumlah (Rp)"
-                            value={r.jumlah}
-                            onChange={(e) =>
-                              updateRincian(i, "jumlah", e.target.value)
-                            }
-                          />
-                        </div>
+                    <div className="col-md-6 mt-5">
+                      <label className="form-label fw-semibold">
+                        Total Pengeluaran
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control fw-bold"
+                        value={formatRupiah(totalExpense)}
+                        readOnly
+                      />
+                    </div>
 
-                        <div className="col-md-2 text-end">
-                          {form.rincian.length > 1 && (
-                            <button
-                              className="btn btn-sm btn-outline-danger"
-                              onClick={() => removeRincian(i)}
-                            >
-                              Hapus
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                    <div className="col-md-3 mt-5">
+                      <label className="form-label fw-semibold">Status</label>
+                      <select
+                        className="form-select"
+                        value={form.status}
+                        onChange={onChange("status")}
+                        style={{
+                          backgroundColor: controlBg,
+                          color: controlText,
+                          borderColor: controlBorder,
+                        }}
+                      >
+                        {["Approved", "Paid"].map((status) => (
+                          <option
+                            key={status}
+                            value={status}
+                            style={{
+                              backgroundColor: optionBg,
+                              color: optionText,
+                            }}
+                          >
+                            {status}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                    <button
-                      className="btn btn-sm btn-outline-primary mt-4"
-                      onClick={addRincian}
-                    >
-                      + Tambah Pengeluaran
-                    </button>
-                  </div>
-
-                  <div className="col-md-6 mt-5">
-                    <label className="form-label fw-semibold">
-                      Total Pengeluaran
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control fw-bold"
-                      value={formatRupiah(totalExpense)}
-                      readOnly
-                    />
-                  </div>
-
-                  <div className="col-md-3 mt-5">
-                    <label className="form-label fw-semibold">Status</label>
-                    <select
-                      className="form-select"
-                      value={form.status}
-                      onChange={onChange("status")}
-                      style={{
-                        backgroundColor: controlBg,
-                        color: controlText,
-                        borderColor: controlBorder,
-                      }}
-                    >
-                      {["Approved", "Paid"].map((status) => (
-                        <option
-                          key={status}
-                          value={status}
-                          style={{
-                            backgroundColor: optionBg,
-                            color: optionText,
-                          }}
-                        >
-                          {status}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="col-md-3 mt-5">
-                    <label className="form-label fw-semibold">Dicatat Oleh</label>
-                    <select
-                      className="form-select"
-                      value={form.dicatat_oleh}
-                      onChange={onChange("dicatat_oleh")}
-                      style={{
-                        backgroundColor: controlBg,
-                        color: controlText,
-                        borderColor: controlBorder,
-                      }}
-                    >
-                      {["Admin", "Owner"].map((role) => (
-                        <option
-                          key={role}
-                          value={role}
-                          style={{
-                            backgroundColor: optionBg,
-                            color: optionText,
-                          }}
-                        >
-                          {role}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="col-md-3 mt-5">
+                      <label className="form-label fw-semibold">
+                        Dicatat Oleh
+                      </label>
+                      <select
+                        className="form-select"
+                        value={form.dicatat_oleh}
+                        onChange={onChange("dicatat_oleh")}
+                        style={{
+                          backgroundColor: controlBg,
+                          color: controlText,
+                          borderColor: controlBorder,
+                        }}
+                      >
+                        {["Admin", "Owner"].map((role) => (
+                          <option
+                            key={role}
+                            value={role}
+                            style={{
+                              backgroundColor: optionBg,
+                              color: optionText,
+                            }}
+                          >
+                            {role}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -510,7 +503,6 @@ export default function InvoiceExpensePage() {
         </div>
       </div>
 
-      </div>
       <style jsx>{`
         .cvant-page-in {
           opacity: 0;
@@ -518,12 +510,12 @@ export default function InvoiceExpensePage() {
           transition: opacity 450ms ease, transform 450ms ease;
           will-change: opacity, transform;
         }
-      
+
         .cvant-page-in.is-in {
           opacity: 1;
           transform: translateY(0);
         }
-      
+
         @media (prefers-reduced-motion: reduce) {
           .cvant-page-in,
           .cvant-page-in.is-in {

@@ -16,7 +16,6 @@ function useCvAntPageIn() {
   return pageIn;
 }
 
-
 function isLightModeNow() {
   if (typeof window === "undefined") return false;
 
@@ -48,7 +47,6 @@ function isLightModeNow() {
 
 export default function ArmadaAddLayer() {
   const pageIn = useCvAntPageIn();
-
   const router = useRouter();
 
   const [form, setForm] = useState({
@@ -101,7 +99,27 @@ export default function ArmadaAddLayer() {
 
   const closePopup = () => setPopup((p) => ({ ...p, show: false }));
 
-  const popupAccent = popup.type === "success" ? "#22c55e" : "#ef4444";
+  // ✅ POPUP CONFIRM DUPLICATE PLATE (WARNING)
+  const [duplicateConfirm, setDuplicateConfirm] = useState({
+    show: false,
+    plat: "",
+    savingAnyway: false,
+  });
+
+  const openDuplicateConfirm = (plat) => {
+    setDuplicateConfirm({ show: true, plat, savingAnyway: false });
+  };
+
+  const closeDuplicateConfirm = () => {
+    setDuplicateConfirm({ show: false, plat: "", savingAnyway: false });
+  };
+
+  const popupAccent =
+    popup.type === "success"
+      ? "#22c55e"
+      : popup.type === "warning"
+      ? "#d97706"
+      : "#ef4444";
 
   const controlBg = isLightMode ? "#ffffff" : "#273142";
   const controlText = isLightMode ? "#0b1220" : "#ffffff";
@@ -115,18 +133,24 @@ export default function ArmadaAddLayer() {
     setForm((s) => ({ ...s, [k]: v }));
   };
 
+  // ✅ VALIDASI FIELD KOSONG (GENERAL POPUP)
   const validate = () => {
-    if (!form.nama_truk || !form.plat_nomor || !form.kapasitas) {
+    const msgGeneral = "Data is still incomplete, please complete it first!";
+
+    if (
+      !String(form.nama_truk || "").trim() ||
+      !String(form.plat_nomor || "").trim() ||
+      !String(form.kapasitas || "").trim()
+    ) {
       setErr("");
-      showPopup("danger", "Semua kolom wajib diisi!", 0);
+      showPopup("danger", msgGeneral, 0);
       return false;
     }
     return true;
   };
 
-  const onSave = async () => {
-    if (!validate()) return;
-
+  // ✅ FUNCTION SAVE FINAL (dipakai juga saat Save Anyway)
+  const doSave = async () => {
     setSaving(true);
     setErr("");
 
@@ -143,181 +167,309 @@ export default function ArmadaAddLayer() {
       }, 3000);
     } catch (e) {
       console.error("Error saving armada:", e);
-      const msg = e?.message || "Gagal menyimpan armada.";
+      const msg = e?.message || "Failed to save fleet.";
       setErr(msg);
       showPopup("danger", msg, 0);
     } finally {
       setSaving(false);
+      closeDuplicateConfirm();
+    }
+  };
+
+  const onSave = async () => {
+    if (!validate()) return;
+
+    try {
+      // ✅ cek duplicate plat nomor
+      const allArmadas = await api.get("/armadas");
+      const list = Array.isArray(allArmadas) ? allArmadas : [];
+
+      const inputPlat = String(form.plat_nomor || "").trim().toLowerCase();
+
+      const exists = list.some((a) => {
+        const plat = String(a?.plat_nomor || "").trim().toLowerCase();
+        return plat === inputPlat;
+      });
+
+      if (exists) {
+        // ✅ tampilkan popup warning duplicate
+        openDuplicateConfirm(form.plat_nomor);
+        return;
+      }
+
+      // ✅ kalau tidak duplicate lanjut save normal
+      await doSave();
+    } catch (e) {
+      const msg = e?.message || "Failed to check fleet list.";
+      showPopup("danger", msg, 0);
     }
   };
 
   return (
     <>
       <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
-      {popup.show && (
-        <div
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-          style={{
-            zIndex: 9999,
-            background: "rgba(0,0,0,0.55)",
-            padding: "16px",
-          }}
-          onClick={closePopup}
-        >
+        {/* ✅ POPUP GENERAL (SUCCESS / ERROR) */}
+        {popup.show && (
           <div
-            className="radius-12 shadow-sm p-24"
+            className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
             style={{
-              width: "100%",
-              maxWidth: "600px",
-              backgroundColor: "#1b2431",
-              border: `2px solid ${popupAccent}`,
+              zIndex: 9999,
+              background: "rgba(0,0,0,0.55)",
+              padding: "16px",
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={closePopup}
           >
-            <div className="d-flex align-items-start justify-content-between gap-2">
-              <div className="d-flex align-items-start gap-12">
-                <span style={{ marginTop: "2px" }}>
-                  <Icon
-                    icon={
-                      popup.type === "success"
-                        ? "solar:check-circle-linear"
-                        : "solar:danger-triangle-linear"
-                    }
-                    style={{
-                      fontSize: "28px",
-                      color: popupAccent,
-                    }}
-                  />
-                </span>
+            <div
+              className="radius-12 shadow-sm p-24"
+              style={{
+                width: "100%",
+                maxWidth: "600px",
+                backgroundColor: "#1b2431",
+                border: `2px solid ${popupAccent}`,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="d-flex align-items-start justify-content-between gap-2">
+                <div className="d-flex align-items-start gap-12">
+                  <span style={{ marginTop: "2px" }}>
+                    <Icon
+                      icon={
+                        popup.type === "success"
+                          ? "solar:check-circle-linear"
+                          : "solar:danger-triangle-linear"
+                      }
+                      style={{
+                        fontSize: "28px",
+                        color: popupAccent,
+                      }}
+                    />
+                  </span>
 
-                <div>
-                  <h5 className="mb-8 fw-bold" style={{ color: "#ffffff" }}>
-                    {popup.type === "success" ? "Success" : "Error"}
-                  </h5>
-                  <p
-                    className="mb-0"
-                    style={{ color: "#cbd5e1", fontSize: "15px" }}
-                  >
-                    {popup.message}
-                  </p>
+                  <div>
+                    <h5 className="mb-8 fw-bold" style={{ color: "#ffffff" }}>
+                      {popup.type === "success" ? "Success" : "Error"}
+                    </h5>
+                    <p
+                      className="mb-0"
+                      style={{ color: "#cbd5e1", fontSize: "15px" }}
+                    >
+                      {popup.message}
+                    </p>
+                  </div>
                 </div>
+
+                <button
+                  type="button"
+                  className="btn p-0"
+                  aria-label="Close"
+                  onClick={closePopup}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    lineHeight: 1,
+                  }}
+                >
+                  <Icon
+                    icon="solar:close-circle-linear"
+                    style={{ fontSize: 24, color: "#94a3b8" }}
+                  />
+                </button>
               </div>
 
-              <button
-                type="button"
-                className="btn p-0"
-                aria-label="Close"
-                onClick={closePopup}
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  lineHeight: 1,
-                }}
-              >
-                <Icon
-                  icon="solar:close-circle-linear"
-                  style={{ fontSize: 24, color: "#94a3b8" }}
-                />
-              </button>
-            </div>
-
-            <div className="d-flex justify-content-end mt-20">
-              <button
-                type="button"
-                className={`btn btn-${
-                  popup.type === "success" ? "primary" : "danger"
-                } radius-12 px-16`}
-                onClick={closePopup}
-                style={{
-                  border: `2px solid ${popupAccent}`,
-                }}
-              >
-                OK
-              </button>
+              <div className="d-flex justify-content-end mt-20">
+                <button
+                  type="button"
+                  className={`btn btn-${
+                    popup.type === "success" ? "primary" : "danger"
+                  } radius-12 px-16`}
+                  onClick={closePopup}
+                  style={{
+                    border: `2px solid ${popupAccent}`,
+                  }}
+                >
+                  OK
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="card">
-        <div className="card-header">
-          <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
-            <button
-              type="button"
-              disabled={saving}
-              onClick={onSave}
-              className="btn btn-sm btn-primary"
+        {/* ✅ POPUP WARNING DUPLICATE PLAT */}
+        {duplicateConfirm.show && (
+          <div
+            className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+            style={{
+              zIndex: 9999,
+              background: "rgba(0,0,0,0.55)",
+              padding: "16px",
+            }}
+            onClick={() => {
+              if (!saving) closeDuplicateConfirm();
+            }}
+          >
+            <div
+              className="radius-12 shadow-sm p-24"
+              style={{
+                width: "100%",
+                maxWidth: "600px",
+                backgroundColor: "#1b2431",
+                border: "2px solid #d97706", // warning-600
+              }}
+              onClick={(e) => e.stopPropagation()}
             >
-              {saving ? "Saving..." : "Save"}
-            </button>
+              <div className="d-flex align-items-start justify-content-between gap-2">
+                <div className="d-flex align-items-start gap-12">
+                  <span style={{ marginTop: "2px" }}>
+                    <Icon
+                      icon="solar:danger-triangle-linear"
+                      style={{
+                        fontSize: "28px",
+                        color: "#d97706",
+                      }}
+                    />
+                  </span>
+
+                  <div>
+                    <h5 className="mb-8 fw-bold" style={{ color: "#ffffff" }}>
+                      Warning
+                    </h5>
+                    <p
+                      className="mb-0"
+                      style={{ color: "#cbd5e1", fontSize: "15px" }}
+                    >
+                      Vehicle plate number already exists! Please double-check!
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn p-0"
+                  aria-label="Close"
+                  onClick={() => {
+                    if (!saving) closeDuplicateConfirm();
+                  }}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    lineHeight: 1,
+                  }}
+                  disabled={saving}
+                >
+                  <Icon
+                    icon="solar:close-circle-linear"
+                    style={{ fontSize: 24, color: "#94a3b8" }}
+                  />
+                </button>
+              </div>
+
+              <div className="d-flex justify-content-end mt-20 gap-2">
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary radius-12 px-16"
+                  onClick={closeDuplicateConfirm}
+                  disabled={saving}
+                  style={{ border: "2px solid #64748b", color: "#e2e8f0" }}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-warning radius-12 px-16"
+                  onClick={doSave}
+                  disabled={saving}
+                  style={{ border: "2px solid #d97706" }}
+                >
+                  {saving ? "Saving..." : "Save Anyway"}
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="card-body">
-          <div className="row g-3">
-            <div className="col-md-4">
-              <label className="form-label fw-semibold">Nama Truk</label>
-              <input
-                value={form.nama_truk}
-                onChange={onChange("nama_truk")}
-                className="form-control"
-                placeholder="mis. Hino 300"
-              />
-            </div>
-
-            <div className="col-md-4">
-              <label className="form-label fw-semibold">Plat Nomor</label>
-              <input
-                value={form.plat_nomor}
-                onChange={onChange("plat_nomor")}
-                className="form-control"
-                placeholder="mis. L 1234 XX"
-              />
-            </div>
-
-            <div className="col-md-4">
-              <label className="form-label fw-semibold">Kapasitas (Tonase)</label>
-              <input
-                type="number"
-                value={form.kapasitas}
-                onChange={onChange("kapasitas")}
-                className="form-control"
-                placeholder="mis. 10"
-              />
-            </div>
-
-            <div className="col-md-4">
-              <label className="form-label fw-semibold">Status</label>
-
-              <select
-                value={form.status}
-                onChange={onChange("status")}
-                className="form-select"
-                style={{
-                  backgroundColor: controlBg,
-                  color: controlText,
-                  borderColor: controlBorder,
-                }}
+        {/* ✅ FORM */}
+        <div className="card">
+          <div className="card-header">
+            <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
+              <button
+                type="button"
+                disabled={saving}
+                onClick={onSave}
+                className="btn btn-sm btn-primary"
               >
-                <option
-                  value="Ready"
-                  style={{ backgroundColor: optionBg, color: optionText }}
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+
+          <div className="card-body">
+            <div className="row g-3">
+              <div className="col-md-4">
+                <label className="form-label fw-semibold">Nama Truk</label>
+                <input
+                  value={form.nama_truk}
+                  onChange={onChange("nama_truk")}
+                  className="form-control"
+                  placeholder="mis. Hino 300"
+                />
+              </div>
+
+              <div className="col-md-4">
+                <label className="form-label fw-semibold">Plat Nomor</label>
+                <input
+                  value={form.plat_nomor}
+                  onChange={onChange("plat_nomor")}
+                  className="form-control"
+                  placeholder="mis. L 1234 XX"
+                />
+              </div>
+
+              <div className="col-md-4">
+                <label className="form-label fw-semibold">
+                  Kapasitas (Tonase)
+                </label>
+                <input
+                  type="number"
+                  value={form.kapasitas}
+                  onChange={onChange("kapasitas")}
+                  className="form-control"
+                  placeholder="mis. 10"
+                />
+              </div>
+
+              <div className="col-md-4">
+                <label className="form-label fw-semibold">Status</label>
+
+                <select
+                  value={form.status}
+                  onChange={onChange("status")}
+                  className="form-select"
+                  style={{
+                    backgroundColor: controlBg,
+                    color: controlText,
+                    borderColor: controlBorder,
+                  }}
                 >
-                  Ready
-                </option>
-                <option
-                  value="Full"
-                  style={{ backgroundColor: optionBg, color: optionText }}
-                >
-                  Full
-                </option>
-              </select>
+                  <option
+                    value="Ready"
+                    style={{ backgroundColor: optionBg, color: optionText }}
+                  >
+                    Ready
+                  </option>
+                  <option
+                    value="Full"
+                    style={{ backgroundColor: optionBg, color: optionText }}
+                  >
+                    Full
+                  </option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      </div>
       <style jsx>{`
         .cvant-page-in {
           opacity: 0;
@@ -325,12 +477,12 @@ export default function ArmadaAddLayer() {
           transition: opacity 450ms ease, transform 450ms ease;
           will-change: opacity, transform;
         }
-      
+
         .cvant-page-in.is-in {
           opacity: 1;
           transform: translateY(0);
         }
-      
+
         @media (prefers-reduced-motion: reduce) {
           .cvant-page-in,
           .cvant-page-in.is-in {
