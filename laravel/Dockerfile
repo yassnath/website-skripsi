@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     git \
     unzip \
     zip \
+    curl \
     libzip-dev \
     libpng-dev \
     libonig-dev \
@@ -19,13 +20,13 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Workdir
 WORKDIR /var/www/html
 
-# Copy source
+# Copy project source
 COPY . .
 
-# Install PHP dependencies
+# Install dependencies (production only)
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
-# Fix permissions
+# Fix permissions for Laravel
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache
@@ -37,4 +38,4 @@ RUN chmod +x /var/www/html/railway-start.sh
 EXPOSE 8080
 
 # Run the startup script
-CMD ["sh", "/var/www/html/railway-start.sh"]
+CMD ["bash", "/var/www/html/railway-start.sh"]

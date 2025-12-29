@@ -1,10 +1,25 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
-php artisan config:cache || true
-php artisan route:cache || true
-php artisan view:cache || true
+echo "🚀 Railway Laravel Start Script Running..."
 
-php artisan migrate --force || true
+# jika APP_KEY kosong, generate otomatis (opsional)
+if [ -z "$APP_KEY" ]; then
+  echo "⚠️ APP_KEY not set, generating..."
+  php artisan key:generate --force
+fi
 
+echo "🧹 Clearing caches..."
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
+
+echo "📌 Running migrations..."
+php artisan migrate --force
+
+# Kalau kamu punya seeder untuk admin/user default
+# php artisan db:seed --force
+
+echo "✅ Starting Laravel server on PORT=${PORT} ..."
 php artisan serve --host=0.0.0.0 --port=${PORT}
