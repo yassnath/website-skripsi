@@ -131,9 +131,9 @@ class InvoiceController extends Controller
      * URL: /api/public/invoices/{id}
      *
      * FIX:
-     * - pastikan rincian array (data legacy)
-     * - tambahkan armada_plat ke tiap rincian jika hanya ada armada_id
-     *   supaya PUBLIC VIEW tidak perlu akses /armadas (yang auth)
+     * - Jangan modifikasi $invoice->rincian by reference (karena accessor)
+     * - ambil ke variable array biasa, modifikasi, assign balik
+     * - inject armada_plat jika perlu
      */
     public function publicShow($id)
     {
@@ -143,15 +143,17 @@ class InvoiceController extends Controller
             return response()->json(['message' => 'Invoice tidak ditemukan'], 404);
         }
 
-        // ✅ pastikan rincian array
-        if (!is_array($invoice->rincian)) {
-            $invoice->rincian = $invoice->rincian ? json_decode($invoice->rincian, true) : [];
+        // ✅ pastikan rincian array (ambil ke variable biasa, bukan langsung modify di $invoice->rincian)
+        $rin = $invoice->rincian;
+
+        if (!is_array($rin)) {
+            $rin = $rin ? json_decode($rin, true) : [];
+            if (!is_array($rin)) $rin = [];
         }
 
         // ✅ inject armada_plat untuk public preview
-        if (is_array($invoice->rincian) && count($invoice->rincian) > 0) {
-            foreach ($invoice->rincian as &$r) {
-                // normalisasi bentuk item
+        if (is_array($rin) && count($rin) > 0) {
+            foreach ($rin as $idx => $r) {
                 if (!is_array($r)) continue;
 
                 $hasPlat = isset($r['armada_plat']) && trim((string)$r['armada_plat']) !== '';
@@ -161,9 +163,13 @@ class InvoiceController extends Controller
                     $armada = \App\Models\Armada::find($r['armada_id']);
                     $r['armada_plat'] = $armada ? $armada->plat_nomor : '-';
                 }
+
+                $rin[$idx] = $r; // ✅ assign balik
             }
-            unset($r);
         }
+
+        // ✅ assign kembali ke invoice agar response json sudah include yang sudah dibenerin
+        $invoice->rincian = $rin;
 
         return response()->json($invoice);
     }
@@ -173,7 +179,7 @@ class InvoiceController extends Controller
      * URL: /api/public/invoices/{id}/pdf
      *
      * FIX:
-     * - pastikan rincian array (data legacy) sebelum render view
+     * - pastikan rincian array sebelum render view
      */
     public function publicPdf($id)
     {
@@ -184,10 +190,15 @@ class InvoiceController extends Controller
                 return response()->json(['message' => 'Invoice tidak ditemukan'], 404);
             }
 
-            // ✅ pastikan rincian selalu array (penting untuk blade pdf.invoice)
-            if (!is_array($invoice->rincian)) {
-                $invoice->rincian = $invoice->rincian ? json_decode($invoice->rincian, true) : [];
+            // ✅ ambil rincian sebagai array aman
+            $rin = $invoice->rincian;
+
+            if (!is_array($rin)) {
+                $rin = $rin ? json_decode($rin, true) : [];
+                if (!is_array($rin)) $rin = [];
             }
+
+            $invoice->rincian = $rin;
 
             // ✅ Pastikan folder exist & writable (Railway)
             @mkdir(storage_path('app/dompdf'), 0777, true);
