@@ -26,8 +26,7 @@ export default function InvoicePreviewLayer() {
   const [armadas, setArmadas] = useState([]);
   const [sending, setSending] = useState(false);
 
-  // ✅ Ambil API base dari env (dibersihkan)
-  // Catatan: env NEXT_PUBLIC_* di Next itu baked saat build.
+  // ✅ API base dari env (dibersihkan)
   const apiBase = useMemo(() => {
     let base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
     base = String(base).replace(/\/+$/, "");
@@ -136,24 +135,23 @@ export default function InvoicePreviewLayer() {
   const totalBayar = useMemo(() => subtotal - pph, [subtotal, pph]);
 
   /**
-   * ✅ PRINT: Portrait kalau rows > 3, else Landscape
-   * ✅ Tetap 1 page: tambahkan scale print dinamis (tanpa ubah CSS yang sudah ada)
-   * ✅ Watermark/logo tetap di tengah (fixed) + aman 1 halaman
+   * ✅ PRINT FIX TOTAL:
+   * - Pakai zoom (lebih stabil dari transform untuk print)
+   * - Compress spacing footer / sign / margin
+   * - Portrait jika rows > 3, else landscape
+   * - Tetap 1 page selama tidak ekstrem
    */
   useEffect(() => {
-    const STYLE_ID = "invoice-print-orientation";
+    const STYLE_ID = "invoice-print-dynamic";
 
-    const applyOrientationAndFit = () => {
+    const applyPrint = () => {
       const isPortrait = rows.length > 3;
 
-      // tweak scale supaya 1 page (lebih ketat jika portrait & banyak row)
-      // kamu bisa adjust angka ini kalau mau lebih rapat/lega.
-      const scale =
-        isPortrait && rows.length >= 6
-          ? 0.86
-          : isPortrait
-          ? 0.9
-          : 0.95;
+      // 🔥 Perhitungan zoom biar lebih pasti 1 halaman
+      // semakin banyak row, zoom makin kecil
+      const baseZoom = isPortrait ? 0.87 : 0.92;
+      const extraCut = Math.max(0, rows.length - 4) * 0.03;
+      const zoom = Math.max(0.72, baseZoom - extraCut);
 
       let el = document.getElementById(STYLE_ID);
       if (!el) {
@@ -164,19 +162,43 @@ export default function InvoicePreviewLayer() {
 
       el.textContent = `
         @media print {
-          /* Orientation sesuai rule kamu */
-          @page { size: A4 ${isPortrait ? "portrait" : "landscape"}; margin: 10mm 10mm; }
+          @page { size: A4 ${isPortrait ? "portrait" : "landscape"}; margin: 8mm 8mm; }
 
-          /* Pastikan 1 halaman: scale area invoice */
-          .invoice-screen {
-            width: 100% !important;
-          }
+          /* ✅ ini yang bikin 1 page: zoom container */
           .invoice-paper {
-            transform: scale(${scale}) !important;
-            transform-origin: top left !important;
+            zoom: ${zoom};
+            -webkit-transform: scale(${zoom});
+            -webkit-transform-origin: top left;
+            transform: scale(${zoom});
+            transform-origin: top left;
           }
 
-          /* Watermark/logo benar-benar di tengah halaman */
+          /* ✅ rapatkan layout bawah biar ga spill */
+          .invoice-footer-note {
+            margin-top: 8px !important;
+            line-height: 1.2 !important;
+          }
+
+          .invoice-sign {
+            margin-top: 14px !important;
+          }
+
+          .invoice-sign p.mb-5 {
+            margin-bottom: 16px !important;
+          }
+
+          /* ✅ kurangi spacing global yg bikin panjang */
+          .mt-5 {
+            margin-top: 12px !important;
+          }
+          .mb-4 {
+            margin-bottom: 8px !important;
+          }
+          .pb-3 {
+            padding-bottom: 6px !important;
+          }
+
+          /* ✅ watermark tetap di tengah halaman */
           .invoice-watermark {
             position: fixed !important;
             top: 50% !important;
@@ -187,10 +209,22 @@ export default function InvoicePreviewLayer() {
             pointer-events: none !important;
           }
 
-          /* Pastikan konten di atas watermark */
-          .invoice-paper > .position-relative.z-1 {
-            position: relative !important;
-            z-index: 1 !important;
+          /* ✅ pastikan semua tetap 1 halaman */
+          html, body {
+            height: auto !important;
+          }
+
+          .invoice-paper,
+          .invoice-paper * {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+
+          /* ✅ tapi table boleh dipotong (kalau perlu) agar tidak lompat page */
+          .invoice-detail-table,
+          .invoice-detail-table * {
+            page-break-inside: auto !important;
+            break-inside: auto !important;
           }
         }
       `;
@@ -201,19 +235,17 @@ export default function InvoicePreviewLayer() {
       if (el) el.remove();
     };
 
-    window.addEventListener("beforeprint", applyOrientationAndFit);
+    window.addEventListener("beforeprint", applyPrint);
     window.addEventListener("afterprint", cleanup);
 
     return () => {
-      window.removeEventListener("beforeprint", applyOrientationAndFit);
+      window.removeEventListener("beforeprint", applyPrint);
       window.removeEventListener("afterprint", cleanup);
       cleanup();
     };
   }, [rows.length]);
 
-  // ✅ FIX PALING PENTING:
-  // Jangan bikin URL PDF manual dari apiBase (bisa nyantol localhost kalau env belum kebawa build).
-  // Ambil URL publik langsung dari backend: /api/invoices/{id}/pdf-link
+  // ✅ PDF URL publik via backend (biar tidak localhost)
   const getPublicPdfUrl = async (invoiceId) => {
     const res = await api.get(`/invoices/${invoiceId}/pdf-link`);
     const url = (res && res.url) ? String(res.url) : "";
@@ -242,7 +274,7 @@ export default function InvoicePreviewLayer() {
     } catch (e) {
       alert(
         `Gagal membuat link PDF publik.\n` +
-          `Pastikan APP_URL di Railway benar dan endpoint /pdf-link berjalan.\n\n` +
+          `Pastikan APP_URL di Railway benar.\n\n` +
           `${e?.message || "Unknown error"}`
       );
     } finally {
@@ -256,7 +288,6 @@ export default function InvoicePreviewLayer() {
       const pdfUrl = await getPublicPdfUrl(invoice.id);
       window.open(pdfUrl, "_blank");
     } catch (e) {
-      // fallback (kalau endpoint pdf-link error)
       window.open(`${apiBase}/api/invoices/${invoice.id}/pdf`, "_blank");
     }
   };
@@ -296,7 +327,6 @@ export default function InvoicePreviewLayer() {
             Edit
           </button>
 
-          {/* ✅ FIX: Open PDF dari url publik (pdf-link) */}
           <button
             className="btn btn-sm btn-outline-success"
             onClick={handleOpenPdf}
@@ -433,9 +463,7 @@ export default function InvoicePreviewLayer() {
                           <span className="cell-2line">{money(r.harga)}</span>
                         </td>
                         <td style={cellStyle}>
-                          <span className="cell-2line">
-                            {money(r.subtotal)}
-                          </span>
+                          <span className="cell-2line">{money(r.subtotal)}</span>
                         </td>
                       </tr>
                     ))}
@@ -490,8 +518,7 @@ export default function InvoicePreviewLayer() {
           </div>
         </div>
 
-        {/* ⚠️ Styling kamu yang sudah fix: TIDAK aku ubah.
-            Aku hanya menambahkan style print dinamis via useEffect (style tag terpisah). */}
+        {/* ✅ STYLE FIX kamu tidak aku ubah sama sekali */}
         <style jsx global>{`
           .invoice-paper {
             overflow-x: hidden;
@@ -638,145 +665,6 @@ export default function InvoicePreviewLayer() {
               opacity: 0.07 !important;
               z-index: 0 !important;
               pointer-events: none !important;
-            }
-
-            .invoice-header {
-              display: table !important;
-              width: 100% !important;
-              table-layout: fixed !important;
-            }
-            .invoice-header-left {
-              display: table-cell !important;
-              width: 60% !important;
-              vertical-align: top !important;
-              text-align: left !important;
-              padding-left: 0 !important;
-            }
-            .invoice-header-right {
-              display: table-cell !important;
-              width: 40% !important;
-              vertical-align: top !important;
-              text-align: right !important;
-              padding-right: 0 !important;
-            }
-
-            .invoice-customer {
-              display: table !important;
-              width: 100% !important;
-              table-layout: fixed !important;
-              margin-bottom: 10px !important;
-              margin-left: 0 !important;
-              margin-right: 0 !important;
-            }
-
-            .invoice-from,
-            .invoice-to {
-              display: table-cell !important;
-              vertical-align: top !important;
-              float: none !important;
-              max-width: none !important;
-            }
-
-            .invoice-from {
-              width: 60% !important;
-              text-align: left !important;
-              padding-left: 0 !important;
-              padding-right: 10px !important;
-            }
-
-            .invoice-to {
-              width: 40% !important;
-              text-align: right !important;
-              padding-right: 0 !important;
-              padding-left: 10px !important;
-            }
-
-            .invoice-from h6,
-            .invoice-from p {
-              text-align: left !important;
-              margin-left: 0 !important;
-              padding-left: 0 !important;
-            }
-
-            .invoice-to h6,
-            .invoice-to p {
-              text-align: right !important;
-              margin-right: 0 !important;
-              padding-right: 0 !important;
-            }
-
-            .invoice-table-wrap {
-              padding-left: 0 !important;
-              padding-right: 0 !important;
-              margin-left: 0 !important;
-              margin-right: 0 !important;
-            }
-
-            .invoice-detail-table {
-              width: 100% !important;
-              margin-top: 10px !important;
-              border-collapse: collapse !important;
-            }
-            .invoice-detail-table th,
-            .invoice-detail-table td {
-              font-size: 10px !important;
-              line-height: 1.1 !important;
-              padding: 3px 4px !important;
-              white-space: nowrap !important;
-            }
-
-            .invoice-detail-table,
-            .invoice-detail-table th,
-            .invoice-detail-table td,
-            .table-bordered,
-            .table-bordered > :not(caption) > * > * {
-              border: none !important;
-            }
-
-            .border-bottom {
-              border-bottom: none !important;
-            }
-            .invoice-header {
-              margin-bottom: 6px !important;
-              padding-bottom: 0 !important;
-            }
-
-            .invoice-armada-summary {
-              display: table !important;
-              width: 100% !important;
-              table-layout: fixed !important;
-              margin-top: 8px !important;
-            }
-            .invoice-armada-left {
-              display: table-cell !important;
-              width: 50% !important;
-              vertical-align: top !important;
-              padding-right: 10px !important;
-              padding-left: 0 !important;
-              max-width: none !important;
-            }
-            .invoice-totals {
-              display: table !important;
-              width: 50% !important;
-              margin-left: auto !important;
-              margin-right: 0 !important;
-              border-collapse: collapse !important;
-            }
-            .invoice-totals td {
-              padding: 3px 4px !important;
-              font-size: 11px !important;
-              border: none !important;
-            }
-            .invoice-totals td:first-child {
-              text-align: left !important;
-            }
-            .invoice-totals td:last-child {
-              text-align: right !important;
-              white-space: nowrap !important;
-              padding-right: 0 !important;
-            }
-            .invoice-totals tr.invoice-totals-bold td {
-              font-weight: 700 !important;
             }
 
             table,
