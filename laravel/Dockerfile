@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Workdir
 WORKDIR /var/www/html
 
 # Copy source
@@ -25,13 +26,13 @@ COPY . .
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
 # Fix permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/storage \
-    && chmod -R 775 /var/www/html/bootstrap/cache
+RUN chmod -R 775 storage bootstrap/cache
 
 # Make startup script executable
 RUN chmod +x /var/www/html/railway-start.sh
 
+# Railway uses dynamic PORT environment variable
 EXPOSE 8080
 
+# Run the startup script
 CMD ["sh", "/var/www/html/railway-start.sh"]
