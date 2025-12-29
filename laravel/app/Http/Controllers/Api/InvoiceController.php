@@ -204,13 +204,11 @@ class InvoiceController extends Controller
 
     public function pdfLink($id)
     {
-        $invoice = Invoice::findOrFail($id);
+        Invoice::findOrFail($id);
 
-        // ✅ ambil URL publik dari APP_URL
-        $baseUrl = rtrim(config('app.url'), '/');
-
+        $base = rtrim(config('app.url'), '/'); // harus https://asnusatrans.online
         return response()->json([
-            'url' => $baseUrl . "/api/invoices/{$invoice->id}/pdf",
+            "url" => $base . "/api/invoices/{$id}/pdf",
         ]);
     }
 }

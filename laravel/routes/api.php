@@ -9,25 +9,27 @@ use App\Http\Controllers\Api\ReportController;
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC ROUTES (Tanpa Auth)
+| PUBLIC ROUTES (NO AUTH)
 |--------------------------------------------------------------------------
-| IMPORTANT:
-| - Wajib di atas supaya tidak bentrok dengan /invoices/{id}
-| - Beri constraint {id} numeric supaya aman
+| Pastikan ini benar-benar tidak kena middleware auth/api kamu.
+| Kita pakai ->withoutMiddleware() biar 100% public.
 */
 Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'pdf'])
-    ->whereNumber('id');
+    ->whereNumber('id')
+    ->withoutMiddleware(['auth.api']);
 
 Route::get('/expenses/{id}/pdf', [ExpenseController::class, 'pdf'])
-    ->whereNumber('id');
+    ->whereNumber('id')
+    ->withoutMiddleware(['auth.api']);
 
 Route::get('/invoices/{id}/pdf-link', [InvoiceController::class, 'pdfLink'])
-    ->whereNumber('id');
+    ->whereNumber('id')
+    ->withoutMiddleware(['auth.api']);
 
-// REPORT public (auth pakai query token di controller)
-Route::get('/reports/summary', [ReportController::class, 'summary']);
+// report public
+Route::get('/reports/summary', [ReportController::class, 'summary'])
+    ->withoutMiddleware(['auth.api']);
 
-// LOGIN
 Route::post('/login', [AuthController::class, 'login']);
 
 
