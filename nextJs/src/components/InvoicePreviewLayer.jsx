@@ -33,6 +33,21 @@ export default function InvoicePreviewLayer() {
     return base;
   }, []);
 
+  // ✅ Public site base: untuk link yang dibuka customer
+  const siteBase = useMemo(() => {
+    // kalau NEXT_PUBLIC_SITE_URL diset, pakai itu
+    // kalau tidak, fallback ke window.location.origin
+    if (typeof window !== "undefined") {
+      return (
+        (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin).replace(
+          /\/+$/,
+          ""
+        )
+      );
+    }
+    return (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/+$/, "");
+  }, []);
+
   useEffect(() => {
     if (id) {
       api
@@ -146,12 +161,10 @@ export default function InvoicePreviewLayer() {
     const applyPrint = () => {
       const isPortrait = rows.length > 3;
 
-      // ✅ zoom: makin banyak row makin kecil
       const baseZoom = isPortrait ? 0.86 : 0.91;
       const extraCut = Math.max(0, rows.length - 4) * 0.03;
-      const zoom = Math.max(0.70, baseZoom - extraCut);
+      const zoom = Math.max(0.7, baseZoom - extraCut);
 
-      // ✅ lift ke atas
       const liftMm = isPortrait ? 8 : 10;
       const lift = Math.min(14, liftMm + Math.max(0, rows.length - 4) * 1);
 
@@ -166,7 +179,6 @@ export default function InvoicePreviewLayer() {
         @media print {
           @page { size: A4 ${isPortrait ? "portrait" : "landscape"}; margin: 6mm 6mm; }
 
-          /* ✅ KUNCI CENTER-IN: posisikan invoice-paper ke tengah */
           .invoice-paper {
             position: relative !important;
             left: 50% !important;
@@ -174,13 +186,11 @@ export default function InvoicePreviewLayer() {
             transform-origin: top center !important;
           }
 
-          /* ✅ rapatkan padding top */
           .invoice-paper.container {
             padding-top: 0 !important;
             margin-top: 0 !important;
           }
 
-          /* ✅ rapatkan bawah */
           .invoice-footer-note {
             margin-top: 4px !important;
             line-height: 1.15 !important;
@@ -198,7 +208,6 @@ export default function InvoicePreviewLayer() {
           .mb-4 { margin-bottom: 6px !important; }
           .pb-3 { padding-bottom: 5px !important; }
 
-          /* ✅ watermark tetap fixed di tengah */
           .invoice-watermark {
             position: fixed !important;
             top: 50% !important;
@@ -220,7 +229,6 @@ export default function InvoicePreviewLayer() {
             break-inside: avoid !important;
           }
 
-          /* tabel boleh auto */
           .invoice-detail-table,
           .invoice-detail-table * {
             page-break-inside: auto !important;
@@ -245,12 +253,20 @@ export default function InvoicePreviewLayer() {
     };
   }, [rows.length]);
 
-  // ✅ PDF URL publik via backend
-  const getPublicPdfUrl = async (invoiceId) => {
-    const res = await api.get(`/invoices/${invoiceId}/pdf-link`);
-    const url = res?.url ? String(res.url) : "";
-    if (!url) throw new Error("URL PDF tidak ditemukan dari endpoint pdf-link.");
-    return url;
+  /**
+   * ✅ FIX PALING PENTING:
+   * Customer tidak boleh akses backend internal url,
+   * jadi link PDF/Viewer harus dari Next.js public page
+   *
+   * Public Viewer: /invoice/{id}
+   * Public PDF:    /invoice/{id}/pdf
+   */
+  const getPublicInvoiceViewerUrl = (invoiceId) => {
+    return `${siteBase}/invoice/${invoiceId}`;
+  };
+
+  const getPublicInvoicePdfUrl = (invoiceId) => {
+    return `${siteBase}/invoice/${invoiceId}/pdf`;
   };
 
   const handleSendToEmail = async () => {
@@ -258,12 +274,13 @@ export default function InvoicePreviewLayer() {
     setSending(true);
 
     try {
-      const pdfUrl = await getPublicPdfUrl(invoice.id);
+      // ✅ Kirim link viewer (lebih friendly)
+      const publicUrl = getPublicInvoiceViewerUrl(invoice.id);
 
       const subject = encodeURIComponent(`Invoice ${invoice.no_invoice}`);
       const body = encodeURIComponent(
         `Yth. ${invoice.nama_pelanggan},\n\n` +
-          `Silakan klik berikut untuk melihat invoice:\n${pdfUrl}\n\n` +
+          `Silakan klik berikut untuk melihat invoice:\n${publicUrl}\n\n` +
           `Terima kasih,\nCV AS Nusa Trans (CV ANT)`
       );
 
@@ -273,9 +290,7 @@ export default function InvoicePreviewLayer() {
       window.open(gmailUrl, "_blank");
     } catch (e) {
       alert(
-        `Gagal membuat link PDF publik.\n` +
-          `Pastikan APP_URL di Railway benar.\n\n` +
-          `${e?.message || "Unknown error"}`
+        `Gagal membuat link invoice publik.\n\n${e?.message || "Unknown error"}`
       );
     } finally {
       setSending(false);
@@ -284,12 +299,10 @@ export default function InvoicePreviewLayer() {
 
   const handleOpenPdf = async () => {
     if (!invoice) return;
-    try {
-      const pdfUrl = await getPublicPdfUrl(invoice.id);
-      window.open(pdfUrl, "_blank");
-    } catch {
-      window.open(`${apiBase}/api/invoices/${invoice.id}/pdf`, "_blank");
-    }
+
+    // ✅ Buka PDF publik via Next Proxy Route
+    const pdfUrl = getPublicInvoicePdfUrl(invoice.id);
+    window.open(pdfUrl, "_blank");
   };
 
   const cellStyle = {
