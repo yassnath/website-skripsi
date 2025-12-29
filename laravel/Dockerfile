@@ -2,13 +2,8 @@ FROM php:8.3-cli
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    zip \
-    libzip-dev \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
+    git unzip zip \
+    libzip-dev libpng-dev libonig-dev libxml2-dev \
     && docker-php-ext-install pdo pdo_mysql zip gd \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -16,14 +11,19 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Workdir
 WORKDIR /var/www/html
 
-# Copy source
 COPY . .
 
 # Install PHP dependencies
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+
+# Ensure Laravel folders exist
+RUN mkdir -p storage/framework/cache \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/logs \
+    bootstrap/cache
 
 # Fix permissions
 RUN chmod -R 775 storage bootstrap/cache
@@ -31,8 +31,6 @@ RUN chmod -R 775 storage bootstrap/cache
 # Make startup script executable
 RUN chmod +x /var/www/html/railway-start.sh
 
-# Railway uses dynamic PORT environment variable
 EXPOSE 8080
 
-# Run the startup script
 CMD ["sh", "/var/www/html/railway-start.sh"]
