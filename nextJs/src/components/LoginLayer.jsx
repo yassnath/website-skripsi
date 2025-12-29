@@ -123,7 +123,7 @@ const LoginLayer = () => {
         .join("; ");
 
       // ✅ FEEDBACK CEPAT (tidak perlu 5 detik)
-      showPopup("success", "Login successful! Redirecting to dashboard...", 1200);
+      showPopup("success", "Login successful! Redirecting to dashboard...", 3000);
 
       // ✅ PENTING: router.replace + refresh supaya state langsung kebaca
       setTimeout(() => {
