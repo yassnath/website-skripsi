@@ -331,13 +331,12 @@ export default function InvoicePreviewLayer() {
             Edit
           </button>
 
-          {/* ✅ Warna tombol tetap pakai tema biru */}
-          <button className="btn btn-sm btn-primary" onClick={handleOpenPdf}>
+          <button className="btn btn-sm btn-outline-success" onClick={handleOpenPdf}>
             Open PDF
           </button>
 
           <button
-            className="btn btn-sm btn-primary"
+            className="btn btn-sm btn-outline-secondary"
             onClick={handleSendToEmail}
             disabled={sending}
           >
