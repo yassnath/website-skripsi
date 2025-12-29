@@ -119,7 +119,14 @@ class InvoiceController extends Controller
             $invoice->rincian = $invoice->rincian ? json_decode($invoice->rincian, true) : [];
         }
 
-        $pdf = Pdf::loadView('pdf.invoice', [
+        // ✅ view yang benar adalah: resources/views/invoices/invoice.blade.php
+        if (!view()->exists('invoices.invoice')) {
+            return response()->json([
+                'message' => 'Template PDF tidak ditemukan: resources/views/invoices/invoice.blade.php'
+            ], 500);
+        }
+
+        $pdf = Pdf::loadView('invoices.invoice', [
             'invoice' => $invoice
         ]);
 
@@ -129,11 +136,6 @@ class InvoiceController extends Controller
     /**
      * ✅ ✅ ✅ PUBLIC SHOW (TANPA LOGIN)
      * URL: /api/public/invoices/{id}
-     *
-     * FIX:
-     * - Jangan modifikasi $invoice->rincian by reference (karena accessor)
-     * - ambil ke variable array biasa, modifikasi, assign balik
-     * - inject armada_plat jika perlu
      */
     public function publicShow($id)
     {
@@ -143,7 +145,6 @@ class InvoiceController extends Controller
             return response()->json(['message' => 'Invoice tidak ditemukan'], 404);
         }
 
-        // ✅ pastikan rincian array (ambil ke variable biasa, bukan langsung modify di $invoice->rincian)
         $rin = $invoice->rincian;
 
         if (!is_array($rin)) {
@@ -164,11 +165,10 @@ class InvoiceController extends Controller
                     $r['armada_plat'] = $armada ? $armada->plat_nomor : '-';
                 }
 
-                $rin[$idx] = $r; // ✅ assign balik
+                $rin[$idx] = $r;
             }
         }
 
-        // ✅ assign kembali ke invoice agar response json sudah include yang sudah dibenerin
         $invoice->rincian = $rin;
 
         return response()->json($invoice);
@@ -177,20 +177,16 @@ class InvoiceController extends Controller
     /**
      * ✅ ✅ ✅ PUBLIC PDF (TANPA LOGIN)
      * URL: /api/public/invoices/{id}/pdf
-     *
-     * FIX:
-     * - pastikan rincian array sebelum render view
      */
     public function publicPdf($id)
     {
         try {
-            $invoice = \App\Models\Invoice::with('armada')->find($id);
+            $invoice = Invoice::with('armada')->find($id);
 
             if (!$invoice) {
                 return response()->json(['message' => 'Invoice tidak ditemukan'], 404);
             }
 
-            // ✅ ambil rincian sebagai array aman
             $rin = $invoice->rincian;
 
             if (!is_array($rin)) {
@@ -200,11 +196,18 @@ class InvoiceController extends Controller
 
             $invoice->rincian = $rin;
 
+            // ✅ view yang benar adalah: resources/views/invoices/invoice.blade.php
+            if (!view()->exists('invoices.invoice')) {
+                return response()->json([
+                    'message' => 'Template PDF tidak ditemukan: resources/views/invoices/invoice.blade.php'
+                ], 500);
+            }
+
             // ✅ Pastikan folder exist & writable (Railway)
             @mkdir(storage_path('app/dompdf'), 0777, true);
             @mkdir(storage_path('app/dompdf/fonts'), 0777, true);
 
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.invoice', [
+            $pdf = Pdf::loadView('invoices.invoice', [
                 'invoice' => $invoice,
             ]);
 
