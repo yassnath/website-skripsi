@@ -115,20 +115,26 @@ export default function InvoicePublicPreview({ id }) {
 
   return (
     <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
-      {/* ✅ background dark supaya nyaman */}
-      <div className="py-4 bg-dark">
+      {/* ✅ BACKGROUND sesuai request */}
+      <div className="py-4" style={{ background: "#1b2431" }}>
         {/* ✅ padding responsif biar tidak nempel kiri-kanan */}
         <div className="container p-0 px-3 px-md-4 px-lg-0">
           {/* ✅ Header card (Dark Theme) */}
-          <div className="p-4 p-md-4 bg-dark text-light rounded shadow-sm border border-secondary position-relative mb-3">
+          <div
+            className="p-4 p-md-4 text-light rounded shadow-sm border border-secondary position-relative mb-3"
+            style={{ background: "#273142" }}
+          >
             <div className="position-relative z-1">
-              {/* ✅ extra spacing kiri-kanan untuk text agar tidak mepet */}
-              <div className="d-flex flex-wrap justify-content-between align-items-start gap-3 px-2 px-md-3">
-                {/* Left */}
-                <div className="pe-2 pe-md-4">
-                  <h4 className="fw-bold mb-1 text-info">
-                    CV AS Nusa Trans
-                  </h4>
+              {/* Header row */}
+              <div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                {/* ✅ LEFT: tambahkan margin-left supaya tidak mepet */}
+                <div
+                  className="pe-2 pe-md-4"
+                  style={{
+                    marginLeft: isMobile ? "6px" : "14px",
+                  }}
+                >
+                  <h4 className="fw-bold mb-1 text-info">CV AS Nusa Trans</h4>
                   <div className="text-light">
                     Ruko Graha Kota Blok BB-07, Suko, Sidoarjo
                   </div>
@@ -136,8 +142,13 @@ export default function InvoicePublicPreview({ id }) {
                   <div className="text-light">Telp: 0812-3425-9399</div>
                 </div>
 
-                {/* Right */}
-                <div className="text-end ps-2 ps-md-4">
+                {/* ✅ RIGHT: tambahkan margin-right supaya tidak mepet */}
+                <div
+                  className="text-end ps-2 ps-md-4"
+                  style={{
+                    marginRight: isMobile ? "6px" : "14px",
+                  }}
+                >
                   <h4 className="fw-bold text-light mb-2">INVOICE</h4>
 
                   <div className="text-light">
@@ -157,18 +168,33 @@ export default function InvoicePublicPreview({ id }) {
 
               <hr className="my-3 border-secondary" />
 
-              {/* Customer info + buttons */}
-              <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 px-2 px-md-3">
-                <div className="text-light">
-                  <div>
+              {/* Customer + Buttons */}
+              <div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                {/* ✅ Customer info: tambahkan margin-left supaya gak mepet garis */}
+                <div
+                  className="text-light"
+                  style={{
+                    marginLeft: isMobile ? "6px" : "14px",
+                  }}
+                >
+                  <div style={{ marginBottom: "6px" }}>
                     <strong>Kepada:</strong> {safeStr(invoice.nama_pelanggan)}
                   </div>
-                  <div>
+
+                  {/* ✅ margin-bottom pada Email agar tidak mepet tombol */}
+                  <div style={{ marginBottom: "14px" }}>
                     <strong>Email:</strong> {safeStr(invoice.email)}
                   </div>
                 </div>
 
-                <div className="d-flex gap-2 flex-wrap">
+                {/* ✅ Buttons: beri margin-bottom supaya tidak mepet juga */}
+                <div
+                  className="d-flex gap-2 flex-wrap"
+                  style={{
+                    marginRight: isMobile ? "6px" : "14px",
+                    marginBottom: "14px",
+                  }}
+                >
                   <button
                     className="btn btn-sm btn-outline-info"
                     onClick={handleDownloadPdf}
@@ -189,7 +215,7 @@ export default function InvoicePublicPreview({ id }) {
 
               {/* ✅ Note untuk mobile */}
               {isMobile && (
-                <div className="alert alert-secondary py-2 mb-0 small mt-3 mx-2 mx-md-3">
+                <div className="alert alert-secondary py-2 mb-0 small mt-2">
                   Preview PDF pada sebagian HP (terutama iPhone) kadang tidak
                   tampil di dalam halaman. Jika tidak muncul, silakan klik{" "}
                   <strong>Open PDF</strong> atau <strong>Download PDF</strong>.
@@ -199,7 +225,10 @@ export default function InvoicePublicPreview({ id }) {
           </div>
 
           {/* ✅ PDF Preview wrapper */}
-          <div className="bg-dark rounded shadow-sm border border-secondary overflow-hidden">
+          <div
+            className="rounded shadow-sm border border-secondary overflow-hidden"
+            style={{ background: "#273142" }}
+          >
             <iframe
               title="Invoice PDF Preview"
               src={pdfUrl}
@@ -207,7 +236,7 @@ export default function InvoicePublicPreview({ id }) {
                 width: "100%",
                 height: isMobile ? "60vh" : "85vh",
                 border: "none",
-                background: "#111", // aman, supaya kalau iframe kosong gak putih menyilaukan
+                background: "#111",
               }}
             />
           </div>
