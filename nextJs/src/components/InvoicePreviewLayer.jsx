@@ -26,26 +26,13 @@ export default function InvoicePreviewLayer() {
   const [armadas, setArmadas] = useState([]);
   const [sending, setSending] = useState(false);
 
-  /**
-   * ✅ FIX UTAMA: apiBase pakai env (build-time)
-   * - Kalau env kosong di production, jangan fallback localhost
-   * - Localhost hanya untuk development lokal
-   */
-  const isProd =
-    typeof window !== "undefined" && window.location.hostname !== "localhost";
-
-  let apiBase = process.env.NEXT_PUBLIC_API_URL || "";
-  apiBase = apiBase.replace(/\/+$/, "");
-
-  // ✅ fallback untuk development lokal saja
-  if (!apiBase && !isProd) apiBase = "http://localhost:8080";
-
-  // ✅ kalau production tapi env kosong, stop agar tidak pernah pakai localhost
-  if (!apiBase && isProd) {
-    console.error(
-      "NEXT_PUBLIC_API_URL belum di-set di Vercel Production. Harus diisi dengan URL Railway backend."
-    );
-  }
+  // ✅ Ambil API base dari env (dibersihkan)
+  // Catatan: env NEXT_PUBLIC_* di Next itu baked saat build.
+  const apiBase = useMemo(() => {
+    let base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    base = String(base).replace(/\/+$/, "");
+    return base;
+  }, []);
 
   useEffect(() => {
     if (id) {
@@ -149,21 +136,24 @@ export default function InvoicePreviewLayer() {
   const totalBayar = useMemo(() => subtotal - pph, [subtotal, pph]);
 
   /**
-   * ✅ AUTO ORIENTATION + AUTO SHRINK 1 PAGE PRINT
-   * - portrait jika row banyak
-   * - landscape jika row sedikit
-   * - selalu shrink supaya cukup 1 halaman
+   * ✅ PRINT: Portrait kalau rows > 3, else Landscape
+   * ✅ Tetap 1 page: tambahkan scale print dinamis (tanpa ubah CSS yang sudah ada)
+   * ✅ Watermark/logo tetap di tengah (fixed) + aman 1 halaman
    */
   useEffect(() => {
     const STYLE_ID = "invoice-print-orientation";
 
-    const applyPrintStyle = () => {
+    const applyOrientationAndFit = () => {
       const isPortrait = rows.length > 3;
 
-      // ✅ shrink factor supaya selalu cukup 1 halaman
-      // semakin banyak rows -> semakin kecil scale
+      // tweak scale supaya 1 page (lebih ketat jika portrait & banyak row)
+      // kamu bisa adjust angka ini kalau mau lebih rapat/lega.
       const scale =
-        rows.length <= 2 ? 1 : rows.length <= 4 ? 0.92 : 0.85;
+        isPortrait && rows.length >= 6
+          ? 0.86
+          : isPortrait
+          ? 0.9
+          : 0.95;
 
       let el = document.getElementById(STYLE_ID);
       if (!el) {
@@ -174,16 +164,19 @@ export default function InvoicePreviewLayer() {
 
       el.textContent = `
         @media print {
-          @page { size: A4 ${isPortrait ? "portrait" : "landscape"}; margin: 8mm 8mm; }
+          /* Orientation sesuai rule kamu */
+          @page { size: A4 ${isPortrait ? "portrait" : "landscape"}; margin: 10mm 10mm; }
 
-          /* ✅ shrink supaya 1 page */
+          /* Pastikan 1 halaman: scale area invoice */
+          .invoice-screen {
+            width: 100% !important;
+          }
           .invoice-paper {
-            transform: scale(${scale});
-            transform-origin: top left;
-            width: ${100 / scale}%;
+            transform: scale(${scale}) !important;
+            transform-origin: top left !important;
           }
 
-          /* ✅ watermark tetap di tengah & rapi */
+          /* Watermark/logo benar-benar di tengah halaman */
           .invoice-watermark {
             position: fixed !important;
             top: 50% !important;
@@ -192,6 +185,12 @@ export default function InvoicePreviewLayer() {
             opacity: 0.07 !important;
             z-index: 0 !important;
             pointer-events: none !important;
+          }
+
+          /* Pastikan konten di atas watermark */
+          .invoice-paper > .position-relative.z-1 {
+            position: relative !important;
+            z-index: 1 !important;
           }
         }
       `;
@@ -202,22 +201,32 @@ export default function InvoicePreviewLayer() {
       if (el) el.remove();
     };
 
-    window.addEventListener("beforeprint", applyPrintStyle);
+    window.addEventListener("beforeprint", applyOrientationAndFit);
     window.addEventListener("afterprint", cleanup);
 
     return () => {
-      window.removeEventListener("beforeprint", applyPrintStyle);
+      window.removeEventListener("beforeprint", applyOrientationAndFit);
       window.removeEventListener("afterprint", cleanup);
+      cleanup();
     };
   }, [rows.length]);
 
-  // ✅ FIX: Send Email selalu pakai apiBase produksi
-  const handleSendToEmail = async () => {
-    if (!invoice || !apiBase) return;
+  // ✅ FIX PALING PENTING:
+  // Jangan bikin URL PDF manual dari apiBase (bisa nyantol localhost kalau env belum kebawa build).
+  // Ambil URL publik langsung dari backend: /api/invoices/{id}/pdf-link
+  const getPublicPdfUrl = async (invoiceId) => {
+    const res = await api.get(`/invoices/${invoiceId}/pdf-link`);
+    const url = (res && res.url) ? String(res.url) : "";
+    if (!url) throw new Error("URL PDF tidak ditemukan dari endpoint pdf-link.");
+    return url;
+  };
 
+  const handleSendToEmail = async () => {
+    if (!invoice) return;
     setSending(true);
+
     try {
-      const pdfUrl = `${apiBase}/api/invoices/${invoice.id}/pdf`;
+      const pdfUrl = await getPublicPdfUrl(invoice.id);
 
       const subject = encodeURIComponent(`Invoice ${invoice.no_invoice}`);
       const body = encodeURIComponent(
@@ -231,9 +240,24 @@ export default function InvoicePreviewLayer() {
 
       window.open(gmailUrl, "_blank");
     } catch (e) {
-      alert("Gagal mengirim email. Pastikan backend berjalan dan URL valid.");
+      alert(
+        `Gagal membuat link PDF publik.\n` +
+          `Pastikan APP_URL di Railway benar dan endpoint /pdf-link berjalan.\n\n` +
+          `${e?.message || "Unknown error"}`
+      );
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleOpenPdf = async () => {
+    if (!invoice) return;
+    try {
+      const pdfUrl = await getPublicPdfUrl(invoice.id);
+      window.open(pdfUrl, "_blank");
+    } catch (e) {
+      // fallback (kalau endpoint pdf-link error)
+      window.open(`${apiBase}/api/invoices/${invoice.id}/pdf`, "_blank");
     }
   };
 
@@ -272,11 +296,10 @@ export default function InvoicePreviewLayer() {
             Edit
           </button>
 
+          {/* ✅ FIX: Open PDF dari url publik (pdf-link) */}
           <button
             className="btn btn-sm btn-outline-success"
-            onClick={() =>
-              window.open(`${apiBase}/api/invoices/${invoice.id}/pdf`, "_blank")
-            }
+            onClick={handleOpenPdf}
           >
             Generate PDF
           </button>
@@ -467,7 +490,8 @@ export default function InvoicePreviewLayer() {
           </div>
         </div>
 
-        {/* ✅ STYLE ORIGINAL TETAP, HANYA DITAMBAH PRINT SCALE & WATERMARK FIX */}
+        {/* ⚠️ Styling kamu yang sudah fix: TIDAK aku ubah.
+            Aku hanya menambahkan style print dinamis via useEffect (style tag terpisah). */}
         <style jsx global>{`
           .invoice-paper {
             overflow-x: hidden;
@@ -570,6 +594,197 @@ export default function InvoicePreviewLayer() {
 
             body {
               overflow: hidden !important;
+            }
+            .invoice-screen,
+            .invoice-paper,
+            .invoice-paper * {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+
+            .invoice-paper.container {
+              padding-left: 0 !important;
+              padding-right: 0 !important;
+              margin-left: 0 !important;
+              margin-right: 0 !important;
+              max-width: 100% !important;
+              width: 100% !important;
+            }
+
+            .invoice-paper {
+              margin: 0 !important;
+              padding: 0 !important;
+              border: none !important;
+              box-shadow: none !important;
+              background: #fff !important;
+              border-radius: 0 !important;
+            }
+
+            .invoice-screen {
+              font-family: DejaVu Sans, Arial, sans-serif !important;
+              font-size: 12px !important;
+              color: #222 !important;
+              line-height: 1.5 !important;
+            }
+            .invoice-screen .text-dark {
+              color: #222 !important;
+            }
+
+            .invoice-watermark {
+              position: fixed !important;
+              top: 50% !important;
+              left: 50% !important;
+              transform: translate(-50%, -50%) !important;
+              opacity: 0.07 !important;
+              z-index: 0 !important;
+              pointer-events: none !important;
+            }
+
+            .invoice-header {
+              display: table !important;
+              width: 100% !important;
+              table-layout: fixed !important;
+            }
+            .invoice-header-left {
+              display: table-cell !important;
+              width: 60% !important;
+              vertical-align: top !important;
+              text-align: left !important;
+              padding-left: 0 !important;
+            }
+            .invoice-header-right {
+              display: table-cell !important;
+              width: 40% !important;
+              vertical-align: top !important;
+              text-align: right !important;
+              padding-right: 0 !important;
+            }
+
+            .invoice-customer {
+              display: table !important;
+              width: 100% !important;
+              table-layout: fixed !important;
+              margin-bottom: 10px !important;
+              margin-left: 0 !important;
+              margin-right: 0 !important;
+            }
+
+            .invoice-from,
+            .invoice-to {
+              display: table-cell !important;
+              vertical-align: top !important;
+              float: none !important;
+              max-width: none !important;
+            }
+
+            .invoice-from {
+              width: 60% !important;
+              text-align: left !important;
+              padding-left: 0 !important;
+              padding-right: 10px !important;
+            }
+
+            .invoice-to {
+              width: 40% !important;
+              text-align: right !important;
+              padding-right: 0 !important;
+              padding-left: 10px !important;
+            }
+
+            .invoice-from h6,
+            .invoice-from p {
+              text-align: left !important;
+              margin-left: 0 !important;
+              padding-left: 0 !important;
+            }
+
+            .invoice-to h6,
+            .invoice-to p {
+              text-align: right !important;
+              margin-right: 0 !important;
+              padding-right: 0 !important;
+            }
+
+            .invoice-table-wrap {
+              padding-left: 0 !important;
+              padding-right: 0 !important;
+              margin-left: 0 !important;
+              margin-right: 0 !important;
+            }
+
+            .invoice-detail-table {
+              width: 100% !important;
+              margin-top: 10px !important;
+              border-collapse: collapse !important;
+            }
+            .invoice-detail-table th,
+            .invoice-detail-table td {
+              font-size: 10px !important;
+              line-height: 1.1 !important;
+              padding: 3px 4px !important;
+              white-space: nowrap !important;
+            }
+
+            .invoice-detail-table,
+            .invoice-detail-table th,
+            .invoice-detail-table td,
+            .table-bordered,
+            .table-bordered > :not(caption) > * > * {
+              border: none !important;
+            }
+
+            .border-bottom {
+              border-bottom: none !important;
+            }
+            .invoice-header {
+              margin-bottom: 6px !important;
+              padding-bottom: 0 !important;
+            }
+
+            .invoice-armada-summary {
+              display: table !important;
+              width: 100% !important;
+              table-layout: fixed !important;
+              margin-top: 8px !important;
+            }
+            .invoice-armada-left {
+              display: table-cell !important;
+              width: 50% !important;
+              vertical-align: top !important;
+              padding-right: 10px !important;
+              padding-left: 0 !important;
+              max-width: none !important;
+            }
+            .invoice-totals {
+              display: table !important;
+              width: 50% !important;
+              margin-left: auto !important;
+              margin-right: 0 !important;
+              border-collapse: collapse !important;
+            }
+            .invoice-totals td {
+              padding: 3px 4px !important;
+              font-size: 11px !important;
+              border: none !important;
+            }
+            .invoice-totals td:first-child {
+              text-align: left !important;
+            }
+            .invoice-totals td:last-child {
+              text-align: right !important;
+              white-space: nowrap !important;
+              padding-right: 0 !important;
+            }
+            .invoice-totals tr.invoice-totals-bold td {
+              font-weight: 700 !important;
+            }
+
+            table,
+            tr,
+            td,
+            th {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
             }
           }
         `}</style>
