@@ -135,11 +135,10 @@ export default function InvoicePreviewLayer() {
   const totalBayar = useMemo(() => subtotal - pph, [subtotal, pph]);
 
   /**
-   * ✅ PRINT FIX TOTAL:
-   * - Pakai zoom (lebih stabil dari transform untuk print)
-   * - Compress spacing footer / sign / margin
-   * - Portrait jika rows > 3, else landscape
-   * - Tetap 1 page selama tidak ekstrem
+   * ✅ PRINT CENTER-IN FIX:
+   * - invoice benar-benar di tengah halaman (horizontal)
+   * - tetap naik (lift) supaya 1 page
+   * - zoom dinamis
    */
   useEffect(() => {
     const STYLE_ID = "invoice-print-dynamic";
@@ -147,11 +146,14 @@ export default function InvoicePreviewLayer() {
     const applyPrint = () => {
       const isPortrait = rows.length > 3;
 
-      // 🔥 Perhitungan zoom biar lebih pasti 1 halaman
-      // semakin banyak row, zoom makin kecil
-      const baseZoom = isPortrait ? 0.87 : 0.92;
+      // ✅ zoom: makin banyak row makin kecil
+      const baseZoom = isPortrait ? 0.86 : 0.91;
       const extraCut = Math.max(0, rows.length - 4) * 0.03;
-      const zoom = Math.max(0.72, baseZoom - extraCut);
+      const zoom = Math.max(0.70, baseZoom - extraCut);
+
+      // ✅ lift ke atas
+      const liftMm = isPortrait ? 8 : 10;
+      const lift = Math.min(14, liftMm + Math.max(0, rows.length - 4) * 1);
 
       let el = document.getElementById(STYLE_ID);
       if (!el) {
@@ -162,43 +164,41 @@ export default function InvoicePreviewLayer() {
 
       el.textContent = `
         @media print {
-          @page { size: A4 ${isPortrait ? "portrait" : "landscape"}; margin: 8mm 8mm; }
+          @page { size: A4 ${isPortrait ? "portrait" : "landscape"}; margin: 6mm 6mm; }
 
-          /* ✅ ini yang bikin 1 page: zoom container */
+          /* ✅ KUNCI CENTER-IN: posisikan invoice-paper ke tengah */
           .invoice-paper {
-            zoom: ${zoom};
-            -webkit-transform: scale(${zoom});
-            -webkit-transform-origin: top left;
-            transform: scale(${zoom});
-            transform-origin: top left;
+            position: relative !important;
+            left: 50% !important;
+            transform: translate(-50%, -${lift}mm) scale(${zoom}) !important;
+            transform-origin: top center !important;
           }
 
-          /* ✅ rapatkan layout bawah biar ga spill */
+          /* ✅ rapatkan padding top */
+          .invoice-paper.container {
+            padding-top: 0 !important;
+            margin-top: 0 !important;
+          }
+
+          /* ✅ rapatkan bawah */
           .invoice-footer-note {
-            margin-top: 8px !important;
-            line-height: 1.2 !important;
+            margin-top: 4px !important;
+            line-height: 1.15 !important;
           }
 
           .invoice-sign {
-            margin-top: 14px !important;
+            margin-top: 8px !important;
           }
 
           .invoice-sign p.mb-5 {
-            margin-bottom: 16px !important;
+            margin-bottom: 10px !important;
           }
 
-          /* ✅ kurangi spacing global yg bikin panjang */
-          .mt-5 {
-            margin-top: 12px !important;
-          }
-          .mb-4 {
-            margin-bottom: 8px !important;
-          }
-          .pb-3 {
-            padding-bottom: 6px !important;
-          }
+          .mt-5 { margin-top: 8px !important; }
+          .mb-4 { margin-bottom: 6px !important; }
+          .pb-3 { padding-bottom: 5px !important; }
 
-          /* ✅ watermark tetap di tengah halaman */
+          /* ✅ watermark tetap fixed di tengah */
           .invoice-watermark {
             position: fixed !important;
             top: 50% !important;
@@ -209,9 +209,9 @@ export default function InvoicePreviewLayer() {
             pointer-events: none !important;
           }
 
-          /* ✅ pastikan semua tetap 1 halaman */
           html, body {
             height: auto !important;
+            overflow: hidden !important;
           }
 
           .invoice-paper,
@@ -220,7 +220,7 @@ export default function InvoicePreviewLayer() {
             break-inside: avoid !important;
           }
 
-          /* ✅ tapi table boleh dipotong (kalau perlu) agar tidak lompat page */
+          /* tabel boleh auto */
           .invoice-detail-table,
           .invoice-detail-table * {
             page-break-inside: auto !important;
@@ -245,10 +245,10 @@ export default function InvoicePreviewLayer() {
     };
   }, [rows.length]);
 
-  // ✅ PDF URL publik via backend (biar tidak localhost)
+  // ✅ PDF URL publik via backend
   const getPublicPdfUrl = async (invoiceId) => {
     const res = await api.get(`/invoices/${invoiceId}/pdf-link`);
-    const url = (res && res.url) ? String(res.url) : "";
+    const url = res?.url ? String(res.url) : "";
     if (!url) throw new Error("URL PDF tidak ditemukan dari endpoint pdf-link.");
     return url;
   };
@@ -287,7 +287,7 @@ export default function InvoicePreviewLayer() {
     try {
       const pdfUrl = await getPublicPdfUrl(invoice.id);
       window.open(pdfUrl, "_blank");
-    } catch (e) {
+    } catch {
       window.open(`${apiBase}/api/invoices/${invoice.id}/pdf`, "_blank");
     }
   };
