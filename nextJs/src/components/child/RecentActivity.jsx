@@ -18,6 +18,24 @@ const unwrapList = (res) => {
   return [];
 };
 
+// ✅ FIX: rincian bisa string JSON di hosting
+const ensureArray = (val) => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+
+  // kalau dari backend berupa string json
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+};
+
 const parseDate = (val) => {
   if (!val) return null;
   if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
@@ -179,10 +197,15 @@ const RecentActivity = () => {
       "end",
     ];
 
+    // ✅ INVOICE
     invoices.forEach((inv) => {
       const id = inv?.id;
-      const time = getTime(inv, "created_at", "updated_at", "tanggal");
-      const dateLabel = formatDateDMY(inv?.created_at || inv?.tanggal);
+
+      // ✅ FIX: gunakan tanggal input invoice (bukan created_at)
+      const invoiceDate = inv?.tanggal || inv?.created_at;
+
+      const time = getTime(inv, "tanggal", "created_at", "updated_at");
+      const dateLabel = formatDateDMY(invoiceDate);
 
       items.push({
         key: `inc-create-${id ?? Math.random()}`,
@@ -195,7 +218,8 @@ const RecentActivity = () => {
         line1Kind: "income-no",
       });
 
-      const rincian = Array.isArray(inv?.rincian) ? inv.rincian : [];
+      // ✅ FIX: rincian di hosting bisa string → decode
+      const rincian = ensureArray(inv?.rincian);
 
       const makeArmadaLine = (r) => {
         const rid = r?.armada_id ?? r?.armada?.id ?? inv?.armada_id;
@@ -205,6 +229,7 @@ const RecentActivity = () => {
           safeStr(arm?.nama_truk, safeStr(r?.armada?.nama_truk, "Armada"));
         const plat =
           safeStr(arm?.plat_nomor, safeStr(r?.armada?.plat_nomor, "-"));
+
         return `${nama} (${plat})`;
       };
 
@@ -248,9 +273,11 @@ const RecentActivity = () => {
         }
       };
 
+      // ✅ FIX: jika rincian ada, maka depart/arrive harus muncul
       if (rincian.length > 0) {
         rincian.forEach((r, idx) => {
           const armLine = makeArmadaLine(r);
+
           pushDepartArrive(
             armLine,
             resolveStart(r),
@@ -259,6 +286,7 @@ const RecentActivity = () => {
           );
         });
       } else {
+        // fallback invoice lama
         const rid = inv?.armada_id ?? inv?.armada?.id;
         const arm = rid != null ? armadaById.get(String(rid)) : null;
 
@@ -281,10 +309,13 @@ const RecentActivity = () => {
       }
     });
 
+    // ✅ EXPENSE
     expenses.forEach((exp) => {
       const id = exp?.id;
-      const time = getTime(exp, "created_at", "updated_at", "tanggal");
-      const dateLabel = formatDateDMY(exp?.created_at || exp?.tanggal);
+      const time = getTime(exp, "tanggal", "created_at", "updated_at");
+
+      // ✅ FIX: gunakan tanggal input expense
+      const dateLabel = formatDateDMY(exp?.tanggal || exp?.created_at);
 
       items.push({
         key: `exp-create-${id ?? Math.random()}`,
@@ -298,6 +329,7 @@ const RecentActivity = () => {
       });
     });
 
+    // ✅ ARMADA
     armadas.forEach((arm) => {
       const id = arm?.id;
       const time = getTime(arm, "created_at", "updated_at");
@@ -455,7 +487,7 @@ const RecentActivity = () => {
           </div>
         </div>
       </div>
-</>
+    </>
   );
 };
 

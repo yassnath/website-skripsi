@@ -36,7 +36,8 @@ return new class extends Migration
             $table->decimal('pph', 12, 2)->default(0);
             $table->decimal('total_bayar', 12, 2)->default(0);
 
-            $table->longText('rincian')->nullable();
+            // ✅ FIX: rincian harus JSON supaya cast array di Laravel konsisten di hosting
+            $table->json('rincian')->nullable();
 
             $table->string('status')->default('Unpaid');
             $table->string('diterima_oleh')->nullable();
