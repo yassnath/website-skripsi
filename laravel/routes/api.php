@@ -26,9 +26,11 @@ Route::get('/invoices/{id}/pdf-link', [InvoiceController::class, 'pdfLink'])
     ->whereNumber('id')
     ->withoutMiddleware(['auth.api']);
 
-// report public
 Route::get('/reports/summary', [ReportController::class, 'summary'])
     ->withoutMiddleware(['auth.api']);
+
+Route::get('/public/invoices/{id}', [InvoiceController::class, 'publicShow']);
+Route::get('/public/invoices/{id}/pdf', [InvoiceController::class, 'pdf']);
 
 Route::post('/login', [AuthController::class, 'login']);
 
