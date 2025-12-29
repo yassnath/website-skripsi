@@ -129,7 +129,7 @@ const LoginLayer = () => {
       setTimeout(() => {
         router.replace("/"); // atau "/dashboard"
         router.refresh();    // ✅ biar middleware + page reload state auth
-      }, 800);
+      }, 1000);
 
     } catch (e2) {
       const msg = sanitizeLoginError(
