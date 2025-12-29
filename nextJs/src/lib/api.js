@@ -1,6 +1,9 @@
 // nextJs/src/lib/api.js
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+let API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
+// ✅ Hapus trailing slash jika ada
+API_URL = API_URL.replace(/\/+$/, "");
 
 /**
  * Semua request otomatis menuju:
