@@ -1,17 +1,22 @@
 import Breadcrumb from "@/components/Breadcrumb";
 import ArmadaAddLayer from "@/components/ArmadaAddLayer";
 import MasterLayout from "@/masterLayout/MasterLayout";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Fleet - Add New | CV ANT",
-  description: "Add New Fleet",
+  description: "Add Fleet",
 };
 
-export default function Page() {
+const Page = () => {
   return (
     <MasterLayout>
-      <Breadcrumb title='Fleet – Add New' subtitle='Armada'/>
-      <ArmadaAddLayer />
+      <Suspense fallback={null}>
+        <Breadcrumb title="Fleet - Add New" />
+        <ArmadaAddLayer />
+      </Suspense>
     </MasterLayout>
   );
-}
+};
+
+export default Page;

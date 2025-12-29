@@ -1,20 +1,21 @@
 import Breadcrumb from "@/components/Breadcrumb";
 import CalendarMainLayer from "@/components/CalendarMainLayer";
 import MasterLayout from "@/masterLayout/MasterLayout";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Calendar | CV ANT",
-  description: "Calendar",
+  description: "Calendar Page",
 };
 
 const Page = () => {
   return (
-    <>
-      <MasterLayout>
-        <Breadcrumb title='Calendar' />
+    <MasterLayout>
+      <Suspense fallback={null}>
+        <Breadcrumb title="Calendar" />
         <CalendarMainLayer />
-      </MasterLayout>
-    </>
+      </Suspense>
+    </MasterLayout>
   );
 };
 

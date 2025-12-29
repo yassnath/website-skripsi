@@ -1,6 +1,7 @@
 import Breadcrumb from "@/components/Breadcrumb";
 import MasterLayout from "@/masterLayout/MasterLayout";
 import ArmadaEditLayer from "@/components/ArmadaEditLayer";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Fleet - Edit | CV ANT",
@@ -10,8 +11,10 @@ export const metadata = {
 export default function Page({ params }) {
   return (
     <MasterLayout>
-      <Breadcrumb title="Fleet – Edit" subtitle="Armada" />
-      <ArmadaEditLayer id={params.id} />
+      <Suspense fallback={null}>
+        <Breadcrumb title="Fleet – Edit" subtitle="Armada" />
+        <ArmadaEditLayer id={params.id} />
+      </Suspense>
     </MasterLayout>
   );
 }

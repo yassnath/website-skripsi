@@ -1,21 +1,21 @@
 import Breadcrumb from "@/components/Breadcrumb";
 import InvoiceExpense from "@/components/InvoiceExpense";
 import MasterLayout from "@/masterLayout/MasterLayout";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Invoice - Add Expense | CV ANT",
-  description:
-    "Add Invoice",
+  description: "Add Invoice Expense",
 };
 
 const Page = () => {
   return (
-    <>
-      <MasterLayout>
-        <Breadcrumb title='Invoice - Add Expense' />
+    <MasterLayout>
+      <Suspense fallback={null}>
+        <Breadcrumb title="Invoice - Add Expense" />
         <InvoiceExpense />
-      </MasterLayout>
-    </>
+      </Suspense>
+    </MasterLayout>
   );
 };
 
