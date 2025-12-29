@@ -42,7 +42,6 @@ const LoginLayer = () => {
   const showPopup = (type, message, autoCloseMs = 0) => {
     setPopup({ show: true, type, message });
 
-    // clear timeout sebelumnya (kalau ada)
     if (showPopup._t) window.clearTimeout(showPopup._t);
 
     if (autoCloseMs > 0) {
@@ -60,33 +59,27 @@ const LoginLayer = () => {
       msg.includes("password") &&
       msg.includes("tidak sesuai")
     ) {
-      return "Login failed. Please Check your username and password!";
+      return "Login failed. Please check your username and password!";
     }
 
-    return rawMsg || "Login failed. Please Check your username and password!";
+    return rawMsg || "Login failed. Please check your username and password!";
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setPopup((p) => ({ ...p, show: false }));
 
-    // ✅ VALIDASI INPUT KOSONG (SPESIFIK)
     const u = (form.username || "").trim();
     const p = (form.password || "").trim();
 
-    // Jika keduanya kosong
     if (!u && !p) {
       showPopup("danger", "Please enter username & password first!", 0);
       return;
     }
-
-    // Jika username kosong saja
     if (!u) {
       showPopup("danger", "Username is still empty, please fill it first!", 0);
       return;
     }
-
-    // Jika password kosong saja
     if (!p) {
       showPopup("danger", "Password is still empty, please fill it first!", 0);
       return;
@@ -95,6 +88,7 @@ const LoginLayer = () => {
     setLoading(true);
 
     try {
+      // ✅ LOGIN KE API
       const res = await api.post("/login", {
         username: u,
         password: p,
@@ -103,31 +97,43 @@ const LoginLayer = () => {
       const { token, user } = res || {};
 
       if (!token || !user) {
-        throw new Error(
-          "Login failed. Please Check your username and password!"
-        );
+        throw new Error("Login failed. Please check your username and password!");
       }
 
+      // ✅ SIMPAN KE LOCALSTORAGE
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("role", user.role || "");
       localStorage.setItem("username", user.username || "");
 
-      // token cookie untuk middleware Next.js (cookie-based)
-      document.cookie = `token=${token}; path=/; SameSite=Lax;`;
+      /**
+       * ✅ SET COOKIE untuk Middleware Next.js
+       * - Pakai max-age supaya cookie tetap ada
+       * - Secure hanya untuk https
+       */
+      const isHttps = window.location.protocol === "https:";
+      document.cookie = [
+        `token=${token}`,
+        "path=/",
+        "SameSite=Lax",
+        "max-age=86400", // 1 hari
+        isHttps ? "Secure" : "",
+      ]
+        .filter(Boolean)
+        .join("; ");
 
-      showPopup(
-        "success",
-        "Login successful! Redirecting to dashboard...",
-        5000
-      );
+      // ✅ FEEDBACK CEPAT (tidak perlu 5 detik)
+      showPopup("success", "Login successful! Redirecting to dashboard...", 1200);
 
+      // ✅ PENTING: router.replace + refresh supaya state langsung kebaca
       setTimeout(() => {
-        router.push("/");
-      }, 5000);
+        router.replace("/"); // atau "/dashboard"
+        router.refresh();    // ✅ biar middleware + page reload state auth
+      }, 800);
+
     } catch (e2) {
       const msg = sanitizeLoginError(
-        e2?.message || "Login failed. Please Check your username and password!"
+        e2?.message || "Login failed. Please check your username and password!"
       );
       showPopup("danger", msg, 0);
     } finally {
@@ -392,7 +398,7 @@ const LoginLayer = () => {
         }
       `}</style>
 
-      {/* POPUP (BACKGROUND PANEL SAMA SEPERTI ARMADA POPUP) */}
+      {/* POPUP */}
       {popup.show && (
         <div
           className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
