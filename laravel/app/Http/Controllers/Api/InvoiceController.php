@@ -132,33 +132,37 @@ class InvoiceController extends Controller
      */
     public function publicShow($id)
     {
-        $invoice = Invoice::with('armada')->findOrFail($id);
+        $invoice = Invoice::with('armada')->find($id);
 
-        if (!is_array($invoice->rincian)) {
-            $invoice->rincian = $invoice->rincian ? json_decode($invoice->rincian, true) : [];
+        if (!$invoice) {
+            return response()->json(['message' => 'Invoice tidak ditemukan'], 404);
         }
 
-        return $invoice;
+        return response()->json($invoice);
     }
 
-    /**
-     * ✅ ✅ ✅ PUBLIC PDF (TANPA LOGIN)
-     * URL: /api/public/invoices/{id}/pdf
-     */
     public function publicPdf($id)
     {
-        $invoice = Invoice::with('armada')->findOrFail($id);
+        try {
+            $invoice = Invoice::with('armada')->find($id);
 
-        if (!is_array($invoice->rincian)) {
-            $invoice->rincian = $invoice->rincian ? json_decode($invoice->rincian, true) : [];
+            if (!$invoice) {
+                return response()->json(['message' => 'Invoice tidak ditemukan'], 404);
+            }
+
+            // ✅ render PDF view
+            $pdf = Pdf::loadView('pdf.invoice', [
+                'invoice' => $invoice,
+            ])->setPaper('a4', 'landscape');
+
+            return $pdf->stream("invoice-{$invoice->no_invoice}.pdf");
+        } catch (\Throwable $e) {
+            // ✅ jangan return HTML panjang
+            return response()->json([
+                'message' => 'Gagal generate PDF',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        $pdf = Pdf::loadView('pdf.invoice', [
-            'invoice' => $invoice
-        ]);
-
-        // ✅ stream agar langsung terbuka di browser (HP friendly)
-        return $pdf->stream("invoice-{$invoice->no_invoice}.pdf");
     }
 
     /**

@@ -7,30 +7,38 @@ use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\ReportController;
 
-/**
- * ✅ PUBLIC ROUTES (TANPA LOGIN)
- * Customer bisa akses langsung dari link email
- */
-Route::get('/public/invoices/{id}', [InvoiceController::class, 'publicShow']);
-Route::get('/public/invoices/{id}/pdf', [InvoiceController::class, 'publicPdf']);
-Route::get('/public/invoices/{id}/pdf-link', [InvoiceController::class, 'publicPdfLink']);
+/*
+|--------------------------------------------------------------------------
+| ✅ PUBLIC ROUTES (NO AUTH)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('public')->group(function () {
+    // ✅ Public invoice detail (optional kalau dibutuhkan)
+    Route::get('/invoices/{id}', [InvoiceController::class, 'publicShow']);
 
-/**
- * ✅ OPTIONAL: public pdf expense jika kamu mau (customer dapat akses expense pdf juga)
- */
-Route::get('/public/expenses/{id}/pdf', [ExpenseController::class, 'publicPdf']);
+    // ✅ Public invoice PDF
+    Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'publicPdf']);
+});
 
-/**
- * ✅ REPORT PUBLIC (tanpa login)
- */
+/*
+|--------------------------------------------------------------------------
+| ✅ PUBLIC PDF OLD ROUTES (OPTIONAL)
+|--------------------------------------------------------------------------
+*/
+Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'pdf']);
+Route::get('/expenses/{id}/pdf', [ExpenseController::class, 'pdf']);
+Route::get('/invoices/{id}/pdf-link', [InvoiceController::class, 'pdfLink']);
+
+// REPORT public tapi auth pakai query token di controller
 Route::get('/reports/summary', [ReportController::class, 'summary']);
 
 Route::post('/login', [AuthController::class, 'login']);
 
-
-/**
- * ✅ PRIVATE ROUTES (HARUS LOGIN)
- */
+/*
+|--------------------------------------------------------------------------
+| ✅ AUTH API ROUTES
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth.api')->group(function () {
 
     Route::get('/me', [AuthController::class, 'me']);
