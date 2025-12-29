@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 
 /**
  * ✅ ANIMASI MASUK (sama seperti page lain)
@@ -35,6 +34,18 @@ export default function InvoicePublicPreview({ id }) {
 
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  /**
+   * ✅ deteksi ukuran layar supaya UX di HP lebih masuk akal
+   */
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   /**
    * ✅ API BASE dari ENV
@@ -105,25 +116,13 @@ export default function InvoicePublicPreview({ id }) {
 
   return (
     <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
-      <div className="container my-3 p-0">
+      {/* ✅ padding responsif biar gak nempel kiri kanan */}
+      <div className="container my-3 p-0 px-3 px-md-4 px-lg-0">
         {/* Header card */}
         <div className="p-4 bg-white rounded shadow-sm position-relative mb-3">
-          <div
-            className="position-absolute top-50 start-50 translate-middle invoice-watermark"
-            style={{ opacity: 0.08, zIndex: 0, pointerEvents: "none" }}
-          >
-            <Image
-              src="/assets/images/icon.png"
-              alt="CV ANT Logo"
-              width={420}
-              height={420}
-              className="user-select-none"
-            />
-          </div>
-
           <div className="position-relative z-1">
             <div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
-              <div>
+              <div className="ms-1">
                 <h4 className="fw-bold mb-1 text-primary">
                   CV AS Nusa Trans
                 </h4>
@@ -134,7 +133,7 @@ export default function InvoicePublicPreview({ id }) {
                 <div className="text-dark">Telp: 0812-3425-9399</div>
               </div>
 
-              <div className="text-end">
+              <div className="text-end me-1">
                 <h4 className="fw-bold text-dark mb-2">INVOICE</h4>
                 <div className="text-dark">
                   <strong>No. Invoice:</strong> {safeStr(invoice.no_invoice)}
@@ -151,7 +150,7 @@ export default function InvoicePublicPreview({ id }) {
 
             <hr className="my-3" />
 
-            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
               <div className="text-dark">
                 <div>
                   <strong>Kepada:</strong> {safeStr(invoice.nama_pelanggan)}
@@ -178,6 +177,15 @@ export default function InvoicePublicPreview({ id }) {
                 </a>
               </div>
             </div>
+
+            {/* ✅ NOTE untuk mobile: iframe pdf kadang memang gak muncul */}
+            {isMobile && (
+              <div className="alert alert-warning py-2 mb-0 small">
+                Preview PDF pada sebagian HP (terutama iPhone) kadang tidak
+                tampil di dalam halaman. Jika tidak muncul, silakan klik{" "}
+                <strong>Open PDF</strong> atau <strong>Download PDF</strong>.
+              </div>
+            )}
           </div>
         </div>
 
@@ -186,11 +194,15 @@ export default function InvoicePublicPreview({ id }) {
           <iframe
             title="Invoice PDF Preview"
             src={pdfUrl}
-            style={{ width: "100%", height: "85vh", border: "none" }}
+            style={{
+              width: "100%",
+              height: isMobile ? "60vh" : "85vh",
+              border: "none",
+            }}
           />
         </div>
 
-        <div className="text-center text-muted small mt-3">
+        <div className="text-center text-muted small mt-3 px-2">
           Jika preview tidak muncul di perangkat Anda, klik{" "}
           <strong>Open PDF</strong>.
         </div>
