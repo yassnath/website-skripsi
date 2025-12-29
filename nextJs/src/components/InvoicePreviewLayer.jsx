@@ -261,6 +261,12 @@ export default function InvoicePreviewLayer() {
    *   /invoice/:id/pdf
    * BUKAN /api/public/... (itu ga ada di Next)
    */
+  // ✅ Link publik untuk customer (halaman preview + tombol download)
+  const getPublicInvoicePublicPageUrl = (invoiceId) => {
+    return `${siteBase}/invoice/${invoiceId}`;
+  };
+
+  // ✅ Direct PDF (untuk tombol "Open PDF")
   const getPublicInvoicePdfUrl = (invoiceId) => {
     return `${siteBase}/invoice/${invoiceId}/pdf`;
   };
@@ -270,13 +276,13 @@ export default function InvoicePreviewLayer() {
     setSending(true);
 
     try {
-      // ✅ Kirim LINK PDF langsung
-      const pdfUrl = getPublicInvoicePdfUrl(invoice.id);
+      // ✅ Kirim LINK halaman publik (preview PDF)
+      const publicUrl = getPublicInvoicePublicPageUrl(invoice.id);
 
       const subject = encodeURIComponent(`Invoice ${invoice.no_invoice}`);
       const body = encodeURIComponent(
         `Yth. ${invoice.nama_pelanggan},\n\n` +
-          `Silakan klik berikut untuk melihat invoice (PDF):\n${pdfUrl}\n\n` +
+          `Silakan klik berikut untuk melihat invoice (Preview PDF):\n${publicUrl}\n\n` +
           `Terima kasih,\nCV AS Nusa Trans (CV ANT)`
       );
 

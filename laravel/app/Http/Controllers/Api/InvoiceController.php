@@ -129,6 +129,11 @@ class InvoiceController extends Controller
     /**
      * ✅ ✅ ✅ PUBLIC SHOW (TANPA LOGIN)
      * URL: /api/public/invoices/{id}
+     *
+     * FIX:
+     * - pastikan rincian array (data legacy)
+     * - tambahkan armada_plat ke tiap rincian jika hanya ada armada_id
+     *   supaya PUBLIC VIEW tidak perlu akses /armadas (yang auth)
      */
     public function publicShow($id)
     {
@@ -138,9 +143,38 @@ class InvoiceController extends Controller
             return response()->json(['message' => 'Invoice tidak ditemukan'], 404);
         }
 
+        // ✅ pastikan rincian array
+        if (!is_array($invoice->rincian)) {
+            $invoice->rincian = $invoice->rincian ? json_decode($invoice->rincian, true) : [];
+        }
+
+        // ✅ inject armada_plat untuk public preview
+        if (is_array($invoice->rincian) && count($invoice->rincian) > 0) {
+            foreach ($invoice->rincian as &$r) {
+                // normalisasi bentuk item
+                if (!is_array($r)) continue;
+
+                $hasPlat = isset($r['armada_plat']) && trim((string)$r['armada_plat']) !== '';
+                $hasNestedArmadaPlat = isset($r['armada']['plat_nomor']) && trim((string)$r['armada']['plat_nomor']) !== '';
+
+                if (!$hasPlat && !$hasNestedArmadaPlat && isset($r['armada_id'])) {
+                    $armada = \App\Models\Armada::find($r['armada_id']);
+                    $r['armada_plat'] = $armada ? $armada->plat_nomor : '-';
+                }
+            }
+            unset($r);
+        }
+
         return response()->json($invoice);
     }
 
+    /**
+     * ✅ ✅ ✅ PUBLIC PDF (TANPA LOGIN)
+     * URL: /api/public/invoices/{id}/pdf
+     *
+     * FIX:
+     * - pastikan rincian array (data legacy) sebelum render view
+     */
     public function publicPdf($id)
     {
         try {
@@ -148,6 +182,11 @@ class InvoiceController extends Controller
 
             if (!$invoice) {
                 return response()->json(['message' => 'Invoice tidak ditemukan'], 404);
+            }
+
+            // ✅ pastikan rincian selalu array (penting untuk blade pdf.invoice)
+            if (!is_array($invoice->rincian)) {
+                $invoice->rincian = $invoice->rincian ? json_decode($invoice->rincian, true) : [];
             }
 
             // ✅ Pastikan folder exist & writable (Railway)
@@ -176,11 +215,10 @@ class InvoiceController extends Controller
         }
     }
 
-
     /**
      * ✅ ✅ ✅ PUBLIC PDF LINK (TANPA LOGIN)
      * URL: /api/public/invoices/{id}/pdf-link
-     * Ini buat frontend supaya bisa dapat URL pdf yang benar.
+     * Ini opsional (front-end kamu sebenarnya sudah bisa build link sendiri)
      */
     public function publicPdfLink($id)
     {
