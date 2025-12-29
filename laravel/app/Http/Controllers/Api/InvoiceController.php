@@ -144,26 +144,38 @@ class InvoiceController extends Controller
     public function publicPdf($id)
     {
         try {
-            $invoice = Invoice::with('armada')->find($id);
+            $invoice = \App\Models\Invoice::with('armada')->find($id);
 
             if (!$invoice) {
                 return response()->json(['message' => 'Invoice tidak ditemukan'], 404);
             }
 
-            // ✅ render PDF view
-            $pdf = Pdf::loadView('pdf.invoice', [
+            // ✅ Pastikan folder exist & writable (Railway)
+            @mkdir(storage_path('app/dompdf'), 0777, true);
+            @mkdir(storage_path('app/dompdf/fonts'), 0777, true);
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.invoice', [
                 'invoice' => $invoice,
-            ])->setPaper('a4', 'landscape');
+            ]);
+
+            // ✅ KUNCI STABIL DI RAILWAY:
+            $pdf->setOption('isRemoteEnabled', true);
+            $pdf->setOption('tempDir', sys_get_temp_dir());
+            $pdf->setOption('fontDir', storage_path('app/dompdf/fonts'));
+            $pdf->setOption('fontCache', storage_path('app/dompdf/fonts'));
+            $pdf->setPaper('a4', 'landscape');
 
             return $pdf->stream("invoice-{$invoice->no_invoice}.pdf");
         } catch (\Throwable $e) {
-            // ✅ jangan return HTML panjang
             return response()->json([
                 'message' => 'Gagal generate PDF',
                 'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ], 500);
         }
     }
+
 
     /**
      * ✅ ✅ ✅ PUBLIC PDF LINK (TANPA LOGIN)

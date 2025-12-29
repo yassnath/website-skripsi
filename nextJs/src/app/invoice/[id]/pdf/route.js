@@ -12,25 +12,31 @@ export async function GET(req, { params }) {
 
   const res = await fetch(upstream, {
     method: "GET",
-    headers: {
-      Accept: "application/pdf",
-    },
+    headers: { Accept: "application/pdf,application/json,text/plain,*/*" },
     cache: "no-store",
   });
 
-  // ✅ kalau backend balikin JSON error
   const contentType = res.headers.get("content-type") || "";
+
+  // ✅ kalau upstream error, forward isi error-nya biar kebaca
   if (!res.ok) {
     const errText = await res.text();
-    return new Response(errText || "PDF error", { status: res.status });
+    return new Response(errText || "Upstream error", {
+      status: res.status,
+      headers: { "Content-Type": contentType || "text/plain" },
+    });
   }
 
-  // ✅ pastikan benar-benar PDF
+  // ✅ kalau bukan PDF, forward teksnya (biasanya JSON error)
   if (!contentType.includes("pdf")) {
     const txt = await res.text();
-    return new Response(txt, { status: 500 });
+    return new Response(txt || "Upstream returned non-PDF", {
+      status: 502,
+      headers: { "Content-Type": contentType || "text/plain" },
+    });
   }
 
+  // ✅ normal: PDF stream
   return new Response(res.body, {
     status: 200,
     headers: {
