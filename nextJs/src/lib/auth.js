@@ -1,44 +1,42 @@
-const API = process.env.NEXT_PUBLIC_API_URL
-  ? process.env.NEXT_PUBLIC_API_URL + "/api"
-  : "http://localhost:8080/api";
+// nextJs/src/lib/auth.js
+import { api } from "@/lib/api";
 
 export async function loginRequest(username, password) {
-  const res = await fetch(`${API}/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
-    body: JSON.stringify({ username, password }),
-  });
+  const res = await api.post("/login", { username, password });
 
-  const data = await res.json();
+  const { token, user } = res || {};
 
-  if (!res.ok) {
-    throw new Error(data.message || "Login gagal");
+  if (!token || !user) {
+    throw new Error("Login failed. Username / password tidak valid.");
   }
 
-  return data;
+  // ✅ Simpan token memakai helper dari api.js (biar konsisten)
+  api.setToken(token);
+
+  // ✅ Simpan data user
+  localStorage.setItem("user", JSON.stringify(user));
+  localStorage.setItem("role", user.role || "");
+  localStorage.setItem("username", user.username || "");
+
+  return res;
 }
 
 export async function me() {
-  const res = await fetch(`${API}/me`, {
-    method: "GET",
-    credentials: "include",
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
+  try {
+    const data = await api.get("/me");
+    return data;
+  } catch {
     return { authenticated: false };
   }
-
-  return data;
 }
 
 export async function logoutRequest() {
-  await fetch(`${API}/logout`, {
-    method: "POST",
-    credentials: "include",
-  });
+  try {
+    await api.post("/logout", {});
+  } catch {
+    // ignore error
+  } finally {
+    api.clearToken();
+    window.location.href = "/login";
+  }
 }
