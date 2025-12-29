@@ -544,28 +544,7 @@ export default function CalendarMainLayer() {
       </div>
 
       {/* ✅ CSS animasi scoped (bukan global.css) */}
-      <style jsx>{`
-        .page-in {
-          opacity: 0;
-          transform: translateY(10px);
-          transition: opacity 450ms ease, transform 450ms ease;
-          will-change: opacity, transform;
-        }
-        .page-in.is-in {
-          opacity: 1;
-          transform: translateY(0);
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .page-in,
-          .page-in.is-in {
-            transition: none !important;
-            transform: none !important;
-            opacity: 1 !important;
-          }
-        }
-      `}</style>
-
-      <style jsx global>{`
+<style jsx global>{`
         .cvant-eye-btn:hover .cvant-eye-icon {
           color: var(--primary-600, #487fff) !important;
         }

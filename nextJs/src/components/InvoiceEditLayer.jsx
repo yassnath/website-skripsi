@@ -814,28 +814,6 @@ export default function InvoiceEditLayer() {
     </div>
   
       </div>
-      <style jsx>{`
-        .cvant-page-in {
-          opacity: 0;
-          transform: translateY(10px);
-          transition: opacity 450ms ease, transform 450ms ease;
-          will-change: opacity, transform;
-        }
-      
-        .cvant-page-in.is-in {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      
-        @media (prefers-reduced-motion: reduce) {
-          .cvant-page-in,
-          .cvant-page-in.is-in {
-            transition: none !important;
-            transform: none !important;
-            opacity: 1 !important;
-          }
-        }
-      `}</style>
-    </>
+</>
   );
 }

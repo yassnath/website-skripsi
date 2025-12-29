@@ -420,24 +420,6 @@ const ArmadaOverview = () => {
 
       {/* ✅ SATU style saja (global) agar tidak kena nested styled-jsx */}
       <style jsx global>{`
-        /* animasi masuk */
-        .page-in {
-          opacity: 0;
-          transform: translateY(10px);
-          transition: opacity 450ms ease, transform 450ms ease;
-          will-change: opacity, transform;
-        }
-        .page-in.is-in {
-          opacity: 1;
-          transform: translateY(0);
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .page-in,
-          .page-in.is-in {
-            transition: none !important;
-            transform: none !important;
-            opacity: 1 !important;
-          }
         }
 
         /* fix donut center labels */

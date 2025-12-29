@@ -275,28 +275,7 @@ const LatestRegisteredOne = () => {
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .page-in {
-          opacity: 0;
-          transform: translateY(10px);
-          transition: opacity 450ms ease, transform 450ms ease;
-          will-change: opacity, transform;
-        }
-        .page-in.is-in {
-          opacity: 1;
-          transform: translateY(0);
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .page-in,
-          .page-in.is-in {
-            transition: none !important;
-            transform: none !important;
-            opacity: 1 !important;
-          }
-        }
-      `}</style>
-    </>
+</>
   );
 };
 
