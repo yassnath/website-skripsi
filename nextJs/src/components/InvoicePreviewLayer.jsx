@@ -254,10 +254,15 @@ export default function InvoicePreviewLayer() {
   /**
    * ✅ SEKARANG CUSTOMER LANGSUNG BUKA PDF
    * Tidak ada viewer page lagi
+   *
+   * PENTING:
+   * - siteBase = domain Next.js (asnusatrans.online)
+   * - pdf public harus lewat route Next:
+   *   /invoice/:id/pdf
+   * BUKAN /api/public/... (itu ga ada di Next)
    */
   const getPublicInvoicePdfUrl = (invoiceId) => {
-    // ✅ langsung ke backend PDF public
-    return `${siteBase}/api/public/invoices/${invoiceId}/pdf`;
+    return `${siteBase}/invoice/${invoiceId}/pdf`;
   };
 
   const handleSendToEmail = async () => {
@@ -291,7 +296,7 @@ export default function InvoicePreviewLayer() {
   const handleOpenPdf = () => {
     if (!invoice) return;
 
-    // ✅ langsung buka PDF public
+    // ✅ langsung buka PDF public via Next route
     const pdfUrl = getPublicInvoicePdfUrl(invoice.id);
     window.open(pdfUrl, "_blank");
   };
@@ -331,7 +336,10 @@ export default function InvoicePreviewLayer() {
             Edit
           </button>
 
-          <button className="btn btn-sm btn-outline-success" onClick={handleOpenPdf}>
+          <button
+            className="btn btn-sm btn-outline-success"
+            onClick={handleOpenPdf}
+          >
             Open PDF
           </button>
 

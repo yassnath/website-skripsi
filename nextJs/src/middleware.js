@@ -4,8 +4,8 @@ export function middleware(request) {
   const token = request.cookies.get("token")?.value || null;
   const pathname = request.nextUrl.pathname;
 
-  // ✅ PUBLIC INVOICE VIEW: tidak perlu login
-  if (pathname.startsWith("/invoice/")) {
+  // ✅ Allow akses PDF publik (CUSTOMER)
+  if (pathname.startsWith("/invoice/") && pathname.endsWith("/pdf")) {
     return NextResponse.next();
   }
 
@@ -21,12 +21,11 @@ export function middleware(request) {
     return NextResponse.next();
   }
 
-  // ✅ Allow API route (hindari blocking)
+  // ✅ Allow API internal Next (hindari blocking)
   if (pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
 
-  // LOGIN PAGE
   const isAuthPage = pathname.startsWith("/login");
 
   if (isAuthPage && token) {
