@@ -1,6 +1,7 @@
 import Breadcrumb from "@/components/Breadcrumb";
 import ExpensePreviewLayer from "@/components/ExpensePreviewLayer";
 import MasterLayout from "@/masterLayout/MasterLayout";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Invoice Expense Preview | CV ANT",
@@ -11,8 +12,10 @@ const Page = () => {
   return (
     <>
       <MasterLayout>
-        <Breadcrumb title='Invoice Expense - Preview' />
-        <ExpensePreviewLayer />
+        <Suspense fallback={null}>
+          <Breadcrumb title='Invoice Expense - Preview' />
+          <ExpensePreviewLayer />
+        </Suspense>
       </MasterLayout>
     </>
   );
