@@ -13,20 +13,15 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
+# Copy source
 COPY . .
 
 # Install PHP dependencies
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
-# Ensure Laravel folders exist
-RUN mkdir -p storage/framework/cache \
-    storage/framework/sessions \
-    storage/framework/views \
-    storage/logs \
-    bootstrap/cache
-
-# Fix permissions
-RUN chmod -R 775 storage bootstrap/cache
+# Fix permissions (Laravel needs storage/bootstrap cache writable)
+RUN chmod -R 775 storage bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache
 
 # Make startup script executable
 RUN chmod +x /var/www/html/railway-start.sh
