@@ -113,13 +113,15 @@ export default function InvoicePublicPreview({ id }) {
     );
   }
 
+  const topTitleMargin = isMobile ? "8px" : "14px";
+
   return (
     <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
       {/* ✅ BACKGROUND sesuai request */}
       <div className="py-4" style={{ background: "#1b2431" }}>
         {/* ✅ padding responsif biar tidak nempel kiri-kanan */}
         <div className="container p-0 px-3 px-md-4 px-lg-0">
-          {/* ✅ Header card (Dark Theme) */}
+          {/* ✅ Header card */}
           <div
             className="p-4 p-md-4 text-light rounded shadow-sm border border-secondary position-relative mb-3"
             style={{ background: "#273142" }}
@@ -127,14 +129,20 @@ export default function InvoicePublicPreview({ id }) {
             <div className="position-relative z-1">
               {/* Header row */}
               <div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
-                {/* ✅ LEFT: tambahkan margin-left supaya tidak mepet */}
+                {/* ✅ LEFT: margin-left + margin-top title */}
                 <div
                   className="pe-2 pe-md-4"
                   style={{
                     marginLeft: isMobile ? "6px" : "14px",
                   }}
                 >
-                  <h4 className="fw-bold mb-1 text-info">CV AS Nusa Trans</h4>
+                  <h4
+                    className="fw-bold mb-1 text-info"
+                    style={{ marginTop: topTitleMargin }}
+                  >
+                    CV AS Nusa Trans
+                  </h4>
+
                   <div className="text-light">
                     Ruko Graha Kota Blok BB-07, Suko, Sidoarjo
                   </div>
@@ -142,14 +150,19 @@ export default function InvoicePublicPreview({ id }) {
                   <div className="text-light">Telp: 0812-3425-9399</div>
                 </div>
 
-                {/* ✅ RIGHT: tambahkan margin-right supaya tidak mepet */}
+                {/* ✅ RIGHT: margin-right + margin-top title */}
                 <div
                   className="text-end ps-2 ps-md-4"
                   style={{
                     marginRight: isMobile ? "6px" : "14px",
                   }}
                 >
-                  <h4 className="fw-bold text-light mb-2">INVOICE</h4>
+                  <h4
+                    className="fw-bold text-light mb-2"
+                    style={{ marginTop: topTitleMargin }}
+                  >
+                    INVOICE
+                  </h4>
 
                   <div className="text-light">
                     <strong>No. Invoice:</strong> {safeStr(invoice.no_invoice)}
@@ -170,7 +183,7 @@ export default function InvoicePublicPreview({ id }) {
 
               {/* Customer + Buttons */}
               <div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
-                {/* ✅ Customer info: tambahkan margin-left supaya gak mepet garis */}
+                {/* ✅ Customer info: margin-left */}
                 <div
                   className="text-light"
                   style={{
@@ -181,13 +194,12 @@ export default function InvoicePublicPreview({ id }) {
                     <strong>Kepada:</strong> {safeStr(invoice.nama_pelanggan)}
                   </div>
 
-                  {/* ✅ margin-bottom pada Email agar tidak mepet tombol */}
                   <div style={{ marginBottom: "14px" }}>
                     <strong>Email:</strong> {safeStr(invoice.email)}
                   </div>
                 </div>
 
-                {/* ✅ Buttons: beri margin-bottom supaya tidak mepet juga */}
+                {/* ✅ Buttons: margin-right + margin-bottom */}
                 <div
                   className="d-flex gap-2 flex-wrap"
                   style={{
