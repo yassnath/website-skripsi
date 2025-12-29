@@ -176,13 +176,9 @@ class InvoiceController extends Controller
         return response()->json(['message' => 'Invoice deleted']);
     }
 
-    // ✅ helper pilih view yang benar
     private function resolveInvoiceViewName(): string
     {
-        // resources/views/invoices/invoice.blade.php
         if (view()->exists('invoices.invoice')) return 'invoices.invoice';
-
-        // resources/views/invoice.blade.php
         if (view()->exists('invoice')) return 'invoice';
 
         abort(500, "View invoice untuk PDF tidak ditemukan. Buat invoices/invoice.blade.php atau invoice.blade.php");
@@ -198,7 +194,6 @@ class InvoiceController extends Controller
             "invoice" => $invoice,
         ])->setPaper("a4", "landscape");
 
-        // ⬇️ INI KUNCINYA: inline (bukan attachment)
         return response($pdf->output(), 200)
             ->header('Content-Type', 'application/pdf')
             ->header(
@@ -211,8 +206,12 @@ class InvoiceController extends Controller
     {
         Invoice::findOrFail($id);
 
+        // ✅ selalu pakai APP_URL dari config agar tidak pernah localhost
+        $base = rtrim(config('app.url'), '/');
+        $url  = $base . "/api/invoices/{$id}/pdf";
+
         return response()->json([
-            "url" => url("/api/invoices/{$id}/pdf"),
+            "url" => $url,
         ]);
     }
 }
