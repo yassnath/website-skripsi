@@ -35,8 +35,6 @@ export default function InvoicePreviewLayer() {
 
   // ✅ Public site base: untuk link yang dibuka customer
   const siteBase = useMemo(() => {
-    // kalau NEXT_PUBLIC_SITE_URL diset, pakai itu
-    // kalau tidak, fallback ke window.location.origin
     if (typeof window !== "undefined") {
       return (
         (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin).replace(
@@ -254,19 +252,12 @@ export default function InvoicePreviewLayer() {
   }, [rows.length]);
 
   /**
-   * ✅ FIX PALING PENTING:
-   * Customer tidak boleh akses backend internal url,
-   * jadi link PDF/Viewer harus dari Next.js public page
-   *
-   * Public Viewer: /invoice/{id}
-   * Public PDF:    /invoice/{id}/pdf
+   * ✅ SEKARANG CUSTOMER LANGSUNG BUKA PDF
+   * Tidak ada viewer page lagi
    */
-  const getPublicInvoiceViewerUrl = (invoiceId) => {
-    return `${siteBase}/invoice/${invoiceId}`;
-  };
-
   const getPublicInvoicePdfUrl = (invoiceId) => {
-    return `${siteBase}/invoice/${invoiceId}/pdf`;
+    // ✅ langsung ke backend PDF public
+    return `${siteBase}/api/public/invoices/${invoiceId}/pdf`;
   };
 
   const handleSendToEmail = async () => {
@@ -274,13 +265,13 @@ export default function InvoicePreviewLayer() {
     setSending(true);
 
     try {
-      // ✅ Kirim link viewer (lebih friendly)
-      const publicUrl = getPublicInvoiceViewerUrl(invoice.id);
+      // ✅ Kirim LINK PDF langsung
+      const pdfUrl = getPublicInvoicePdfUrl(invoice.id);
 
       const subject = encodeURIComponent(`Invoice ${invoice.no_invoice}`);
       const body = encodeURIComponent(
         `Yth. ${invoice.nama_pelanggan},\n\n` +
-          `Silakan klik berikut untuk melihat invoice:\n${publicUrl}\n\n` +
+          `Silakan klik berikut untuk melihat invoice (PDF):\n${pdfUrl}\n\n` +
           `Terima kasih,\nCV AS Nusa Trans (CV ANT)`
       );
 
@@ -290,17 +281,17 @@ export default function InvoicePreviewLayer() {
       window.open(gmailUrl, "_blank");
     } catch (e) {
       alert(
-        `Gagal membuat link invoice publik.\n\n${e?.message || "Unknown error"}`
+        `Gagal membuat link PDF publik.\n\n${e?.message || "Unknown error"}`
       );
     } finally {
       setSending(false);
     }
   };
 
-  const handleOpenPdf = async () => {
+  const handleOpenPdf = () => {
     if (!invoice) return;
 
-    // ✅ Buka PDF publik via Next Proxy Route
+    // ✅ langsung buka PDF public
     const pdfUrl = getPublicInvoicePdfUrl(invoice.id);
     window.open(pdfUrl, "_blank");
   };
@@ -340,19 +331,17 @@ export default function InvoicePreviewLayer() {
             Edit
           </button>
 
-          <button
-            className="btn btn-sm btn-outline-success"
-            onClick={handleOpenPdf}
-          >
-            Generate PDF
+          {/* ✅ Warna tombol tetap pakai tema biru */}
+          <button className="btn btn-sm btn-primary" onClick={handleOpenPdf}>
+            Open PDF
           </button>
 
           <button
-            className="btn btn-sm btn-outline-secondary"
+            className="btn btn-sm btn-primary"
             onClick={handleSendToEmail}
             disabled={sending}
           >
-            {sending ? "Sending to email..." : "Send to Email"}
+            {sending ? "Sending..." : "Send to Email"}
           </button>
         </div>
 
