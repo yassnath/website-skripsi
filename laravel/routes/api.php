@@ -7,15 +7,35 @@ use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\ReportController;
 
-Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'pdf']);
-Route::get('/expenses/{id}/pdf', [ExpenseController::class, 'pdf']);
-Route::get('/invoices/{id}/pdf-link', [InvoiceController::class, 'pdfLink']);
+/*
+|--------------------------------------------------------------------------
+| PUBLIC ROUTES (Tanpa Auth)
+|--------------------------------------------------------------------------
+| IMPORTANT:
+| - Wajib di atas supaya tidak bentrok dengan /invoices/{id}
+| - Beri constraint {id} numeric supaya aman
+*/
+Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'pdf'])
+    ->whereNumber('id');
 
-// REPORT jadi public tapi auth pakai query token di controller
+Route::get('/expenses/{id}/pdf', [ExpenseController::class, 'pdf'])
+    ->whereNumber('id');
+
+Route::get('/invoices/{id}/pdf-link', [InvoiceController::class, 'pdfLink'])
+    ->whereNumber('id');
+
+// REPORT public (auth pakai query token di controller)
 Route::get('/reports/summary', [ReportController::class, 'summary']);
 
+// LOGIN
 Route::post('/login', [AuthController::class, 'login']);
 
+
+/*
+|--------------------------------------------------------------------------
+| AUTH ROUTES
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth.api')->group(function () {
 
     Route::get('/me', [AuthController::class, 'me']);
@@ -23,21 +43,21 @@ Route::middleware('auth.api')->group(function () {
     // ARMADA
     Route::get('/armadas', [ArmadaController::class, 'index']);
     Route::post('/armadas', [ArmadaController::class, 'store']);
-    Route::get('/armadas/{id}', [ArmadaController::class, 'show']);
-    Route::put('/armadas/{id}', [ArmadaController::class, 'update']);
-    Route::delete('/armadas/{id}', [ArmadaController::class, 'destroy']);
+    Route::get('/armadas/{id}', [ArmadaController::class, 'show'])->whereNumber('id');
+    Route::put('/armadas/{id}', [ArmadaController::class, 'update'])->whereNumber('id');
+    Route::delete('/armadas/{id}', [ArmadaController::class, 'destroy'])->whereNumber('id');
 
     // INVOICE CRUD
     Route::get('/invoices', [InvoiceController::class, 'index']);
     Route::post('/invoices', [InvoiceController::class, 'store']);
-    Route::get('/invoices/{id}', [InvoiceController::class, 'show']);
-    Route::put('/invoices/{id}', [InvoiceController::class, 'update']);
-    Route::delete('/invoices/{id}', [InvoiceController::class, 'destroy']);
+    Route::get('/invoices/{id}', [InvoiceController::class, 'show'])->whereNumber('id');
+    Route::put('/invoices/{id}', [InvoiceController::class, 'update'])->whereNumber('id');
+    Route::delete('/invoices/{id}', [InvoiceController::class, 'destroy'])->whereNumber('id');
 
     // EXPENSE CRUD
     Route::get('/expenses', [ExpenseController::class, 'index']);
     Route::post('/expenses', [ExpenseController::class, 'store']);
-    Route::get('/expenses/{id}', [ExpenseController::class, 'show']);
-    Route::put('/expenses/{id}', [ExpenseController::class, 'update']);
-    Route::delete('/expenses/{id}', [ExpenseController::class, 'destroy']);
+    Route::get('/expenses/{id}', [ExpenseController::class, 'show'])->whereNumber('id');
+    Route::put('/expenses/{id}', [ExpenseController::class, 'update'])->whereNumber('id');
+    Route::delete('/expenses/{id}', [ExpenseController::class, 'destroy'])->whereNumber('id');
 });
