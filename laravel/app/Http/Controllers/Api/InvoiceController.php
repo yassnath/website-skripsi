@@ -214,8 +214,18 @@ class InvoiceController extends Controller
     // ===============================
     public function publicPdf($id)
     {
-        // sama seperti pdf internal
-        return $this->pdf($id);
+        $invoice = Invoice::with('armada')->find($id);
+
+        if (!$invoice) {
+            return response()->json(['message' => 'Invoice not found'], 404);
+        }
+
+        // ✅ view pdf sama seperti private pdf kamu
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.invoice', [
+            'invoice' => $invoice
+        ]);
+
+        return $pdf->stream("invoice-{$invoice->no_invoice}.pdf");
     }
 
     public function pdfLink($id)
