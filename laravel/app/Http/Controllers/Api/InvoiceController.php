@@ -176,6 +176,7 @@ class InvoiceController extends Controller
         return response()->json(['message' => 'Invoice deleted']);
     }
 
+    // ✅ helper pilih view yang benar
     private function resolveInvoiceViewName(): string
     {
         if (view()->exists('invoices.invoice')) return 'invoices.invoice';
@@ -184,31 +185,46 @@ class InvoiceController extends Controller
         abort(500, "View invoice untuk PDF tidak ditemukan. Buat invoices/invoice.blade.php atau invoice.blade.php");
     }
 
+    // ===============================
+    // ✅ INTERNAL PDF
+    // ===============================
     public function pdf($id)
     {
         $invoice = Invoice::with('armada')->findOrFail($id);
-
         $viewName = $this->resolveInvoiceViewName();
 
-        $pdf = Pdf::loadView($viewName, [
-            "invoice" => $invoice,
-        ])->setPaper("a4", "landscape");
+        $pdf = Pdf::loadView($viewName, ["invoice" => $invoice])
+            ->setPaper("a4", "landscape");
 
         return response($pdf->output(), 200)
             ->header('Content-Type', 'application/pdf')
-            ->header(
-                'Content-Disposition',
-                'inline; filename="invoice-' . $invoice->no_invoice . '.pdf"'
-            );
+            ->header('Content-Disposition', 'inline; filename="invoice-' . $invoice->no_invoice . '.pdf"');
+    }
+
+    // ===============================
+    // ✅ PUBLIC JSON VIEW (NO LOGIN)
+    // ===============================
+    public function publicShow($id)
+    {
+        return Invoice::with('armada')->findOrFail($id);
+    }
+
+    // ===============================
+    // ✅ PUBLIC PDF (NO LOGIN)
+    // ===============================
+    public function publicPdf($id)
+    {
+        // sama seperti pdf internal
+        return $this->pdf($id);
     }
 
     public function pdfLink($id)
     {
         Invoice::findOrFail($id);
 
-        $base = rtrim(config('app.url'), '/'); // harus https://asnusatrans.online
+        // ✅ PUBLIC URL PASTI PAKAI DOMAIN PUBLIK APP_URL
         return response()->json([
-            "url" => $base . "/api/invoices/{$id}/pdf",
+            "url" => url("/api/public/invoices/{$id}/pdf"),
         ]);
     }
 }

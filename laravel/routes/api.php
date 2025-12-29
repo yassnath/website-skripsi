@@ -7,39 +7,37 @@ use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\ReportController;
 
-/*
-|--------------------------------------------------------------------------
-| PUBLIC ROUTES (NO AUTH)
-|--------------------------------------------------------------------------
-| Pastikan ini benar-benar tidak kena middleware auth/api kamu.
-| Kita pakai ->withoutMiddleware() biar 100% public.
-*/
-Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'pdf'])
-    ->whereNumber('id')
-    ->withoutMiddleware(['auth.api']);
+/**
+ * ==========================
+ * ✅ PUBLIC ROUTES (NO LOGIN)
+ * ==========================
+ */
 
-Route::get('/expenses/{id}/pdf', [ExpenseController::class, 'pdf'])
-    ->whereNumber('id')
-    ->withoutMiddleware(['auth.api']);
-
-Route::get('/invoices/{id}/pdf-link', [InvoiceController::class, 'pdfLink'])
-    ->whereNumber('id')
-    ->withoutMiddleware(['auth.api']);
-
-Route::get('/reports/summary', [ReportController::class, 'summary'])
-    ->withoutMiddleware(['auth.api']);
-
+// ✅ PUBLIC VIEW JSON (untuk Next.js page /invoice/[id])
 Route::get('/public/invoices/{id}', [InvoiceController::class, 'publicShow']);
-Route::get('/public/invoices/{id}/pdf', [InvoiceController::class, 'pdf']);
 
+// ✅ PUBLIC PDF (untuk customer download)
+Route::get('/public/invoices/{id}/pdf', [InvoiceController::class, 'publicPdf']);
+
+// ✅ PDF old (opsional untuk internal)
+Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'pdf']);
+Route::get('/expenses/{id}/pdf', [ExpenseController::class, 'pdf']);
+
+// ✅ optional link maker
+Route::get('/invoices/{id}/pdf-link', [InvoiceController::class, 'pdfLink']);
+
+// ✅ REPORT
+Route::get('/reports/summary', [ReportController::class, 'summary']);
+
+// ✅ AUTH
 Route::post('/login', [AuthController::class, 'login']);
 
 
-/*
-|--------------------------------------------------------------------------
-| AUTH ROUTES
-|--------------------------------------------------------------------------
-*/
+/**
+ * ==========================
+ * ✅ AUTH ROUTES
+ * ==========================
+ */
 Route::middleware('auth.api')->group(function () {
 
     Route::get('/me', [AuthController::class, 'me']);
@@ -47,21 +45,21 @@ Route::middleware('auth.api')->group(function () {
     // ARMADA
     Route::get('/armadas', [ArmadaController::class, 'index']);
     Route::post('/armadas', [ArmadaController::class, 'store']);
-    Route::get('/armadas/{id}', [ArmadaController::class, 'show'])->whereNumber('id');
-    Route::put('/armadas/{id}', [ArmadaController::class, 'update'])->whereNumber('id');
-    Route::delete('/armadas/{id}', [ArmadaController::class, 'destroy'])->whereNumber('id');
+    Route::get('/armadas/{id}', [ArmadaController::class, 'show']);
+    Route::put('/armadas/{id}', [ArmadaController::class, 'update']);
+    Route::delete('/armadas/{id}', [ArmadaController::class, 'destroy']);
 
     // INVOICE CRUD
     Route::get('/invoices', [InvoiceController::class, 'index']);
     Route::post('/invoices', [InvoiceController::class, 'store']);
-    Route::get('/invoices/{id}', [InvoiceController::class, 'show'])->whereNumber('id');
-    Route::put('/invoices/{id}', [InvoiceController::class, 'update'])->whereNumber('id');
-    Route::delete('/invoices/{id}', [InvoiceController::class, 'destroy'])->whereNumber('id');
+    Route::get('/invoices/{id}', [InvoiceController::class, 'show']);
+    Route::put('/invoices/{id}', [InvoiceController::class, 'update']);
+    Route::delete('/invoices/{id}', [InvoiceController::class, 'destroy']);
 
     // EXPENSE CRUD
     Route::get('/expenses', [ExpenseController::class, 'index']);
     Route::post('/expenses', [ExpenseController::class, 'store']);
-    Route::get('/expenses/{id}', [ExpenseController::class, 'show'])->whereNumber('id');
-    Route::put('/expenses/{id}', [ExpenseController::class, 'update'])->whereNumber('id');
-    Route::delete('/expenses/{id}', [ExpenseController::class, 'destroy'])->whereNumber('id');
+    Route::get('/expenses/{id}', [ExpenseController::class, 'show']);
+    Route::put('/expenses/{id}', [ExpenseController::class, 'update']);
+    Route::delete('/expenses/{id}', [ExpenseController::class, 'destroy']);
 });
