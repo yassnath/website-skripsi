@@ -8,35 +8,28 @@ use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\ReportController;
 
 /**
- * ==========================
- * ✅ PUBLIC ROUTES (NO LOGIN)
- * ==========================
+ * ✅ PUBLIC ROUTES (TANPA LOGIN)
+ * Customer bisa akses langsung dari link email
  */
-
-// ✅ PUBLIC VIEW JSON (untuk Next.js page /invoice/[id])
 Route::get('/public/invoices/{id}', [InvoiceController::class, 'publicShow']);
-
-// ✅ PUBLIC PDF (untuk customer download)
 Route::get('/public/invoices/{id}/pdf', [InvoiceController::class, 'publicPdf']);
+Route::get('/public/invoices/{id}/pdf-link', [InvoiceController::class, 'publicPdfLink']);
 
-// ✅ PDF old (opsional untuk internal)
-Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'pdf']);
-Route::get('/expenses/{id}/pdf', [ExpenseController::class, 'pdf']);
+/**
+ * ✅ OPTIONAL: public pdf expense jika kamu mau (customer dapat akses expense pdf juga)
+ */
+Route::get('/public/expenses/{id}/pdf', [ExpenseController::class, 'publicPdf']);
 
-// ✅ optional link maker
-Route::get('/invoices/{id}/pdf-link', [InvoiceController::class, 'pdfLink']);
-
-// ✅ REPORT
+/**
+ * ✅ REPORT PUBLIC (tanpa login)
+ */
 Route::get('/reports/summary', [ReportController::class, 'summary']);
 
-// ✅ AUTH
 Route::post('/login', [AuthController::class, 'login']);
 
 
 /**
- * ==========================
- * ✅ AUTH ROUTES
- * ==========================
+ * ✅ PRIVATE ROUTES (HARUS LOGIN)
  */
 Route::middleware('auth.api')->group(function () {
 

@@ -9,165 +9,96 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class InvoiceController extends Controller
 {
+    /**
+     * ✅ PRIVATE: List invoice (butuh login)
+     */
     public function index()
     {
-        return Invoice::with('armada')
-            ->orderByDesc('tanggal')
-            ->orderByDesc('id')
-            ->get();
+        return Invoice::with('armada')->latest()->get();
     }
 
+    /**
+     * ✅ PRIVATE: Store invoice
+     */
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'no_invoice'         => 'required|unique:invoices,no_invoice',
-            'nama_pelanggan'     => 'required',
-            'email'              => 'nullable|email',
-            'no_telp'            => 'nullable',
-            'tanggal'            => 'required|date',
-            'due_date'           => 'nullable|date',
-
-            'armada_id'          => 'nullable|exists:armadas,id',
-            'armada_start_date'  => 'nullable|date',
-            'armada_end_date'    => 'nullable|date',
-            'lokasi_muat'        => 'nullable',
-            'lokasi_bongkar'     => 'nullable',
-            'tonase'             => 'numeric',
-            'harga'              => 'numeric',
-
-            'total_biaya'        => 'numeric',
-            'pph'                => 'numeric',
-            'total_bayar'        => 'numeric',
-            'status'             => 'required',
-            'diterima_oleh'      => 'nullable',
-
-            'rincian'                        => 'nullable|array',
-            'rincian.*.lokasi_muat'          => 'nullable|string',
-            'rincian.*.lokasi_bongkar'       => 'nullable|string',
-            'rincian.*.armada_id'            => 'nullable|integer|exists:armadas,id',
-            'rincian.*.armada_start_date'    => 'nullable|date',
-            'rincian.*.armada_end_date'      => 'nullable|date',
-            'rincian.*.tonase'               => 'nullable|numeric',
-            'rincian.*.harga'                => 'nullable|numeric',
-            'rincian.*.total'                => 'nullable|numeric',
+        $validated = $request->validate([
+            'no_invoice' => 'required|string|unique:invoices,no_invoice',
+            'nama_pelanggan' => 'required|string',
+            'email' => 'nullable|string',
+            'no_telp' => 'nullable|string',
+            'tanggal' => 'required|date',
+            'due_date' => 'nullable|date',
+            'armada_id' => 'nullable|exists:armadas,id',
+            'armada_start_date' => 'nullable|date',
+            'armada_end_date' => 'nullable|date',
+            'lokasi_muat' => 'nullable|string',
+            'lokasi_bongkar' => 'nullable|string',
+            'tonase' => 'nullable|numeric',
+            'harga' => 'nullable|numeric',
+            'total_biaya' => 'nullable|numeric',
+            'pph' => 'nullable|numeric',
+            'total_bayar' => 'nullable|numeric',
+            'status' => 'nullable|string',
+            'diterima_oleh' => 'nullable|string',
+            'rincian' => 'nullable',
         ]);
 
-        $rincian = $request->input('rincian', null);
-
-        if (is_array($rincian) && count($rincian) > 0) {
-            $subtotal = 0;
-
-            foreach ($rincian as $r) {
-                $tonase = (float) ($r['tonase'] ?? 0);
-                $harga  = (float) ($r['harga'] ?? 0);
-                $subtotal += ($tonase * $harga);
-            }
-
-            $pph = $subtotal * 0.02;
-            $totalBayar = $subtotal - $pph;
-
-            $data['total_biaya'] = $subtotal;
-            $data['pph'] = $pph;
-            $data['total_bayar'] = $totalBayar;
-
-            $first = $rincian[0];
-
-            $data['lokasi_muat'] = $data['lokasi_muat'] ?? ($first['lokasi_muat'] ?? null);
-            $data['lokasi_bongkar'] = $data['lokasi_bongkar'] ?? ($first['lokasi_bongkar'] ?? null);
-            $data['armada_id'] = $data['armada_id'] ?? ($first['armada_id'] ?? null);
-            $data['armada_start_date'] = $data['armada_start_date'] ?? ($first['armada_start_date'] ?? null);
-            $data['armada_end_date'] = $data['armada_end_date'] ?? ($first['armada_end_date'] ?? null);
-            $data['tonase'] = $data['tonase'] ?? (float) ($first['tonase'] ?? 0);
-            $data['harga'] = $data['harga'] ?? (float) ($first['harga'] ?? 0);
-
-            $data['rincian'] = $rincian;
-        } else {
-            $data['rincian'] = null;
-        }
-
-        $invoice = Invoice::create($data);
-
-        return response()->json($invoice);
+        $invoice = Invoice::create($validated);
+        return $invoice->load('armada');
     }
 
+    /**
+     * ✅ PRIVATE: Show invoice by id (butuh login)
+     */
     public function show($id)
     {
-        return Invoice::with('armada')->findOrFail($id);
+        $invoice = Invoice::with('armada')->findOrFail($id);
+
+        // ✅ pastikan rincian selalu array
+        if (!is_array($invoice->rincian)) {
+            $invoice->rincian = $invoice->rincian ? json_decode($invoice->rincian, true) : [];
+        }
+
+        return $invoice;
     }
 
+    /**
+     * ✅ PRIVATE: Update invoice
+     */
     public function update(Request $request, $id)
     {
         $invoice = Invoice::findOrFail($id);
 
-        $data = $request->validate([
-            'nama_pelanggan'     => 'required',
-            'email'              => 'nullable|email',
-            'no_telp'            => 'nullable',
-            'tanggal'            => 'required|date',
-            'due_date'           => 'nullable|date',
-
-            'armada_id'          => 'nullable|exists:armadas,id',
-            'armada_start_date'  => 'nullable|date',
-            'armada_end_date'    => 'nullable|date',
-            'lokasi_muat'        => 'nullable',
-            'lokasi_bongkar'     => 'nullable',
-            'tonase'             => 'numeric',
-            'harga'              => 'numeric',
-            'total_biaya'        => 'numeric',
-            'pph'                => 'numeric',
-            'total_bayar'        => 'numeric',
-            'status'             => 'required',
-            'diterima_oleh'      => 'nullable',
-
-            'rincian'                        => 'nullable|array',
-            'rincian.*.lokasi_muat'          => 'nullable|string',
-            'rincian.*.lokasi_bongkar'       => 'nullable|string',
-            'rincian.*.armada_id'            => 'nullable|integer|exists:armadas,id',
-            'rincian.*.armada_start_date'    => 'nullable|date',
-            'rincian.*.armada_end_date'      => 'nullable|date',
-            'rincian.*.tonase'               => 'nullable|numeric',
-            'rincian.*.harga'                => 'nullable|numeric',
-            'rincian.*.total'                => 'nullable|numeric',
+        $validated = $request->validate([
+            'no_invoice' => 'required|string|unique:invoices,no_invoice,' . $invoice->id,
+            'nama_pelanggan' => 'required|string',
+            'email' => 'nullable|string',
+            'no_telp' => 'nullable|string',
+            'tanggal' => 'required|date',
+            'due_date' => 'nullable|date',
+            'armada_id' => 'nullable|exists:armadas,id',
+            'armada_start_date' => 'nullable|date',
+            'armada_end_date' => 'nullable|date',
+            'lokasi_muat' => 'nullable|string',
+            'lokasi_bongkar' => 'nullable|string',
+            'tonase' => 'nullable|numeric',
+            'harga' => 'nullable|numeric',
+            'total_biaya' => 'nullable|numeric',
+            'pph' => 'nullable|numeric',
+            'total_bayar' => 'nullable|numeric',
+            'status' => 'nullable|string',
+            'diterima_oleh' => 'nullable|string',
+            'rincian' => 'nullable',
         ]);
 
-        $rincian = $request->input('rincian', null);
-
-        if (is_array($rincian) && count($rincian) > 0) {
-            $subtotal = 0;
-
-            foreach ($rincian as $r) {
-                $tonase = (float) ($r['tonase'] ?? 0);
-                $harga  = (float) ($r['harga'] ?? 0);
-                $subtotal += ($tonase * $harga);
-            }
-
-            $pph = $subtotal * 0.02;
-            $totalBayar = $subtotal - $pph;
-
-            $data['total_biaya'] = $subtotal;
-            $data['pph'] = $pph;
-            $data['total_bayar'] = $totalBayar;
-
-            $first = $rincian[0];
-
-            $data['lokasi_muat'] = $data['lokasi_muat'] ?? ($first['lokasi_muat'] ?? null);
-            $data['lokasi_bongkar'] = $data['lokasi_bongkar'] ?? ($first['lokasi_bongkar'] ?? null);
-            $data['armada_id'] = $data['armada_id'] ?? ($first['armada_id'] ?? null);
-            $data['armada_start_date'] = $data['armada_start_date'] ?? ($first['armada_start_date'] ?? null);
-            $data['armada_end_date'] = $data['armada_end_date'] ?? ($first['armada_end_date'] ?? null);
-            $data['tonase'] = $data['tonase'] ?? (float) ($first['tonase'] ?? 0);
-            $data['harga'] = $data['harga'] ?? (float) ($first['harga'] ?? 0);
-
-            $data['rincian'] = $rincian;
-        } else {
-            $data['rincian'] = null;
-        }
-
-        $invoice->update($data);
-
-        return response()->json($invoice);
+        $invoice->update($validated);
+        return $invoice->load('armada');
     }
 
+    /**
+     * ✅ PRIVATE: Delete invoice
+     */
     public function destroy($id)
     {
         $invoice = Invoice::findOrFail($id);
@@ -176,65 +107,74 @@ class InvoiceController extends Controller
         return response()->json(['message' => 'Invoice deleted']);
     }
 
-    // ✅ helper pilih view yang benar
-    private function resolveInvoiceViewName(): string
-    {
-        if (view()->exists('invoices.invoice')) return 'invoices.invoice';
-        if (view()->exists('invoice')) return 'invoice';
-
-        abort(500, "View invoice untuk PDF tidak ditemukan. Buat invoices/invoice.blade.php atau invoice.blade.php");
-    }
-
-    // ===============================
-    // ✅ INTERNAL PDF
-    // ===============================
+    /**
+     * ✅ PRIVATE PDF (untuk internal dashboard)
+     * URL: /api/invoices/{id}/pdf (butuh login)
+     */
     public function pdf($id)
     {
         $invoice = Invoice::with('armada')->findOrFail($id);
-        $viewName = $this->resolveInvoiceViewName();
 
-        $pdf = Pdf::loadView($viewName, ["invoice" => $invoice])
-            ->setPaper("a4", "landscape");
-
-        return response($pdf->output(), 200)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="invoice-' . $invoice->no_invoice . '.pdf"');
-    }
-
-    // ===============================
-    // ✅ PUBLIC JSON VIEW (NO LOGIN)
-    // ===============================
-    public function publicShow($id)
-    {
-        return Invoice::with('armada')->findOrFail($id);
-    }
-
-    // ===============================
-    // ✅ PUBLIC PDF (NO LOGIN)
-    // ===============================
-    public function publicPdf($id)
-    {
-        $invoice = Invoice::with('armada')->find($id);
-
-        if (!$invoice) {
-            return response()->json(['message' => 'Invoice not found'], 404);
+        if (!is_array($invoice->rincian)) {
+            $invoice->rincian = $invoice->rincian ? json_decode($invoice->rincian, true) : [];
         }
 
-        // ✅ view pdf sama seperti private pdf kamu
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.invoice', [
+        $pdf = Pdf::loadView('pdf.invoice', [
             'invoice' => $invoice
         ]);
 
         return $pdf->stream("invoice-{$invoice->no_invoice}.pdf");
     }
 
-    public function pdfLink($id)
+    /**
+     * ✅ ✅ ✅ PUBLIC SHOW (TANPA LOGIN)
+     * URL: /api/public/invoices/{id}
+     */
+    public function publicShow($id)
     {
-        Invoice::findOrFail($id);
+        $invoice = Invoice::with('armada')->findOrFail($id);
 
-        // ✅ PUBLIC URL PASTI PAKAI DOMAIN PUBLIK APP_URL
+        if (!is_array($invoice->rincian)) {
+            $invoice->rincian = $invoice->rincian ? json_decode($invoice->rincian, true) : [];
+        }
+
+        return $invoice;
+    }
+
+    /**
+     * ✅ ✅ ✅ PUBLIC PDF (TANPA LOGIN)
+     * URL: /api/public/invoices/{id}/pdf
+     */
+    public function publicPdf($id)
+    {
+        $invoice = Invoice::with('armada')->findOrFail($id);
+
+        if (!is_array($invoice->rincian)) {
+            $invoice->rincian = $invoice->rincian ? json_decode($invoice->rincian, true) : [];
+        }
+
+        $pdf = Pdf::loadView('pdf.invoice', [
+            'invoice' => $invoice
+        ]);
+
+        // ✅ stream agar langsung terbuka di browser (HP friendly)
+        return $pdf->stream("invoice-{$invoice->no_invoice}.pdf");
+    }
+
+    /**
+     * ✅ ✅ ✅ PUBLIC PDF LINK (TANPA LOGIN)
+     * URL: /api/public/invoices/{id}/pdf-link
+     * Ini buat frontend supaya bisa dapat URL pdf yang benar.
+     */
+    public function publicPdfLink($id)
+    {
+        $invoice = Invoice::findOrFail($id);
+
+        // ✅ base domain publik (APP_URL)
+        $base = rtrim(config('app.url'), '/');
+
         return response()->json([
-            "url" => url("/api/public/invoices/{$id}/pdf"),
+            'url' => "{$base}/api/public/invoices/{$invoice->id}/pdf"
         ]);
     }
 }
