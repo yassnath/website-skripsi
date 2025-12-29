@@ -114,6 +114,7 @@ export default function InvoicePublicPreview({ id }) {
   }
 
   const topTitleMargin = isMobile ? "8px" : "14px";
+  const buttonTopMargin = isMobile ? "8px" : "14px";
 
   return (
     <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
@@ -199,12 +200,13 @@ export default function InvoicePublicPreview({ id }) {
                   </div>
                 </div>
 
-                {/* ✅ Buttons: margin-right + margin-bottom */}
+                {/* ✅ Buttons: margin-right + margin-bottom + margin-top */}
                 <div
                   className="d-flex gap-2 flex-wrap"
                   style={{
                     marginRight: isMobile ? "6px" : "14px",
                     marginBottom: "14px",
+                    marginTop: buttonTopMargin, // ✅ tambahan sesuai request
                   }}
                 >
                   <button
