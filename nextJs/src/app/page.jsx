@@ -1,5 +1,5 @@
 import MasterLayout from "@/masterLayout/MasterLayout";
-import DashboardLayerOne from "@/components/DashboardLayerOne.jsx";
+import DashboardLayerOne from "@/components/DashboardLayerOne";
 
 export const metadata = {
   title: "Dashboard | CV ANT",
