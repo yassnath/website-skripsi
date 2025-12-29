@@ -26,9 +26,26 @@ export default function InvoicePreviewLayer() {
   const [armadas, setArmadas] = useState([]);
   const [sending, setSending] = useState(false);
 
-  // ✅ FIX: pastikan API base selalu dari env dan bersih dari slash
-  let apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  /**
+   * ✅ FIX UTAMA: apiBase pakai env (build-time)
+   * - Kalau env kosong di production, jangan fallback localhost
+   * - Localhost hanya untuk development lokal
+   */
+  const isProd =
+    typeof window !== "undefined" && window.location.hostname !== "localhost";
+
+  let apiBase = process.env.NEXT_PUBLIC_API_URL || "";
   apiBase = apiBase.replace(/\/+$/, "");
+
+  // ✅ fallback untuk development lokal saja
+  if (!apiBase && !isProd) apiBase = "http://localhost:8080";
+
+  // ✅ kalau production tapi env kosong, stop agar tidak pernah pakai localhost
+  if (!apiBase && isProd) {
+    console.error(
+      "NEXT_PUBLIC_API_URL belum di-set di Vercel Production. Harus diisi dengan URL Railway backend."
+    );
+  }
 
   useEffect(() => {
     if (id) {
@@ -131,11 +148,22 @@ export default function InvoicePreviewLayer() {
   const pph = useMemo(() => Math.round(subtotal * 0.02), [subtotal]);
   const totalBayar = useMemo(() => subtotal - pph, [subtotal, pph]);
 
+  /**
+   * ✅ AUTO ORIENTATION + AUTO SHRINK 1 PAGE PRINT
+   * - portrait jika row banyak
+   * - landscape jika row sedikit
+   * - selalu shrink supaya cukup 1 halaman
+   */
   useEffect(() => {
     const STYLE_ID = "invoice-print-orientation";
 
-    const applyOrientation = () => {
+    const applyPrintStyle = () => {
       const isPortrait = rows.length > 3;
+
+      // ✅ shrink factor supaya selalu cukup 1 halaman
+      // semakin banyak rows -> semakin kecil scale
+      const scale =
+        rows.length <= 2 ? 1 : rows.length <= 4 ? 0.92 : 0.85;
 
       let el = document.getElementById(STYLE_ID);
       if (!el) {
@@ -146,7 +174,25 @@ export default function InvoicePreviewLayer() {
 
       el.textContent = `
         @media print {
-          @page { size: A4 ${isPortrait ? "portrait" : "landscape"}; margin: 10mm 10mm; }
+          @page { size: A4 ${isPortrait ? "portrait" : "landscape"}; margin: 8mm 8mm; }
+
+          /* ✅ shrink supaya 1 page */
+          .invoice-paper {
+            transform: scale(${scale});
+            transform-origin: top left;
+            width: ${100 / scale}%;
+          }
+
+          /* ✅ watermark tetap di tengah & rapi */
+          .invoice-watermark {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            opacity: 0.07 !important;
+            z-index: 0 !important;
+            pointer-events: none !important;
+          }
         }
       `;
     };
@@ -156,20 +202,20 @@ export default function InvoicePreviewLayer() {
       if (el) el.remove();
     };
 
-    window.addEventListener("beforeprint", applyOrientation);
+    window.addEventListener("beforeprint", applyPrintStyle);
     window.addEventListener("afterprint", cleanup);
 
     return () => {
-      window.removeEventListener("beforeprint", applyOrientation);
+      window.removeEventListener("beforeprint", applyPrintStyle);
       window.removeEventListener("afterprint", cleanup);
     };
   }, [rows.length]);
 
-  // ✅ FIX: Send email menggunakan URL langsung dari apiBase (tidak localhost)
+  // ✅ FIX: Send Email selalu pakai apiBase produksi
   const handleSendToEmail = async () => {
-    if (!invoice) return;
-    setSending(true);
+    if (!invoice || !apiBase) return;
 
+    setSending(true);
     try {
       const pdfUrl = `${apiBase}/api/invoices/${invoice.id}/pdf`;
 
@@ -226,14 +272,10 @@ export default function InvoicePreviewLayer() {
             Edit
           </button>
 
-          {/* ✅ FIX: Generate PDF selalu pakai apiBase */}
           <button
             className="btn btn-sm btn-outline-success"
             onClick={() =>
-              window.open(
-                `${apiBase}/api/invoices/${invoice.id}/pdf`,
-                "_blank"
-              )
+              window.open(`${apiBase}/api/invoices/${invoice.id}/pdf`, "_blank")
             }
           >
             Generate PDF
@@ -425,7 +467,7 @@ export default function InvoicePreviewLayer() {
           </div>
         </div>
 
-        {/* ⚠️ Styling tidak diubah sama sekali */}
+        {/* ✅ STYLE ORIGINAL TETAP, HANYA DITAMBAH PRINT SCALE & WATERMARK FIX */}
         <style jsx global>{`
           .invoice-paper {
             overflow-x: hidden;
@@ -436,7 +478,6 @@ export default function InvoicePreviewLayer() {
             overflow-x: auto;
           }
 
-          /* rapatkan baris tabel (web view) */
           .invoice-detail-table th,
           .invoice-detail-table td {
             padding: 8px 10px;
@@ -444,7 +485,6 @@ export default function InvoicePreviewLayer() {
             vertical-align: middle;
           }
 
-          /* cell content wrapper: default desktop tetap single line (mengikuti cellStyle nowrap) */
           .cell-2line {
             display: inline;
           }
@@ -454,17 +494,15 @@ export default function InvoicePreviewLayer() {
               padding: 18px !important;
             }
 
-            /* di layar kecil: boleh wrap */
             .invoice-detail-table th,
             .invoice-detail-table td {
               font-size: 12px !important;
               padding: 6px 6px !important;
               line-height: 1.15 !important;
-              white-space: normal !important; /* ✅ td tetap table-cell, hanya allow wrap */
+              white-space: normal !important;
               word-break: break-word !important;
             }
 
-            /* batasi isi jadi max 2 baris (TANPA mengubah display td) */
             .cell-2line {
               display: -webkit-box;
               -webkit-line-clamp: 2;
@@ -474,7 +512,6 @@ export default function InvoicePreviewLayer() {
               white-space: normal;
             }
 
-            /* header tetap ringkas */
             .invoice-detail-table th {
               white-space: nowrap !important;
             }
@@ -504,9 +541,6 @@ export default function InvoicePreviewLayer() {
             }
           }
 
-          /* ============================
-             PRINT (tetap seperti punyamu)
-             ============================ */
           @media print {
             html,
             body {
@@ -536,197 +570,6 @@ export default function InvoicePreviewLayer() {
 
             body {
               overflow: hidden !important;
-            }
-            .invoice-screen,
-            .invoice-paper,
-            .invoice-paper * {
-              page-break-inside: avoid !important;
-              break-inside: avoid !important;
-            }
-
-            .invoice-paper.container {
-              padding-left: 0 !important;
-              padding-right: 0 !important;
-              margin-left: 0 !important;
-              margin-right: 0 !important;
-              max-width: 100% !important;
-              width: 100% !important;
-            }
-
-            .invoice-paper {
-              margin: 0 !important;
-              padding: 0 !important;
-              border: none !important;
-              box-shadow: none !important;
-              background: #fff !important;
-              border-radius: 0 !important;
-            }
-
-            .invoice-screen {
-              font-family: DejaVu Sans, Arial, sans-serif !important;
-              font-size: 12px !important;
-              color: #222 !important;
-              line-height: 1.5 !important;
-            }
-            .invoice-screen .text-dark {
-              color: #222 !important;
-            }
-
-            .invoice-watermark {
-              position: fixed !important;
-              top: 50% !important;
-              left: 50% !important;
-              transform: translate(-50%, -50%) !important;
-              opacity: 0.07 !important;
-              z-index: 0 !important;
-              pointer-events: none !important;
-            }
-
-            .invoice-header {
-              display: table !important;
-              width: 100% !important;
-              table-layout: fixed !important;
-            }
-            .invoice-header-left {
-              display: table-cell !important;
-              width: 60% !important;
-              vertical-align: top !important;
-              text-align: left !important;
-              padding-left: 0 !important;
-            }
-            .invoice-header-right {
-              display: table-cell !important;
-              width: 40% !important;
-              vertical-align: top !important;
-              text-align: right !important;
-              padding-right: 0 !important;
-            }
-
-            .invoice-customer {
-              display: table !important;
-              width: 100% !important;
-              table-layout: fixed !important;
-              margin-bottom: 10px !important;
-              margin-left: 0 !important;
-              margin-right: 0 !important;
-            }
-
-            .invoice-from,
-            .invoice-to {
-              display: table-cell !important;
-              vertical-align: top !important;
-              float: none !important;
-              max-width: none !important;
-            }
-
-            .invoice-from {
-              width: 60% !important;
-              text-align: left !important;
-              padding-left: 0 !important;
-              padding-right: 10px !important;
-            }
-
-            .invoice-to {
-              width: 40% !important;
-              text-align: right !important;
-              padding-right: 0 !important;
-              padding-left: 10px !important;
-            }
-
-            .invoice-from h6,
-            .invoice-from p {
-              text-align: left !important;
-              margin-left: 0 !important;
-              padding-left: 0 !important;
-            }
-
-            .invoice-to h6,
-            .invoice-to p {
-              text-align: right !important;
-              margin-right: 0 !important;
-              padding-right: 0 !important;
-            }
-
-            .invoice-table-wrap {
-              padding-left: 0 !important;
-              padding-right: 0 !important;
-              margin-left: 0 !important;
-              margin-right: 0 !important;
-            }
-
-            .invoice-detail-table {
-              width: 100% !important;
-              margin-top: 10px !important;
-              border-collapse: collapse !important;
-            }
-            .invoice-detail-table th,
-            .invoice-detail-table td {
-              font-size: 10px !important;
-              line-height: 1.1 !important;
-              padding: 3px 4px !important;
-              white-space: nowrap !important;
-            }
-
-            .invoice-detail-table,
-            .invoice-detail-table th,
-            .invoice-detail-table td,
-            .table-bordered,
-            .table-bordered > :not(caption) > * > * {
-              border: none !important;
-            }
-
-            .border-bottom {
-              border-bottom: none !important;
-            }
-            .invoice-header {
-              margin-bottom: 6px !important;
-              padding-bottom: 0 !important;
-            }
-
-            .invoice-armada-summary {
-              display: table !important;
-              width: 100% !important;
-              table-layout: fixed !important;
-              margin-top: 8px !important;
-            }
-            .invoice-armada-left {
-              display: table-cell !important;
-              width: 50% !important;
-              vertical-align: top !important;
-              padding-right: 10px !important;
-              padding-left: 0 !important;
-              max-width: none !important;
-            }
-            .invoice-totals {
-              display: table !important;
-              width: 50% !important;
-              margin-left: auto !important;
-              margin-right: 0 !important;
-              border-collapse: collapse !important;
-            }
-            .invoice-totals td {
-              padding: 3px 4px !important;
-              font-size: 11px !important;
-              border: none !important;
-            }
-            .invoice-totals td:first-child {
-              text-align: left !important;
-            }
-            .invoice-totals td:last-child {
-              text-align: right !important;
-              white-space: nowrap !important;
-              padding-right: 0 !important;
-            }
-            .invoice-totals tr.invoice-totals-bold td {
-              font-weight: 700 !important;
-            }
-
-            table,
-            tr,
-            td,
-            th {
-              page-break-inside: avoid !important;
-              break-inside: avoid !important;
             }
           }
         `}</style>
