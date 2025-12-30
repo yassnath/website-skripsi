@@ -16,7 +16,6 @@ function useCvAntPageIn() {
   return pageIn;
 }
 
-
 function isLightModeNow() {
   if (typeof window === "undefined") return false;
 
@@ -48,7 +47,6 @@ function isLightModeNow() {
 
 export default function InvoiceEditLayer() {
   const pageIn = useCvAntPageIn();
-
   const sp = useSearchParams();
   const router = useRouter();
   const id = sp.get("id");
@@ -78,8 +76,25 @@ export default function InvoiceEditLayer() {
 
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
-
   const [isLightMode, setIsLightMode] = useState(false);
+
+  // ✅ base API & base SITE (untuk email link publik)
+  const apiBase = useMemo(() => {
+    let base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    return String(base).replace(/\/+$/, "");
+  }, []);
+
+  const siteBase = useMemo(() => {
+    if (typeof window !== "undefined") {
+      return (
+        (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin).replace(
+          /\/+$/,
+          ""
+        )
+      );
+    }
+    return (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/+$/, "");
+  }, []);
 
   useEffect(() => {
     const update = () => setIsLightMode(isLightModeNow());
@@ -109,7 +124,6 @@ export default function InvoiceEditLayer() {
     setPopup({ show: true, type, message });
 
     window.clearTimeout(showPopup._t);
-
     if (autoCloseMs > 0) {
       showPopup._t = window.setTimeout(() => {
         setPopup((p) => ({ ...p, show: false }));
@@ -118,7 +132,6 @@ export default function InvoiceEditLayer() {
   };
 
   const closePopup = () => setPopup((p) => ({ ...p, show: false }));
-
   const popupAccent = popup.type === "success" ? "#22c55e" : "#ef4444";
 
   const controlBg = isLightMode ? "#ffffff" : "#273142";
@@ -129,14 +142,12 @@ export default function InvoiceEditLayer() {
 
   const toInputDate = (raw) => {
     if (!raw) return "";
-
     const str = String(raw).trim();
 
     if (/^\d{2}-\d{2}-\d{4}$/.test(str)) {
       const [dd, mm, yyyy] = str.split("-");
       return `${yyyy}-${mm}-${dd}`;
     }
-
     if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
 
     if (/^\d{4}-\d{2}-\d{2}T/.test(str)) {
@@ -151,7 +162,6 @@ export default function InvoiceEditLayer() {
     }
 
     if (/^\d{4}-\d{2}-\d{2}\s/.test(str)) return str.split(" ")[0];
-
     return "";
   };
 
@@ -207,14 +217,14 @@ export default function InvoiceEditLayer() {
         }));
 
         setForm({
-          no_invoice: d.no_invoice || "",
-          tanggal: toInputDate(d.tanggal || ""),
-          due_date: toInputDate(d.due_date || ""),
-          nama_pelanggan: d.nama_pelanggan || "",
-          email: d.email || "",
-          no_telp: d.no_telp || "",
-          status: d.status || "Unpaid",
-          diterima_oleh: d.diterima_oleh || "Admin",
+          no_invoice: d?.no_invoice || "",
+          tanggal: toInputDate(d?.tanggal || ""),
+          due_date: toInputDate(d?.due_date || ""),
+          nama_pelanggan: d?.nama_pelanggan || "",
+          email: d?.email || "",
+          no_telp: d?.no_telp || "",
+          status: d?.status || "Unpaid",
+          diterima_oleh: d?.diterima_oleh || "Admin",
           rincian,
         });
       })
@@ -272,8 +282,9 @@ export default function InvoiceEditLayer() {
   const totalBayar = useMemo(() => subtotal - pph, [subtotal, pph]);
 
   const validate = () => {
-    const required = ["tanggal", "nama_pelanggan", "status"];
-    const empty = required.filter((f) => !form[f]);
+    // ✅ tambahkan no_invoice biar aman
+    const required = ["no_invoice", "tanggal", "nama_pelanggan", "status"];
+    const empty = required.filter((f) => !String(form[f] || "").trim());
 
     if (empty.length > 0) {
       setErr("");
@@ -312,14 +323,16 @@ export default function InvoiceEditLayer() {
       showPopup("danger", "ID invoice tidak ditemukan.", 0);
       return;
     }
-
     if (!validate()) return;
 
     setSaving(true);
     setErr("");
 
     try {
+      // ✅ FIX UTAMA: no_invoice harus ikut payload PUT
       const payload = {
+        no_invoice: String(form.no_invoice || "").trim(),
+
         nama_pelanggan: form.nama_pelanggan,
         email: form.email,
         no_telp: form.no_telp,
@@ -350,11 +363,21 @@ export default function InvoiceEditLayer() {
         "Invoice updated successfully! Redirecting to Invoice List Page...",
         2500
       );
-      setTimeout(() => {
-        router.push("/invoice-list");
-      }, 3000);
+      setTimeout(() => router.push("/invoice-list"), 3000);
     } catch (e) {
-      const msg = e?.message || "Gagal mengupdate invoice";
+      // ✅ tampilkan error validasi Laravel kalau ada
+      const serverMsg =
+        e?.response?.data?.message ||
+        e?.message ||
+        "Gagal mengupdate invoice";
+
+      const fieldErrors = e?.response?.data?.errors;
+      const firstFieldError = fieldErrors
+        ? Object.values(fieldErrors).flat()?.[0]
+        : "";
+
+      const msg = firstFieldError || serverMsg;
+
       setErr(msg);
       showPopup("danger", msg, 0);
     } finally {
@@ -363,23 +386,19 @@ export default function InvoiceEditLayer() {
   };
 
   const handlePdf = () => {
-    if (!id) {
-      showPopup("danger", "ID invoice tidak ditemukan.", 0);
-      return;
-    }
+    if (!id) return showPopup("danger", "ID invoice tidak ditemukan.", 0);
     router.push(`/invoice-preview?id=${id}`);
   };
 
   const handleEmail = () => {
-    if (!id) {
-      showPopup("danger", "ID invoice tidak ditemukan.", 0);
-      return;
-    }
+    if (!id) return showPopup("danger", "ID invoice tidak ditemukan.", 0);
 
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    // ✅ Link email sebaiknya pakai site publik (bukan internal apiBase)
+    const publicPdf = `${siteBase}/invoice/${id}/pdf`;
+
     const subject = encodeURIComponent(`Invoice ${form.no_invoice || ""}`);
     const body = encodeURIComponent(
-      `Yth. ${form.nama_pelanggan},\n\nBerikut link untuk unduh invoice:\n${baseUrl}/api/invoices/${id}/pdf\n\nTerima kasih,\nCV. AS Nusa Trans`
+      `Yth. ${form.nama_pelanggan},\n\nBerikut link untuk unduh invoice:\n${publicPdf}\n\nTerima kasih,\nCV. AS Nusa Trans`
     );
     const to = encodeURIComponent(form.email || "");
 
@@ -389,431 +408,456 @@ export default function InvoiceEditLayer() {
     );
   };
 
-  
   return (
     <>
       <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
-    <div className="container-fluid py-4">
-      {popup.show && (
-        <div
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-          style={{
-            zIndex: 9999,
-            background: "rgba(0,0,0,0.55)",
-            padding: "16px",
-          }}
-          onClick={closePopup}
-        >
-          <div
-            className="radius-12 shadow-sm p-24"
-            style={{
-              width: "100%",
-              maxWidth: "600px",
-              backgroundColor: "#1b2431",
-              border: `2px solid ${popupAccent}`,
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="d-flex align-items-start justify-content-between gap-2">
-              <div className="d-flex align-items-start gap-12">
-                <span style={{ marginTop: "2px" }}>
-                  <Icon
-                    icon={
-                      popup.type === "success"
-                        ? "solar:check-circle-linear"
-                        : "solar:danger-triangle-linear"
-                    }
-                    style={{
-                      fontSize: "28px",
-                      color: popupAccent,
-                    }}
-                  />
-                </span>
-
-                <div>
-                  <h5 className="mb-8 fw-bold" style={{ color: "#ffffff" }}>
-                    {popup.type === "success" ? "Success" : "Error"}
-                  </h5>
-                  <p
-                    className="mb-0"
-                    style={{ color: "#cbd5e1", fontSize: "15px" }}
-                  >
-                    {popup.message}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                className="btn p-0"
-                aria-label="Close"
-                onClick={closePopup}
+        <div className="container-fluid py-4">
+          {popup.show && (
+            <div
+              className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+              style={{
+                zIndex: 9999,
+                background: "rgba(0,0,0,0.55)",
+                padding: "16px",
+              }}
+              onClick={closePopup}
+            >
+              <div
+                className="radius-12 shadow-sm p-24"
                 style={{
-                  border: "none",
-                  background: "transparent",
-                  lineHeight: 1,
-                }}
-              >
-                <Icon
-                  icon="solar:close-circle-linear"
-                  style={{ fontSize: 24, color: "#94a3b8" }}
-                />
-              </button>
-            </div>
-
-            <div className="d-flex justify-content-end mt-20">
-              <button
-                type="button"
-                className={`btn btn-${
-                  popup.type === "success" ? "primary" : "danger"
-                } radius-12 px-16`}
-                onClick={closePopup}
-                style={{
+                  width: "100%",
+                  maxWidth: "600px",
+                  backgroundColor: "#1b2431",
                   border: `2px solid ${popupAccent}`,
                 }}
+                onClick={(e) => e.stopPropagation()}
               >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                <div className="d-flex align-items-start justify-content-between gap-2">
+                  <div className="d-flex align-items-start gap-12">
+                    <span style={{ marginTop: "2px" }}>
+                      <Icon
+                        icon={
+                          popup.type === "success"
+                            ? "solar:check-circle-linear"
+                            : "solar:danger-triangle-linear"
+                        }
+                        style={{ fontSize: "28px", color: popupAccent }}
+                      />
+                    </span>
 
-      {!id ? (
-        <div className="alert alert-warning">ID invoice tidak ditemukan</div>
-      ) : (
-        <div className="row g-4">
-          <div className="col-lg-12">
-            <div className="card shadow-sm border-0">
-              <div className="card-header bg-transparent d-flex justify-content-end gap-2">
-                <button
-                  onClick={handleEmail}
-                  className="btn btn-sm btn-outline-secondary"
-                >
-                  Kirim Email
-                </button>
-                <button
-                  onClick={handlePdf}
-                  className="btn btn-sm btn-outline-warning"
-                >
-                  Preview
-                </button>
-                <button
-                  disabled={saving}
-                  onClick={handleSave}
-                  className="btn btn-sm btn-primary"
-                >
-                  {saving ? "Menyimpan..." : "Simpan"}
-                </button>
+                    <div>
+                      <h5 className="mb-8 fw-bold" style={{ color: "#ffffff" }}>
+                        {popup.type === "success" ? "Success" : "Error"}
+                      </h5>
+                      <p
+                        className="mb-0"
+                        style={{ color: "#cbd5e1", fontSize: "15px" }}
+                      >
+                        {popup.message}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn p-0"
+                    aria-label="Close"
+                    onClick={closePopup}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      lineHeight: 1,
+                    }}
+                  >
+                    <Icon
+                      icon="solar:close-circle-linear"
+                      style={{ fontSize: 24, color: "#94a3b8" }}
+                    />
+                  </button>
+                </div>
+
+                <div className="d-flex justify-content-end mt-20">
+                  <button
+                    type="button"
+                    className={`btn btn-${
+                      popup.type === "success" ? "primary" : "danger"
+                    } radius-12 px-16`}
+                    onClick={closePopup}
+                    style={{ border: `2px solid ${popupAccent}` }}
+                  >
+                    OK
+                  </button>
+                </div>
               </div>
+            </div>
+          )}
 
-              <div className="card-body">
-                <div className="row g-3">
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">
-                      Nomor Invoice
-                    </label>
-                    <input
-                      className="form-control"
-                      value={form.no_invoice || ""}
-                      readOnly
-                    />
-                  </div>
-
-                  <div className="col-md-3">
-                    <label className="form-label fw-semibold">Tanggal</label>
-                    <input
-                      type="date"
-                      className="form-control"
-                      value={form.tanggal || ""}
-                      onChange={onChange("tanggal")}
-                    />
-                  </div>
-
-                  <div className="col-md-3">
-                    <label className="form-label fw-semibold">Jatuh Tempo</label>
-                    <input
-                      type="date"
-                      className="form-control"
-                      value={form.due_date || ""}
-                      onChange={onChange("due_date")}
-                    />
-                  </div>
-
-                  <div className="col-12">
-                    <hr className="my-2" />
-                  </div>
-
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Nama Customer</label>
-                    <input
-                      className="form-control"
-                      value={form.nama_pelanggan || ""}
-                      onChange={onChange("nama_pelanggan")}
-                      placeholder="Nama pelanggan"
-                    />
-                  </div>
-
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Email Customer</label>
-                    <input
-                      className="form-control"
-                      value={form.email || ""}
-                      onChange={onChange("email")}
-                      placeholder="email@domain.com"
-                    />
-                  </div>
-
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">No. Telp</label>
-                    <input
-                      className="form-control"
-                      value={form.no_telp || ""}
-                      onChange={onChange("no_telp")}
-                      placeholder="0812xxxx"
-                    />
-                  </div>
-
-                  <div className="col-12">
-                    <label className="form-label fw-semibold">
-                      Rincian Muat / Bongkar & Armada
-                    </label>
-
-                    {(form.rincian || []).map((r, i) => {
-                      const rowTotal = calcRowSubtotal(r);
-
-                      return (
-                        <div
-                          key={i}
-                          className={`row g-2 align-items-center mb-2 ${
-                            i > 0 ? "mt-3" : ""
-                          }`}
-                          style={{ paddingBottom: "6px" }}
-                        >
-                          <div className="col-md-3">
-                            <input
-                              type="text"
-                              className="form-control"
-                              placeholder="Lokasi Muat"
-                              value={r.lokasi_muat}
-                              onChange={(e) =>
-                                updateRincian(i, "lokasi_muat", e.target.value)
-                              }
-                            />
-                          </div>
-
-                          <div className="col-md-3">
-                            <input
-                              type="text"
-                              className="form-control"
-                              placeholder="Lokasi Bongkar"
-                              value={r.lokasi_bongkar}
-                              onChange={(e) =>
-                                updateRincian(i, "lokasi_bongkar", e.target.value)
-                              }
-                            />
-                          </div>
-
-                          <div className="col-md-4">
-                            <select
-                              className="form-select"
-                              value={r.armada_id}
-                              onChange={(e) =>
-                                updateRincian(i, "armada_id", e.target.value)
-                              }
-                              style={{
-                                backgroundColor: controlBg,
-                                color: controlText,
-                                borderColor: controlBorder,
-                              }}
-                            >
-                              <option
-                                value=""
-                                style={{ backgroundColor: optionBg, color: optionText }}
-                              >
-                                -- Pilih Armada --
-                              </option>
-
-                              {armadas.map((a) => (
-                                <option
-                                  key={a.id}
-                                  value={a.id}
-                                  style={{ backgroundColor: optionBg, color: optionText }}
-                                >
-                                  {a.nama_truk} – {a.plat_nomor} ({a.status})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div className="col-md-2 text-end">
-                            {(form.rincian || []).length > 1 && (
-                              <button
-                                className="btn btn-sm btn-outline-danger"
-                                onClick={() => removeRincian(i)}
-                              >
-                                Hapus
-                              </button>
-                            )}
-                          </div>
-
-                          <div className="col-md-3">
-                            <input
-                              type="date"
-                              className="form-control"
-                              value={r.armada_start_date}
-                              onChange={(e) =>
-                                updateRincian(i, "armada_start_date", e.target.value)
-                              }
-                            />
-                          </div>
-
-                          <div className="col-md-3">
-                            <input
-                              type="date"
-                              className="form-control"
-                              value={r.armada_end_date}
-                              onChange={(e) =>
-                                updateRincian(i, "armada_end_date", e.target.value)
-                              }
-                            />
-                          </div>
-
-                          <div className="col-md-2">
-                            <input
-                              type="number"
-                              className="form-control"
-                              placeholder="Tonase"
-                              value={r.tonase}
-                              onChange={(e) =>
-                                updateRincian(i, "tonase", e.target.value)
-                              }
-                            />
-                          </div>
-
-                          <div className="col-md-2">
-                            <input
-                              type="number"
-                              className="form-control"
-                              placeholder="Harga / Ton"
-                              value={r.harga}
-                              onChange={(e) =>
-                                updateRincian(i, "harga", e.target.value)
-                              }
-                            />
-                          </div>
-
-                          <div className="col-md-2">
-                            <input
-                              type="text"
-                              className="form-control"
-                              value={`Rp ${rowTotal.toLocaleString("id-ID")}`}
-                              readOnly
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-
+          {!id ? (
+            <div className="alert alert-warning">ID invoice tidak ditemukan</div>
+          ) : (
+            <div className="row g-4">
+              <div className="col-lg-12">
+                <div className="card shadow-sm border-0">
+                  <div className="card-header bg-transparent d-flex justify-content-end gap-2">
                     <button
-                      className="btn btn-sm btn-outline-primary mt-4"
-                      onClick={addRincian}
+                      onClick={handleEmail}
+                      className="btn btn-sm btn-outline-secondary"
                     >
-                      + Tambah Rincian
+                      Kirim Email
+                    </button>
+                    <button
+                      onClick={handlePdf}
+                      className="btn btn-sm btn-outline-warning"
+                    >
+                      Preview
+                    </button>
+                    <button
+                      disabled={saving}
+                      onClick={handleSave}
+                      className="btn btn-sm btn-primary"
+                    >
+                      {saving ? "Menyimpan..." : "Simpan"}
                     </button>
                   </div>
 
-                  <div className="col-md-4">
-                    <label className="form-label fw-semibold">Subtotal</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={`Rp ${subtotal.toLocaleString("id-ID")}`}
-                      readOnly
-                    />
-                  </div>
+                  <div className="card-body">
+                    <div className="row g-3">
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          Nomor Invoice
+                        </label>
+                        <input
+                          className="form-control"
+                          value={form.no_invoice || ""}
+                          readOnly
+                        />
+                      </div>
 
-                  <div className="col-md-4">
-                    <label className="form-label fw-semibold">PPH (2%)</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={`Rp ${pph.toLocaleString("id-ID")}`}
-                      readOnly
-                    />
-                  </div>
+                      <div className="col-md-3">
+                        <label className="form-label fw-semibold">Tanggal</label>
+                        <input
+                          type="date"
+                          className="form-control"
+                          value={form.tanggal || ""}
+                          onChange={onChange("tanggal")}
+                        />
+                      </div>
 
-                  <div className="col-md-4">
-                    <label className="form-label fw-semibold">Total Bayar</label>
-                    <input
-                      type="text"
-                      className="form-control fw-bold"
-                      style={{
-                        backgroundColor: "#f8f9fa",
-                        color: "black",
-                        WebkitTextFillColor: "black",
-                      }}
-                      value={`Rp ${totalBayar.toLocaleString("id-ID")}`}
-                      readOnly
-                    />
-                  </div>
+                      <div className="col-md-3">
+                        <label className="form-label fw-semibold">
+                          Jatuh Tempo
+                        </label>
+                        <input
+                          type="date"
+                          className="form-control"
+                          value={form.due_date || ""}
+                          onChange={onChange("due_date")}
+                        />
+                      </div>
 
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Status</label>
-                    <select
-                      className="form-select"
-                      value={form.status || "Unpaid"}
-                      onChange={onChange("status")}
-                      style={{
-                        backgroundColor: controlBg,
-                        color: controlText,
-                        borderColor: controlBorder,
-                      }}
-                    >
-                      {["Unpaid", "Paid", "Waiting"].map((s) => (
-                        <option
-                          key={s}
-                          value={s}
-                          style={{ backgroundColor: optionBg, color: optionText }}
+                      <div className="col-12">
+                        <hr className="my-2" />
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          Nama Customer
+                        </label>
+                        <input
+                          className="form-control"
+                          value={form.nama_pelanggan || ""}
+                          onChange={onChange("nama_pelanggan")}
+                          placeholder="Nama pelanggan"
+                        />
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          Email Customer
+                        </label>
+                        <input
+                          className="form-control"
+                          value={form.email || ""}
+                          onChange={onChange("email")}
+                          placeholder="email@domain.com"
+                        />
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">No. Telp</label>
+                        <input
+                          className="form-control"
+                          value={form.no_telp || ""}
+                          onChange={onChange("no_telp")}
+                          placeholder="0812xxxx"
+                        />
+                      </div>
+
+                      <div className="col-12">
+                        <label className="form-label fw-semibold">
+                          Rincian Muat / Bongkar & Armada
+                        </label>
+
+                        {(form.rincian || []).map((r, i) => {
+                          const rowTotal = calcRowSubtotal(r);
+
+                          return (
+                            <div
+                              key={i}
+                              className={`row g-2 align-items-center mb-2 ${
+                                i > 0 ? "mt-3" : ""
+                              }`}
+                              style={{ paddingBottom: "6px" }}
+                            >
+                              <div className="col-md-3">
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  placeholder="Lokasi Muat"
+                                  value={r.lokasi_muat}
+                                  onChange={(e) =>
+                                    updateRincian(i, "lokasi_muat", e.target.value)
+                                  }
+                                />
+                              </div>
+
+                              <div className="col-md-3">
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  placeholder="Lokasi Bongkar"
+                                  value={r.lokasi_bongkar}
+                                  onChange={(e) =>
+                                    updateRincian(
+                                      i,
+                                      "lokasi_bongkar",
+                                      e.target.value
+                                    )
+                                  }
+                                />
+                              </div>
+
+                              <div className="col-md-4">
+                                <select
+                                  className="form-select"
+                                  value={r.armada_id}
+                                  onChange={(e) =>
+                                    updateRincian(i, "armada_id", e.target.value)
+                                  }
+                                  style={{
+                                    backgroundColor: controlBg,
+                                    color: controlText,
+                                    borderColor: controlBorder,
+                                  }}
+                                >
+                                  <option
+                                    value=""
+                                    style={{
+                                      backgroundColor: optionBg,
+                                      color: optionText,
+                                    }}
+                                  >
+                                    -- Pilih Armada --
+                                  </option>
+
+                                  {armadas.map((a) => (
+                                    <option
+                                      key={a.id}
+                                      value={a.id}
+                                      style={{
+                                        backgroundColor: optionBg,
+                                        color: optionText,
+                                      }}
+                                    >
+                                      {a.nama_truk} – {a.plat_nomor} ({a.status})
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div className="col-md-2 text-end">
+                                {(form.rincian || []).length > 1 && (
+                                  <button
+                                    className="btn btn-sm btn-outline-danger"
+                                    onClick={() => removeRincian(i)}
+                                    type="button"
+                                  >
+                                    Hapus
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="col-md-3">
+                                <input
+                                  type="date"
+                                  className="form-control"
+                                  value={r.armada_start_date}
+                                  onChange={(e) =>
+                                    updateRincian(
+                                      i,
+                                      "armada_start_date",
+                                      e.target.value
+                                    )
+                                  }
+                                />
+                              </div>
+
+                              <div className="col-md-3">
+                                <input
+                                  type="date"
+                                  className="form-control"
+                                  value={r.armada_end_date}
+                                  onChange={(e) =>
+                                    updateRincian(
+                                      i,
+                                      "armada_end_date",
+                                      e.target.value
+                                    )
+                                  }
+                                />
+                              </div>
+
+                              <div className="col-md-2">
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  placeholder="Tonase"
+                                  value={r.tonase}
+                                  onChange={(e) =>
+                                    updateRincian(i, "tonase", e.target.value)
+                                  }
+                                />
+                              </div>
+
+                              <div className="col-md-2">
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  placeholder="Harga / Ton"
+                                  value={r.harga}
+                                  onChange={(e) =>
+                                    updateRincian(i, "harga", e.target.value)
+                                  }
+                                />
+                              </div>
+
+                              <div className="col-md-2">
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  value={`Rp ${rowTotal.toLocaleString("id-ID")}`}
+                                  readOnly
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        <button
+                          className="btn btn-sm btn-outline-primary mt-4"
+                          onClick={addRincian}
+                          type="button"
                         >
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                          + Tambah Rincian
+                        </button>
+                      </div>
 
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Diterima Oleh</label>
-                    <select
-                      className="form-select"
-                      value={form.diterima_oleh || "Admin"}
-                      onChange={onChange("diterima_oleh")}
-                      style={{
-                        backgroundColor: controlBg,
-                        color: controlText,
-                        borderColor: controlBorder,
-                      }}
-                    >
-                      {["Admin", "Owner"].map((role) => (
-                        <option
-                          key={role}
-                          value={role}
-                          style={{ backgroundColor: optionBg, color: optionText }}
+                      <div className="col-md-4">
+                        <label className="form-label fw-semibold">Subtotal</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={`Rp ${subtotal.toLocaleString("id-ID")}`}
+                          readOnly
+                        />
+                      </div>
+
+                      <div className="col-md-4">
+                        <label className="form-label fw-semibold">PPH (2%)</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={`Rp ${pph.toLocaleString("id-ID")}`}
+                          readOnly
+                        />
+                      </div>
+
+                      <div className="col-md-4">
+                        <label className="form-label fw-semibold">Total Bayar</label>
+                        <input
+                          type="text"
+                          className="form-control fw-bold"
+                          style={{
+                            backgroundColor: "#f8f9fa",
+                            color: "black",
+                            WebkitTextFillColor: "black",
+                          }}
+                          value={`Rp ${totalBayar.toLocaleString("id-ID")}`}
+                          readOnly
+                        />
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">Status</label>
+                        <select
+                          className="form-select"
+                          value={form.status || "Unpaid"}
+                          onChange={onChange("status")}
+                          style={{
+                            backgroundColor: controlBg,
+                            color: controlText,
+                            borderColor: controlBorder,
+                          }}
                         >
-                          {role}
-                        </option>
-                      ))}
-                    </select>
+                          {["Unpaid", "Paid", "Waiting"].map((s) => (
+                            <option
+                              key={s}
+                              value={s}
+                              style={{
+                                backgroundColor: optionBg,
+                                color: optionText,
+                              }}
+                            >
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">Diterima Oleh</label>
+                        <select
+                          className="form-select"
+                          value={form.diterima_oleh || "Admin"}
+                          onChange={onChange("diterima_oleh")}
+                          style={{
+                            backgroundColor: controlBg,
+                            color: controlText,
+                            borderColor: controlBorder,
+                          }}
+                        >
+                          {["Admin", "Owner"].map((role) => (
+                            <option
+                              key={role}
+                              value={role}
+                              style={{
+                                backgroundColor: optionBg,
+                                color: optionText,
+                              }}
+                            >
+                              {role}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
-    </div>
-  
       </div>
-</>
+    </>
   );
 }
