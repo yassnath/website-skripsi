@@ -82,13 +82,13 @@ function tgl($date){
 <table class="twocol">
     <tr>
         <td class="left">
-            <h2 class="company-title">CV AS Nusa Trans (CV ANT)</h2>
+            <h2 class="company-title">CV AS Nusa Trans</h2>
             <p class="company-line">Ruko Graha Kota Blok BB-07, Suko, Sidoarjo</p>
             <p class="company-line">Email: asnusa.trans@gmail.com | Telp: 0812-3425-9399</p>
         </td>
 
         <td class="right">
-            <h3 class="title-main">{{ $rangeLabel }}</h3>
+            <h2 class="title-main">{{ $rangeLabel }}</h2>
             <p class="info-line"><strong>Periode:</strong> {{ $periodLabel }}</p>
             <p class="info-line"><strong>Dicetak:</strong> {{ $generatedAt }}</p>
         </td>
