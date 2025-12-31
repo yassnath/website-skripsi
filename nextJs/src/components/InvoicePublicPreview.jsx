@@ -92,6 +92,7 @@ export default function InvoicePublicPreview({ id }) {
     a.download = invoice?.no_invoice
       ? `invoice-${invoice.no_invoice}.pdf`
       : `invoice-${id}.pdf`;
+
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -113,121 +114,121 @@ export default function InvoicePublicPreview({ id }) {
     );
   }
 
-  const topTitleMargin = isMobile ? "8px" : "14px";
-  const buttonTopMargin = isMobile ? "8px" : "14px";
-
   return (
     <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
-      <div className="py-4" style={{ background: "#1b2431" }}>
-        <div className="container p-0 px-3 px-md-4 px-lg-0">
+      <div className="py-3 py-md-4" style={{ background: "#1b2431" }}>
+        <div className="container px-3 px-md-4 px-lg-0">
+          {/* ✅ HEADER CARD */}
           <div
-            className="p-4 p-md-4 text-light rounded shadow-sm border border-secondary position-relative mb-3"
-            style={{ background: "#273142" }}
+            className="rounded shadow-sm border border-secondary position-relative mb-3 overflow-hidden"
+            style={{
+              background: "#273142",
+            }}
           >
-            <div className="position-relative z-1">
-              <div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
-                <div
-                  className="pe-2 pe-md-4"
-                  style={{
-                    marginLeft: isMobile ? "6px" : "14px",
-                  }}
-                >
-                  <h4
-                    className="fw-bold mb-1 text-info"
-                    style={{ marginTop: topTitleMargin }}
-                  >
+            <div className="p-3 p-md-4">
+              {/* ✅ MOBILE: stack, DESKTOP: flex */}
+              <div className="d-flex flex-column flex-md-row justify-content-between gap-3">
+                {/* LEFT */}
+                <div className="text-light">
+                  <h5 className="fw-bold text-info mb-2">
                     CV AS Nusa Trans
-                  </h4>
-
-                  <div className="text-light">
+                  </h5>
+                  <div className="small text-light opacity-90">
                     Ruko Graha Kota Blok BB-07, Suko, Sidoarjo
                   </div>
-                  <div className="text-light">Email: asnusa.trans@gmail.com</div>
-                  <div className="text-light">Telp: 0812-3425-9399</div>
+                  <div className="small text-light opacity-90">
+                    Email: asnusa.trans@gmail.com
+                  </div>
+                  <div className="small text-light opacity-90">
+                    Telp: 0812-3425-9399
+                  </div>
                 </div>
 
-                <div
-                  className="text-end ps-2 ps-md-4"
-                  style={{
-                    marginRight: isMobile ? "6px" : "14px",
-                  }}
-                >
-                  <h4
-                    className="fw-bold text-light mb-2"
-                    style={{ marginTop: topTitleMargin }}
-                  >
-                    INVOICE
-                  </h4>
-
-                  <div className="text-light">
-                    <strong>No. Invoice:</strong> {safeStr(invoice.no_invoice)}
+                {/* RIGHT */}
+                <div className="text-light text-md-end">
+                  <h5 className="fw-bold mb-2">INVOICE</h5>
+                  <div className="small">
+                    <strong>No:</strong>{" "}
+                    <span className="opacity-90">{safeStr(invoice.no_invoice)}</span>
                   </div>
-
-                  <div className="text-light">
-                    <strong>Tanggal:</strong> {formatDate(invoice.tanggal)}
+                  <div className="small">
+                    <strong>Tanggal:</strong>{" "}
+                    <span className="opacity-90">{formatDate(invoice.tanggal)}</span>
                   </div>
-
-                  <div className="text-light">
+                  <div className="small">
                     <strong>Jatuh Tempo:</strong>{" "}
-                    {invoice.due_date ? formatDate(invoice.due_date) : "-"}
+                    <span className="opacity-90">
+                      {invoice.due_date ? formatDate(invoice.due_date) : "-"}
+                    </span>
                   </div>
                 </div>
               </div>
 
+              {/* divider */}
               <hr className="my-3 border-secondary" />
 
-              <div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
-                <div
-                  className="text-light"
-                  style={{
-                    marginLeft: isMobile ? "6px" : "14px",
-                  }}
-                >
-                  <div style={{ marginBottom: "6px" }}>
-                    <strong>Kepada:</strong> {safeStr(invoice.nama_pelanggan)}
+              {/* CUSTOMER + BUTTON */}
+              <div className="d-flex flex-column flex-md-row justify-content-between gap-3">
+                {/* Customer */}
+                <div className="text-light">
+                  <div className="small mb-1">
+                    <strong>Kepada:</strong>{" "}
+                    <span className="opacity-90">{safeStr(invoice.nama_pelanggan)}</span>
                   </div>
-
-                  <div style={{ marginBottom: "14px" }}>
-                    <strong>Email:</strong> {safeStr(invoice.email)}
+                  <div className="small">
+                    <strong>Email:</strong>{" "}
+                    <span className="opacity-90">{safeStr(invoice.email)}</span>
                   </div>
                 </div>
 
-                <div
-                  className="d-flex gap-2 flex-wrap"
-                  style={{
-                    marginRight: isMobile ? "6px" : "14px",
-                    marginBottom: "14px",
-                    marginTop: buttonTopMargin,
-                  }}
-                >
+                {/* Buttons */}
+                <div className="d-flex flex-column flex-sm-row gap-2">
                   <button
-                    className="btn btn-sm btn-primary"
+                    className="btn btn-primary btn-sm w-100"
                     onClick={handleDownloadPdf}
+                    style={{
+                      minWidth: isMobile ? "100%" : "140px",
+                    }}
                   >
                     Download PDF
                   </button>
 
                   <a
-                    className="btn btn-sm btn-success"
+                    className="btn btn-success btn-sm w-100"
                     href={pdfUrl}
                     target="_blank"
                     rel="noreferrer"
+                    style={{
+                      minWidth: isMobile ? "100%" : "140px",
+                    }}
                   >
                     Open PDF
                   </a>
                 </div>
               </div>
 
+              {/* ✅ Alert khusus mobile */}
               {isMobile && (
-                <div className="alert alert-secondary py-2 mb-0 small mt-2">
-                  Preview PDF pada sebagian HP (terutama iPhone) kadang tidak
-                  tampil di dalam halaman. Jika tidak muncul, silakan klik{" "}
-                  <strong>Open PDF</strong> atau <strong>Download PDF</strong>.
+                <div
+                  className="mt-3 p-2 rounded"
+                  style={{
+                    background: "#1f2937",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    fontSize: "12px",
+                    color: "#cbd5e1",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  Jika preview PDF tidak muncul di beberapa HP (misalnya iPhone),
+                  silakan klik{" "}
+                  <strong className="text-light">Open PDF</strong> atau{" "}
+                  <strong className="text-light">Download PDF</strong>.
                 </div>
               )}
             </div>
           </div>
 
+          {/* ✅ PDF VIEWER */}
           <div
             className="rounded shadow-sm border border-secondary overflow-hidden"
             style={{ background: "#273142" }}
@@ -237,16 +238,20 @@ export default function InvoicePublicPreview({ id }) {
               src={pdfUrl}
               style={{
                 width: "100%",
-                height: isMobile ? "60vh" : "85vh",
+                height: isMobile ? "68vh" : "85vh",
                 border: "none",
                 background: "#111",
               }}
             />
           </div>
 
-          <div className="text-center text-muted small mt-3 px-2">
+          {/* Footer hint */}
+          <div
+            className="text-center small mt-3 px-2"
+            style={{ color: "rgba(255,255,255,0.55)" }}
+          >
             Jika preview tidak muncul di perangkat Anda, klik{" "}
-            <strong className="text-light">Open PDF</strong>.
+            <strong style={{ color: "#fff" }}>Open PDF</strong>.
           </div>
         </div>
       </div>
