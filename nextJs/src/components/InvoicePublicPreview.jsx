@@ -183,7 +183,7 @@ export default function InvoicePublicPreview({ id }) {
                   style={{ justifyContent: isMobile ? "stretch" : "flex-end" }}
                 >
                   <button
-                    className="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center"
+                    className="btn btn-sm btn-primary d-inline-flex align-items-center justify-content-center"
                     onClick={handleDownloadPdf}
                     style={{
                       minWidth: isMobile ? "100%" : "150px",
@@ -193,7 +193,7 @@ export default function InvoicePublicPreview({ id }) {
                   </button>
 
                   <a
-                    className="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center"
+                    className="btn btn-sm btn-success d-inline-flex align-items-center justify-content-center"
                     href={pdfUrl}
                     target="_blank"
                     rel="noreferrer"
