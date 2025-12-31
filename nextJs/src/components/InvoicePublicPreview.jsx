@@ -114,6 +114,16 @@ export default function InvoicePublicPreview({ id }) {
     );
   }
 
+  /**
+   * ✅ FIX tombol supaya textnya BENAR2 center vertikal (desktop & mobile)
+   */
+  const btnFixStyle = {
+    height: "34px",
+    lineHeight: 1,
+    paddingTop: 0,
+    paddingBottom: 0,
+  };
+
   return (
     <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
       <div className="py-3 py-md-4" style={{ background: "#1b2431" }}>
@@ -149,11 +159,15 @@ export default function InvoicePublicPreview({ id }) {
                   <h5 className="fw-bold mb-2 text-light">INVOICE</h5>
                   <div className="small">
                     <strong>No:</strong>{" "}
-                    <span className="opacity-90">{safeStr(invoice.no_invoice)}</span>
+                    <span className="opacity-90">
+                      {safeStr(invoice.no_invoice)}
+                    </span>
                   </div>
                   <div className="small">
                     <strong>Tanggal:</strong>{" "}
-                    <span className="opacity-90">{formatDate(invoice.tanggal)}</span>
+                    <span className="opacity-90">
+                      {formatDate(invoice.tanggal)}
+                    </span>
                   </div>
                   <div className="small">
                     <strong>Jatuh Tempo:</strong>{" "}
@@ -173,20 +187,25 @@ export default function InvoicePublicPreview({ id }) {
                 <div className="text-light">
                   <div className="small mb-1">
                     <strong>Kepada:</strong>{" "}
-                    <span className="opacity-90">{safeStr(invoice.nama_pelanggan)}</span>
+                    <span className="opacity-90">
+                      {safeStr(invoice.nama_pelanggan)}
+                    </span>
                   </div>
                   <div className="small">
                     <strong>Email:</strong>{" "}
-                    <span className="opacity-90">{safeStr(invoice.email)}</span>
+                    <span className="opacity-90">
+                      {safeStr(invoice.email)}
+                    </span>
                   </div>
                 </div>
 
                 {/* Buttons */}
                 <div className="d-flex flex-column flex-sm-row gap-2">
                   <button
-                    className="btn btn-primary btn-sm w-100"
+                    className="btn btn-primary btn-sm w-100 d-flex align-items-center justify-content-center"
                     onClick={handleDownloadPdf}
                     style={{
+                      ...btnFixStyle,
                       minWidth: isMobile ? "100%" : "140px",
                     }}
                   >
@@ -194,11 +213,12 @@ export default function InvoicePublicPreview({ id }) {
                   </button>
 
                   <a
-                    className="btn btn-success btn-sm w-100"
+                    className="btn btn-success btn-sm w-100 d-flex align-items-center justify-content-center"
                     href={pdfUrl}
                     target="_blank"
                     rel="noreferrer"
                     style={{
+                      ...btnFixStyle,
                       minWidth: isMobile ? "100%" : "140px",
                     }}
                   >
