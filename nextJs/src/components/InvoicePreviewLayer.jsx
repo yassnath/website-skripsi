@@ -282,7 +282,7 @@ export default function InvoicePreviewLayer() {
       const subject = encodeURIComponent(`Invoice ${invoice.no_invoice}`);
       const body = encodeURIComponent(
         `Yth. ${invoice.nama_pelanggan},\n\n` +
-          `Silakan klik berikut untuk melihat invoice (Preview PDF):\n${publicUrl}\n\n` +
+          `Silakan klik berikut untuk melihat invoice:\n${publicUrl}\n\n` +
           `Terima kasih,\nCV AS Nusa Trans (CV ANT)`
       );
 
