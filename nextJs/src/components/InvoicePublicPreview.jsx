@@ -146,7 +146,7 @@ export default function InvoicePublicPreview({ id }) {
 
                 {/* RIGHT */}
                 <div className="text-light text-md-end">
-                  <h5 className="fw-bold mb-2">INVOICE</h5>
+                  <h5 className="fw-bold mb-2 text-light">INVOICE</h5>
                   <div className="small">
                     <strong>No:</strong>{" "}
                     <span className="opacity-90">{safeStr(invoice.no_invoice)}</span>
