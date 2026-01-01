@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import listPlugin from "@fullcalendar/list";
+import listPlugin from "@fullcalendar/list"; // ✅ TAMBAH
 import { api } from "@/lib/api";
 
 export default function CalendarMainLayer() {
@@ -24,9 +24,18 @@ export default function CalendarMainLayer() {
   const [currentRange, setCurrentRange] = useState({ start: "", end: "" });
 
   const [isLightMode, setIsLightMode] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
 
   const tooltipRef = useRef(null);
+
+  // ✅ MOBILE DETECTOR
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 991);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const getCssVar = (name, fallback) => {
     if (typeof window === "undefined") return fallback;
@@ -66,7 +75,6 @@ export default function CalendarMainLayer() {
     return false;
   };
 
-  // ✅ detect theme
   useEffect(() => {
     const update = () => setIsLightMode(isLightModeNow());
     update();
@@ -85,19 +93,6 @@ export default function CalendarMainLayer() {
     return () => obs.disconnect();
   }, []);
 
-  // ✅ detect mobile
-  useEffect(() => {
-    const update = () => {
-      if (typeof window === "undefined") return;
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
-  // ✅ update height
   useEffect(() => {
     const updateHeight = () => {
       if (calendarRef.current) {
@@ -107,10 +102,11 @@ export default function CalendarMainLayer() {
     updateHeight();
     window.addEventListener("resize", updateHeight);
     return () => window.removeEventListener("resize", updateHeight);
-  }, [invoices, expenses, isMobile]);
+  }, [invoices, expenses]);
 
   const normalizeDate = (value) => {
     if (!value) return "";
+
     const str = String(value).trim();
 
     if (/^\d{2}-\d{2}-\d{4}$/.test(str)) {
@@ -145,7 +141,6 @@ export default function CalendarMainLayer() {
     return `${d}-${m}-${y}`;
   };
 
-  // ✅ fetch invoice + expense
   useEffect(() => {
     const load = async () => {
       try {
@@ -285,7 +280,6 @@ export default function CalendarMainLayer() {
     return all;
   }, [invoices, expenses, currentRange]);
 
-  // ✅ Tooltip (desktop only)
   const ensureTooltipEl = () => {
     if (typeof document === "undefined") return null;
 
@@ -349,12 +343,12 @@ export default function CalendarMainLayer() {
 
   return (
     <>
+      {/* ✅ efek-in ditempel ke wrapper root */}
       <div className={`row gy-4 page-in ${pageIn ? "is-in" : ""}`}>
-        {/* ✅ LEFT SIDE */}
         <div className="col-xxl-3 col-lg-4">
           <div className="card h-100 p-0">
             <div
-              className="card-body p-24 cvant-left-transaction"
+              className="card-body p-24"
               style={{
                 maxHeight: calendarHeight ? `${calendarHeight}px` : "650px",
                 overflowY: "auto",
@@ -429,26 +423,29 @@ export default function CalendarMainLayer() {
           </div>
         </div>
 
-        {/* ✅ RIGHT SIDE */}
         <div className="col-xxl-9 col-lg-8">
           <div className="card h-100 p-0">
-            <div className="card-body p-24" ref={calendarRef}>
-              <div className="apexcharts-tooltip-style-1">
+            <div
+              className="card-body p-24"
+              ref={calendarRef}
+              style={{
+                height: "100%",
+                overflow: "visible",
+              }}
+            >
+              <div
+                className="apexcharts-tooltip-style-1"
+                style={{
+                  height: "100%",
+                }}
+              >
                 <FullCalendar
-                  key={isMobile ? "mobile" : "desktop"} // ✅ INI FIX UTAMANYA!
-                  plugins={[dayGridPlugin, listPlugin]}
-                  initialView={isMobile ? "listMonth" : "dayGridMonth"}
+                  plugins={[dayGridPlugin, listPlugin]} // ✅ TAMBAH listPlugin
+                  initialView={isMobile ? "listMonth" : "dayGridMonth"} // ✅ MOBILE = LIST FULL TANGGAL
                   headerToolbar={{
                     left: "prev",
                     center: "title",
                     right: "next",
-                  }}
-                  views={{
-                    listMonth: {
-                      buttonText: "List",
-                      listDayFormat: { weekday: "long", day: "numeric", month: "short" },
-                      listDaySideFormat: false,
-                    },
                   }}
                   events={calendarEvents}
                   displayEventTime={false}
@@ -463,14 +460,19 @@ export default function CalendarMainLayer() {
                     });
                   }}
                   eventDidMount={(info) => {
-                    if (isMobile) return;
-
                     info.el.removeAttribute("title");
 
                     const type = info.event.extendedProps.type;
 
                     const makeLines = () => {
-                      if (type === "income" || type === "expense") {
+                      if (type === "income") {
+                        return [
+                          `Total: Rp ${Number(
+                            info.event.extendedProps.total
+                          ).toLocaleString("id-ID")}`,
+                        ];
+                      }
+                      if (type === "expense") {
                         return [
                           `Total: Rp ${Number(
                             info.event.extendedProps.total
@@ -491,33 +493,103 @@ export default function CalendarMainLayer() {
 
                     const onMove = (e) => {
                       showTooltip(
-                        buildTooltipHtmlFromLines(info.event.title, makeLines()),
+                        buildTooltipHtmlFromLines(
+                          info.event.title,
+                          makeLines()
+                        ),
                         e.clientX,
                         e.clientY
                       );
                     };
 
+                    const onEnter = (e) => onMove(e);
                     const onLeave = () => hideTooltip();
 
                     info.el.addEventListener("mousemove", onMove);
+                    info.el.addEventListener("mouseenter", onEnter);
                     info.el.addEventListener("mouseleave", onLeave);
 
                     return () => {
                       info.el.removeEventListener("mousemove", onMove);
+                      info.el.removeEventListener("mouseenter", onEnter);
                       info.el.removeEventListener("mouseleave", onLeave);
+                    };
+                  }}
+                  eventContent={(arg) => {
+                    const type = arg.event.extendedProps.type;
+
+                    // ✅ LIST VIEW (mobile) biarkan default, supaya "full tanggal" rapi
+                    if (isMobile) return undefined;
+
+                    if (type === "armada") {
+                      return {
+                        html: `
+                          <div style="
+                            width:100%;height:100%;
+                            display:flex;justify-content:center;align-items:center;
+                            font-size:0.78rem;font-weight:600;text-align:center;
+                            color:${arg.event.textColor};
+                          ">
+                            ${arg.event.title}
+                          </div>
+                        `,
+                      };
+                    }
+
+                    let color = "inherit";
+                    if (type === "income") color = "#0d6efd";
+                    if (type === "expense") color = "#dc3545";
+
+                    return {
+                      html: `
+                        <div style="font-weight:600;font-size:0.83rem;color:${color}">
+                          ${arg.event.title}
+                        </div>
+                      `,
                     };
                   }}
                 />
               </div>
+
+              <div style={{ clear: "both" }} />
             </div>
           </div>
         </div>
       </div>
 
-      {/* ✅ CSS */}
+      {/* ✅ CSS existing JANGAN DIUBAH */}
       <style jsx global>{`
         .cvant-eye-btn:hover .cvant-eye-icon {
           color: var(--primary-600, #487fff) !important;
+        }
+
+        .cvant-fc-native-tooltip {
+          white-space: nowrap;
+          max-width: 320px;
+
+          border: 1px solid
+            var(--neutral-300, rgba(255, 255, 255, 0.18)) !important;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18) !important;
+          border-radius: 10px !important;
+          overflow: hidden;
+        }
+
+        .cvant-fc-native-tooltip .cvant-tooltip-pad {
+          padding: 12px 14px !important;
+        }
+
+        html[data-bs-theme="light"] .cvant-fc-native-tooltip,
+        html[data-theme="light"] .cvant-fc-native-tooltip {
+          background: #ffffff !important;
+          color: #111827 !important;
+          border-color: rgba(15, 23, 42, 0.14) !important;
+        }
+
+        html[data-bs-theme="dark"] .cvant-fc-native-tooltip,
+        html[data-theme="dark"] .cvant-fc-native-tooltip {
+          background: #0b1220 !important;
+          color: #ffffff !important;
+          border-color: rgba(255, 255, 255, 0.14) !important;
         }
 
         .fc .fc-button {
@@ -535,53 +607,73 @@ export default function CalendarMainLayer() {
           color: #ffffff !important;
         }
 
+        .fc .fc-button:focus,
+        .fc .fc-button:active {
+          background: transparent !important;
+          box-shadow: none !important;
+          outline: none !important;
+        }
+
         .fc .fc-toolbar-title {
           color: ${btnTextColor} !important;
         }
 
-        /* ✅ MOBILE LIST MODE (KALENDER JADI LIST TURUN KE BAWAH) */
-        @media (max-width: 767px) {
-          .cvant-left-transaction {
-            max-height: 360px !important;
-            padding: 16px !important;
-          }
+        .fc .fc-scroller {
+          overflow: visible !important;
+          height: auto !important;
+        }
+        .fc .fc-view-harness {
+          height: auto !important;
+        }
+        .fc .fc-daygrid-body {
+          height: auto !important;
+        }
+        .fc .fc-scrollgrid-section-body > td {
+          height: auto !important;
+        }
 
-          /* ✅ list mode rapih */
-          .fc .fc-list-table {
-            border: none !important;
-          }
+        html[data-bs-theme="light"] .fc .fc-col-header-cell,
+        html[data-theme="light"] .fc .fc-col-header-cell {
+          background: #ffffff !important;
+        }
+        html[data-bs-theme="light"] .fc .fc-col-header-cell a,
+        html[data-theme="light"] .fc .fc-col-header-cell a {
+          color: #111827 !important;
+        }
 
-          .fc .fc-list-day-cushion {
-            font-weight: 700 !important;
-            font-size: 13px !important;
-            padding: 10px 12px !important;
-            border-radius: 10px !important;
-          }
+        html[data-bs-theme="dark"] .fc .fc-col-header-cell,
+        html[data-theme="dark"] .fc .fc-col-header-cell {
+          background: #000000 !important;
+        }
+        html[data-bs-theme="dark"] .fc .fc-col-header-cell a,
+        html[data-theme="dark"] .fc .fc-col-header-cell a {
+          color: #ffffff !important;
+        }
 
-          .fc .fc-list-event {
-            border-radius: 12px !important;
-            margin: 8px 0 !important;
-            overflow: hidden !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-          }
+        html[data-bs-theme="light"]
+          .fc
+          .fc-col-header-cell
+          .fc-scrollgrid-sync-inner,
+        html[data-theme="light"]
+          .fc
+          .fc-col-header-cell
+          .fc-scrollgrid-sync-inner {
+          background: #ffffff !important;
+        }
+        html[data-bs-theme="dark"]
+          .fc
+          .fc-col-header-cell
+          .fc-scrollgrid-sync-inner,
+        html[data-theme="dark"]
+          .fc
+          .fc-col-header-cell
+          .fc-scrollgrid-sync-inner {
+          background: #273142 !important;
+        }
 
-          .fc .fc-list-event td {
-            padding: 10px 12px !important;
-          }
-
-          /* ✅ hilangkan jam & dot */
-          .fc .fc-list-event-time {
-            display: none !important;
-          }
-          .fc .fc-list-event-graphic {
-            display: none !important;
-          }
-
-          /* ✅ text boleh multi-line */
-          .fc .fc-list-event-title {
-            white-space: normal !important;
-            line-height: 1.25 !important;
-          }
+        /* ✅ tambahan kecil untuk list view mobile tapi tetap ikut style existing */
+        .fc .fc-list-day-cushion {
+          background: transparent !important;
         }
       `}</style>
     </>
