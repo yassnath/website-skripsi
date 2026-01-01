@@ -77,7 +77,7 @@ export default function InvoiceEditLayer() {
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // ✅ STATE BARU: DISAMAKAN DENGAN InvoicePreviewLayer.jsx
+  // ✅ NEW STATE (sama seperti InvoicePreviewLayer.jsx)
   const [sending, setSending] = useState(false);
 
   const [isLightMode, setIsLightMode] = useState(false);
@@ -362,15 +362,18 @@ export default function InvoiceEditLayer() {
     router.push(`/invoice-preview?id=${id}`);
   };
 
-  // ✅ DISAMAKAN DENGAN InvoicePreviewLayer.jsx
+  // ✅ sesuai dengan InvoicePreviewLayer.jsx
   const getPublicInvoicePublicPageUrl = (invoiceId) => {
     return `${siteBase}/invoice/${invoiceId}`;
   };
 
-  // ✅ DISAMAKAN DENGAN InvoicePreviewLayer.jsx (state sending + isi email)
+  // ✅ UPDATED: dibuat sama persis dengan InvoicePreviewLayer.jsx
   const handleSendToEmail = async () => {
-    if (!id) return;
-    if (!String(form.email || "").trim()) return;
+    if (!id) return showPopup("danger", "ID invoice tidak ditemukan.", 0);
+
+    if (!String(form.email || "").trim()) {
+      return showPopup("danger", "Email customer belum diisi.", 0);
+    }
 
     setSending(true);
 
@@ -389,8 +392,10 @@ export default function InvoiceEditLayer() {
 
       window.open(gmailUrl, "_blank");
     } catch (e) {
-      alert(
-        `Gagal membuat link PDF publik.\n\n${e?.message || "Unknown error"}`
+      showPopup(
+        "danger",
+        `Gagal membuat link PDF publik.\n\n${e?.message || "Unknown error"}`,
+        0
       );
     } finally {
       setSending(false);
@@ -532,7 +537,11 @@ export default function InvoiceEditLayer() {
                                   placeholder="Lokasi Muat"
                                   value={r.lokasi_muat}
                                   onChange={(e) =>
-                                    updateRincian(i, "lokasi_muat", e.target.value)
+                                    updateRincian(
+                                      i,
+                                      "lokasi_muat",
+                                      e.target.value
+                                    )
                                   }
                                 />
                               </div>
@@ -558,7 +567,11 @@ export default function InvoiceEditLayer() {
                                   className="form-select"
                                   value={r.armada_id}
                                   onChange={(e) =>
-                                    updateRincian(i, "armada_id", e.target.value)
+                                    updateRincian(
+                                      i,
+                                      "armada_id",
+                                      e.target.value
+                                    )
                                   }
                                   style={{
                                     backgroundColor: controlBg,
@@ -661,7 +674,9 @@ export default function InvoiceEditLayer() {
                                 <input
                                   type="text"
                                   className="form-control"
-                                  value={`Rp ${rowTotal.toLocaleString("id-ID")}`}
+                                  value={`Rp ${rowTotal.toLocaleString(
+                                    "id-ID"
+                                  )}`}
                                   readOnly
                                 />
                               </div>
@@ -679,7 +694,9 @@ export default function InvoiceEditLayer() {
                       </div>
 
                       <div className="col-md-4">
-                        <label className="form-label fw-semibold">Subtotal</label>
+                        <label className="form-label fw-semibold">
+                          Subtotal
+                        </label>
                         <input
                           type="text"
                           className="form-control"
@@ -699,7 +716,9 @@ export default function InvoiceEditLayer() {
                       </div>
 
                       <div className="col-md-4">
-                        <label className="form-label fw-semibold">Total Bayar</label>
+                        <label className="form-label fw-semibold">
+                          Total Bayar
+                        </label>
                         <input
                           type="text"
                           className="form-control fw-bold"
