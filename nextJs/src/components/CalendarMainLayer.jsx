@@ -435,12 +435,20 @@ export default function CalendarMainLayer() {
             <div className="card-body p-24" ref={calendarRef}>
               <div className="apexcharts-tooltip-style-1">
                 <FullCalendar
+                  key={isMobile ? "mobile" : "desktop"} // ✅ INI FIX UTAMANYA!
                   plugins={[dayGridPlugin, listPlugin]}
                   initialView={isMobile ? "listMonth" : "dayGridMonth"}
                   headerToolbar={{
                     left: "prev",
                     center: "title",
                     right: "next",
+                  }}
+                  views={{
+                    listMonth: {
+                      buttonText: "List",
+                      listDayFormat: { weekday: "long", day: "numeric", month: "short" },
+                      listDaySideFormat: false,
+                    },
                   }}
                   events={calendarEvents}
                   displayEventTime={false}
@@ -455,7 +463,7 @@ export default function CalendarMainLayer() {
                     });
                   }}
                   eventDidMount={(info) => {
-                    if (isMobile) return; // ✅ tooltip hanya desktop
+                    if (isMobile) return;
 
                     info.el.removeAttribute("title");
 
@@ -499,79 +507,6 @@ export default function CalendarMainLayer() {
                       info.el.removeEventListener("mouseleave", onLeave);
                     };
                   }}
-                  eventContent={(arg) => {
-                    const type = arg.event.extendedProps.type;
-
-                    // ✅ list view lebih readable
-                    if (isMobile) {
-                      const isIncome = type === "income";
-                      const isExpense = type === "expense";
-                      const isArmada = type === "armada";
-
-                      let color = "#111827";
-                      if (isIncome) color = "#0d6efd";
-                      if (isExpense) color = "#dc3545";
-                      if (isArmada) color = arg.event.textColor || "#111827";
-
-                      const total = arg.event.extendedProps.total;
-
-                      return {
-                        html: `
-                          <div style="display:flex;flex-direction:column;gap:4px;">
-                            <div style="font-weight:700;font-size:.92rem;color:${color};line-height:1.15;">
-                              ${arg.event.title}
-                            </div>
-                            ${
-                              (isIncome || isExpense) && total != null
-                                ? `<div style="font-size:.8rem;opacity:.85;">
-                                     Total: Rp ${Number(total).toLocaleString("id-ID")}
-                                   </div>`
-                                : ""
-                            }
-                            ${
-                              isArmada
-                                ? `<div style="font-size:.78rem;opacity:.85;">
-                                     ${toDisplayDDMMYYYY(
-                                       arg.event.extendedProps.startOriginal
-                                     )} → ${toDisplayDDMMYYYY(
-                                    arg.event.extendedProps.endOriginal
-                                  )}
-                                   </div>`
-                                : ""
-                            }
-                          </div>
-                        `,
-                      };
-                    }
-
-                    // ✅ Desktop view tetap sama (grid month)
-                    if (type === "armada") {
-                      return {
-                        html: `
-                          <div style="
-                            width:100%;height:100%;
-                            display:flex;justify-content:center;align-items:center;
-                            font-size:0.78rem;font-weight:600;text-align:center;
-                            color:${arg.event.textColor};
-                          ">
-                            ${arg.event.title}
-                          </div>
-                        `,
-                      };
-                    }
-
-                    let color = "inherit";
-                    if (type === "income") color = "#0d6efd";
-                    if (type === "expense") color = "#dc3545";
-
-                    return {
-                      html: `
-                        <div style="font-weight:600;font-size:0.83rem;color:${color}">
-                          ${arg.event.title}
-                        </div>
-                      `,
-                    };
-                  }}
                 />
               </div>
             </div>
@@ -604,36 +539,48 @@ export default function CalendarMainLayer() {
           color: ${btnTextColor} !important;
         }
 
-        /* ✅ MOBILE LIST MODE extra rapi */
+        /* ✅ MOBILE LIST MODE (KALENDER JADI LIST TURUN KE BAWAH) */
         @media (max-width: 767px) {
           .cvant-left-transaction {
             max-height: 360px !important;
             padding: 16px !important;
           }
 
-          .fc .fc-list-event {
-            border-radius: 10px !important;
+          /* ✅ list mode rapih */
+          .fc .fc-list-table {
+            border: none !important;
           }
 
           .fc .fc-list-day-cushion {
             font-weight: 700 !important;
             font-size: 13px !important;
+            padding: 10px 12px !important;
+            border-radius: 10px !important;
           }
 
-          .fc .fc-list-event-title {
-            white-space: normal !important;
+          .fc .fc-list-event {
+            border-radius: 12px !important;
+            margin: 8px 0 !important;
+            overflow: hidden !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
           }
 
+          .fc .fc-list-event td {
+            padding: 10px 12px !important;
+          }
+
+          /* ✅ hilangkan jam & dot */
+          .fc .fc-list-event-time {
+            display: none !important;
+          }
           .fc .fc-list-event-graphic {
             display: none !important;
           }
 
-          .fc .fc-list-table {
-            border: none !important;
-          }
-
-          .fc .fc-list-event-time {
-            display: none !important;
+          /* ✅ text boleh multi-line */
+          .fc .fc-list-event-title {
+            white-space: normal !important;
+            line-height: 1.25 !important;
           }
         }
       `}</style>
