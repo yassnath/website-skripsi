@@ -154,6 +154,32 @@ const LoginLayer = () => {
         }
 
         /* ==============================
+           ✅ CENTER HEADER + GLOW
+           ============================== */
+
+        .cvant-header-center {
+          width: 100% !important;
+          text-align: center !important;
+        }
+
+        .cvant-logo-wrap {
+          width: 100% !important;
+          display: flex !important;
+          justify-content: center !important;
+        }
+
+        .cvant-logo-glow {
+          filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.35))
+            drop-shadow(0 0 18px rgba(91, 140, 255, 0.2))
+            drop-shadow(0 0 12px rgba(168, 85, 247, 0.16));
+        }
+
+        .cvant-title-glow {
+          text-shadow: 0 0 18px rgba(91, 140, 255, 0.18),
+            0 0 10px rgba(168, 85, 247, 0.14);
+        }
+
+        /* ==============================
            ✅ INPUT ICON HARD CENTER FIX
            ============================== */
 
@@ -173,10 +199,6 @@ const LoginLayer = () => {
           justify-content: center !important;
           z-index: 5 !important;
           pointer-events: none !important;
-        }
-
-        .cvant-icon-wrap svg {
-          display: block !important;
         }
 
         .cvant-input {
@@ -202,36 +224,6 @@ const LoginLayer = () => {
           background: transparent !important;
           padding: 0 !important;
           z-index: 6 !important;
-        }
-
-        .cvant-eye-btn svg {
-          display: block !important;
-        }
-
-        /* ==============================
-           ✅ CENTER + GLOW HEADER (ALL)
-           ============================== */
-
-        .cvant-header-center {
-          width: 100% !important;
-          text-align: center !important;
-        }
-
-        .cvant-logo-wrap {
-          width: 100% !important;
-          display: flex !important;
-          justify-content: center !important;
-        }
-
-        .cvant-logo-glow {
-          filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.35))
-            drop-shadow(0 0 18px rgba(91, 140, 255, 0.18))
-            drop-shadow(0 0 12px rgba(168, 85, 247, 0.12));
-        }
-
-        .cvant-title-glow {
-          text-shadow: 0 0 18px rgba(91, 140, 255, 0.18),
-            0 0 10px rgba(168, 85, 247, 0.14);
         }
 
         /* ==============================
@@ -272,6 +264,114 @@ const LoginLayer = () => {
           border-radius: 18px;
           position: relative;
           overflow: hidden;
+        }
+
+        /* ==============================
+           ✅ LOGIN BUTTON NEON GLOW
+           ============================== */
+
+        .cvant-login-btn {
+          position: relative !important;
+          overflow: hidden !important;
+          border: none !important;
+          background: linear-gradient(
+            90deg,
+            rgba(91, 140, 255, 1),
+            rgba(168, 85, 247, 1)
+          ) !important;
+          transition: transform 0.15s ease, box-shadow 0.2s ease,
+            filter 0.2s ease !important;
+          box-shadow: 0 0 0 1px rgba(91, 140, 255, 0.35),
+            0 16px 34px rgba(0, 0, 0, 0.4),
+            0 0 16px rgba(91, 140, 255, 0.2) !important;
+        }
+
+        .cvant-login-btn::before {
+          content: "";
+          position: absolute;
+          inset: -2px;
+          background: radial-gradient(
+              400px 140px at 20% 30%,
+              rgba(255, 255, 255, 0.22),
+              transparent 60%
+            ),
+            radial-gradient(
+              500px 160px at 80% 60%,
+              rgba(34, 211, 238, 0.18),
+              transparent 62%
+            );
+          opacity: 0.7;
+          transition: opacity 0.25s ease;
+          pointer-events: none;
+        }
+
+        .cvant-login-btn:hover {
+          filter: brightness(1.04);
+          box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.45),
+            0 20px 46px rgba(0, 0, 0, 0.46),
+            0 0 22px rgba(91, 140, 255, 0.26),
+            0 0 16px rgba(168, 85, 247, 0.18) !important;
+          transform: translateY(-1px);
+        }
+
+        .cvant-login-btn:hover::before {
+          opacity: 1;
+        }
+
+        .cvant-login-btn:active {
+          transform: translateY(0px) scale(0.99);
+        }
+
+        /* ==============================
+           ✅ LEFT BIG ICON (DESKTOP) GLOW
+           ============================== */
+
+        .cvant-big-icon {
+          position: relative;
+          filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.35))
+            drop-shadow(0 0 18px rgba(34, 211, 238, 0.12))
+            drop-shadow(0 0 22px rgba(91, 140, 255, 0.16));
+        }
+
+        /* shimmer overlay */
+        .cvant-big-icon-wrap {
+          position: relative;
+          display: inline-block;
+        }
+
+        .cvant-big-icon-wrap::after {
+          content: "";
+          position: absolute;
+          inset: -10%;
+          background: linear-gradient(
+            120deg,
+            transparent 20%,
+            rgba(91, 140, 255, 0.16) 45%,
+            rgba(34, 211, 238, 0.12) 55%,
+            transparent 80%
+          );
+          transform: translateX(-130%);
+          animation: cvantShimmer 6.5s ease-in-out infinite;
+          pointer-events: none;
+          mix-blend-mode: screen;
+          border-radius: 18px;
+        }
+
+        @keyframes cvantShimmer {
+          0% {
+            transform: translateX(-130%);
+            opacity: 0.4;
+          }
+          35% {
+            opacity: 0.7;
+          }
+          60% {
+            opacity: 0.55;
+          }
+          100% {
+            transform: translateX(130%);
+            opacity: 0.4;
+          }
         }
 
         /* ✅ MOBILE ONLY */
@@ -402,13 +502,13 @@ const LoginLayer = () => {
         {/* DESKTOP LEFT */}
         <div className="auth-left d-lg-block d-none" style={{ height: "100%" }}>
           <div className="d-flex align-items-center flex-column h-100 justify-content-center">
-            <img
-              src="/assets/images/big-icon.webp"
-              alt=""
-              style={{
-                filter: "drop-shadow(0 18px 24px rgba(0,0,0,0.35))",
-              }}
-            />
+            <div className="cvant-big-icon-wrap">
+              <img
+                src="/assets/images/big-icon.webp"
+                alt=""
+                className="cvant-big-icon"
+              />
+            </div>
           </div>
         </div>
 
@@ -421,7 +521,7 @@ const LoginLayer = () => {
             className="max-w-464-px mx-auto w-100 cvant-glass"
             style={{ padding: "28px" }}
           >
-            {/* ✅ HEADER MUST CENTER (MOBILE + DESKTOP) */}
+            {/* ✅ HEADER MUST CENTER */}
             <div className="cvant-header-center">
               <div className="cvant-logo-wrap mb-24">
                 <Link href="/" className="d-inline-flex">
@@ -493,14 +593,11 @@ const LoginLayer = () => {
                 </button>
               </div>
 
+              {/* ✅ LOGIN BUTTON */}
               <button
                 type="submit"
-                className="btn btn-primary text-sm btn-sm px-12 py-16 w-100 radius-12 mt-5"
+                className="btn text-sm btn-sm px-12 py-16 w-100 radius-12 mt-5 cvant-login-btn"
                 disabled={loading}
-                style={{
-                  boxShadow:
-                    "0 0 0 1px rgba(91,140,255,0.35), 0 18px 36px rgba(0,0,0,0.35), 0 0 18px rgba(91,140,255,0.14)",
-                }}
               >
                 {loading ? "Logging in..." : "Login"}
               </button>
