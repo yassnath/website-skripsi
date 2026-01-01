@@ -122,15 +122,12 @@ const LoginLayer = () => {
         .filter(Boolean)
         .join("; ");
 
-      // ✅ FEEDBACK CEPAT (tidak perlu 5 detik)
       showPopup("success", "Login successful! Redirecting to dashboard...", 3000);
 
-      // ✅ PENTING: router.replace + refresh supaya state langsung kebaca
       setTimeout(() => {
-        router.replace("/"); // atau "/dashboard"
-        router.refresh();    // ✅ biar middleware + page reload state auth
+        router.replace("/");
+        router.refresh();
       }, 1000);
-
     } catch (e2) {
       const msg = sanitizeLoginError(
         e2?.message || "Login failed. Please check your username and password!"
@@ -397,61 +394,51 @@ const LoginLayer = () => {
           pointer-events: none;
         }
 
-        /* ✅ MOBILE REFINEMENT (DESKTOP TIDAK DIUBAH) */
-        @media (max-width: 991px) {
-          .auth.cvant-auth-bg {
-            padding: 18px 14px;
-            height: 100vh;
-          }
-
-          .auth-right {
-            padding: 0 !important;
-            height: 100% !important;
-          }
-
+        /* ✅ MOBILE ONLY IMPROVEMENTS (DESKTOP TIDAK KEUBAH) */
+        @media (max-width: 991.98px) {
           .cvant-glass {
-            border-radius: 16px;
-            padding: 22px 18px !important;
-            width: 100%;
-            max-width: 420px;
-            margin: 0 auto;
+            padding: 22px !important;
+            border-radius: 16px !important;
           }
 
-          .cvant-glass h4 {
-            font-size: 20px;
-            margin-bottom: 6px !important;
+          .cvant-mobile-center {
+            text-align: center !important;
           }
 
-          .cvant-glass p {
+          .cvant-mobile-center a,
+          .cvant-mobile-center img {
+            margin-left: auto !important;
+            margin-right: auto !important;
+          }
+
+          .cvant-mobile-title {
+            font-size: 20px !important;
+            line-height: 1.25 !important;
+            margin-top: 8px !important;
+          }
+
+          .cvant-mobile-desc {
             font-size: 14px !important;
-            line-height: 1.35;
+            line-height: 1.4 !important;
             margin-bottom: 18px !important;
           }
 
-          .cvant-glass img {
-            max-width: 150px;
-            height: auto;
-          }
-
           .icon-field .icon {
-            font-size: 18px;
-            opacity: 0.9;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            height: 100% !important;
           }
 
-          .form-control.h-56-px {
-            height: 50px !important;
-            font-size: 14px !important;
+          .icon-field input {
+            height: 52px !important;
             border-radius: 12px !important;
           }
 
-          .btn.btn-primary {
-            padding: 14px 14px !important;
-            border-radius: 12px !important;
+          .cvant-mobile-btn {
+            padding-top: 14px !important;
+            padding-bottom: 14px !important;
             font-size: 14px !important;
-          }
-
-          .mt-3.text-center p {
-            font-size: 13px !important;
           }
         }
       `}</style>
@@ -552,6 +539,7 @@ const LoginLayer = () => {
         <div className="cvant-blob b2" />
         <div className="cvant-blob b3" />
 
+        {/* ✅ DESKTOP LEFT (TIDAK DIUBAH) */}
         <div
           className="auth-left d-lg-block d-none cvant-animate-left cvant-left-panel"
           style={{ height: "100%" }}
@@ -567,6 +555,7 @@ const LoginLayer = () => {
           </div>
         </div>
 
+        {/* ✅ RIGHT PANEL */}
         <div
           className="auth-right py-32 px-24 d-flex flex-column justify-content-center cvant-animate-right"
           style={{ backgroundColor: "transparent", height: "100%" }}
@@ -575,7 +564,8 @@ const LoginLayer = () => {
             className="max-w-464-px mx-auto w-100 cvant-glass"
             style={{ padding: "28px" }}
           >
-            <div>
+            {/* ✅ MOBILE CENTER WRAPPER (DESKTOP AMAN) */}
+            <div className="cvant-mobile-center">
               <Link
                 href="/"
                 className="mb-24 max-w-290-px d-inline-block cvant-animate-in cvant-delay-1"
@@ -589,10 +579,10 @@ const LoginLayer = () => {
                 />
               </Link>
 
-              <h4 className="mb-10 text-white cvant-animate-in cvant-delay-2">
+              <h4 className="mb-10 text-white cvant-animate-in cvant-delay-2 cvant-mobile-title">
                 Login to your Account
               </h4>
-              <p className="mb-26 text-neutral-500 text-lg cvant-animate-in cvant-delay-3">
+              <p className="mb-26 text-neutral-500 text-lg cvant-animate-in cvant-delay-3 cvant-mobile-desc">
                 Welcome back! please enter your username and password
               </p>
             </div>
@@ -655,7 +645,7 @@ const LoginLayer = () => {
 
               <button
                 type="submit"
-                className="btn btn-primary text-sm btn-sm px-12 py-16 w-100 radius-12 mt-5 cvant-animate-in cvant-delay-6 cvant-btn-pop"
+                className="btn btn-primary text-sm btn-sm px-12 py-16 w-100 radius-12 mt-5 cvant-animate-in cvant-delay-6 cvant-btn-pop cvant-mobile-btn"
                 disabled={loading}
                 style={{
                   boxShadow:
@@ -665,7 +655,8 @@ const LoginLayer = () => {
                 {loading ? "Logging in..." : "Login"}
               </button>
 
-              <div className="mt-3 text-center text-m cvant-animate-in cvant-delay-7">
+              {/* ✅ MOBILE CENTER TEXT */}
+              <div className="mt-3 text-center text-m cvant-animate-in cvant-delay-7 cvant-mobile-center">
                 <p className="mb-0 text-neutral-400">
                   Forgot Password?{" "}
                   <Link
