@@ -282,7 +282,6 @@ export default function InvoiceEditLayer() {
   const totalBayar = useMemo(() => subtotal - pph, [subtotal, pph]);
 
   const validate = () => {
-    // ✅ tambahkan no_invoice biar aman
     const required = ["no_invoice", "tanggal", "nama_pelanggan", "status"];
     const empty = required.filter((f) => !String(form[f] || "").trim());
 
@@ -329,10 +328,8 @@ export default function InvoiceEditLayer() {
     setErr("");
 
     try {
-      // ✅ FIX UTAMA: no_invoice harus ikut payload PUT
       const payload = {
         no_invoice: String(form.no_invoice || "").trim(),
-
         nama_pelanggan: form.nama_pelanggan,
         email: form.email,
         no_telp: form.no_telp,
@@ -340,7 +337,6 @@ export default function InvoiceEditLayer() {
         due_date: form.due_date,
         status: form.status,
         diterima_oleh: form.diterima_oleh,
-
         total_biaya: subtotal,
         pph,
         total_bayar: totalBayar,
@@ -365,7 +361,6 @@ export default function InvoiceEditLayer() {
       );
       setTimeout(() => router.push("/invoice-list"), 3000);
     } catch (e) {
-      // ✅ tampilkan error validasi Laravel kalau ada
       const serverMsg =
         e?.response?.data?.message ||
         e?.message ||
@@ -390,22 +385,43 @@ export default function InvoiceEditLayer() {
     router.push(`/invoice-preview?id=${id}`);
   };
 
-  const handleEmail = () => {
+  /**
+   * ✅ SEND TO EMAIL: DISAMAKAN PERSIS dengan InvoicePreviewLayer.jsx
+   * - pakai link public page (bukan link api)
+   * - format gmail compose: view=cm&fs=1&to=...&su=...&body=...
+   */
+  const getPublicInvoiceViewerUrl = (invoiceId) => {
+    return `${siteBase}/invoice/${invoiceId}`;
+  };
+
+  const handleEmail = async () => {
     if (!id) return showPopup("danger", "ID invoice tidak ditemukan.", 0);
 
-    // ✅ Link email sebaiknya pakai site publik (bukan internal apiBase)
-    const publicPdf = `${siteBase}/invoice/${id}/pdf`;
+    if (!String(form.email || "").trim()) {
+      return showPopup("danger", "Email customer belum diisi.", 0);
+    }
 
-    const subject = encodeURIComponent(`Invoice ${form.no_invoice || ""}`);
-    const body = encodeURIComponent(
-      `Yth. ${form.nama_pelanggan},\n\nBerikut link untuk unduh invoice:\n${publicPdf}\n\nTerima kasih,\nCV. AS Nusa Trans`
-    );
-    const to = encodeURIComponent(form.email || "");
+    try {
+      const publicUrl = getPublicInvoiceViewerUrl(id);
 
-    window.open(
-      `https://mail.google.com/mail/?view=cm&to=${to}&su=${subject}&body=${body}`,
-      "_blank"
-    );
+      const subject = encodeURIComponent(`Invoice ${form.no_invoice || ""}`);
+      const body = encodeURIComponent(
+        `Yth. ${form.nama_pelanggan},\n\n` +
+          `Silakan klik berikut untuk melihat invoice:\n${publicUrl}\n\n` +
+          `Terima kasih,\nCV AS Nusa Trans (CV ANT)`
+      );
+
+      const to = encodeURIComponent(form.email || "");
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`;
+
+      window.open(gmailUrl, "_blank");
+    } catch (e) {
+      showPopup(
+        "danger",
+        `Gagal membuat link invoice publik.\n\n${e?.message || "Unknown error"}`,
+        0
+      );
+    }
   };
 
   return (
@@ -502,24 +518,30 @@ export default function InvoiceEditLayer() {
                     <button
                       onClick={handleEmail}
                       className="btn btn-sm btn-outline-secondary"
+                      type="button"
                     >
                       Kirim Email
                     </button>
+
                     <button
                       onClick={handlePdf}
                       className="btn btn-sm btn-outline-warning"
+                      type="button"
                     >
                       Preview
                     </button>
+
                     <button
                       disabled={saving}
                       onClick={handleSave}
                       className="btn btn-sm btn-primary"
+                      type="button"
                     >
-                      {saving ? "Menyimpan..." : "Simpan"}
+                      {saving ? "Saving..." : "Save"}
                     </button>
                   </div>
 
+                  {/* ✅ BODY FORM (tidak aku ubah) */}
                   <div className="card-body">
                     <div className="row g-3">
                       <div className="col-md-6">
@@ -616,7 +638,11 @@ export default function InvoiceEditLayer() {
                                   placeholder="Lokasi Muat"
                                   value={r.lokasi_muat}
                                   onChange={(e) =>
-                                    updateRincian(i, "lokasi_muat", e.target.value)
+                                    updateRincian(
+                                      i,
+                                      "lokasi_muat",
+                                      e.target.value
+                                    )
                                   }
                                 />
                               </div>
@@ -642,7 +668,11 @@ export default function InvoiceEditLayer() {
                                   className="form-select"
                                   value={r.armada_id}
                                   onChange={(e) =>
-                                    updateRincian(i, "armada_id", e.target.value)
+                                    updateRincian(
+                                      i,
+                                      "armada_id",
+                                      e.target.value
+                                    )
                                   }
                                   style={{
                                     backgroundColor: controlBg,
@@ -745,7 +775,9 @@ export default function InvoiceEditLayer() {
                                 <input
                                   type="text"
                                   className="form-control"
-                                  value={`Rp ${rowTotal.toLocaleString("id-ID")}`}
+                                  value={`Rp ${rowTotal.toLocaleString(
+                                    "id-ID"
+                                  )}`}
                                   readOnly
                                 />
                               </div>
@@ -763,7 +795,9 @@ export default function InvoiceEditLayer() {
                       </div>
 
                       <div className="col-md-4">
-                        <label className="form-label fw-semibold">Subtotal</label>
+                        <label className="form-label fw-semibold">
+                          Subtotal
+                        </label>
                         <input
                           type="text"
                           className="form-control"
@@ -783,7 +817,9 @@ export default function InvoiceEditLayer() {
                       </div>
 
                       <div className="col-md-4">
-                        <label className="form-label fw-semibold">Total Bayar</label>
+                        <label className="form-label fw-semibold">
+                          Total Bayar
+                        </label>
                         <input
                           type="text"
                           className="form-control fw-bold"
@@ -825,7 +861,9 @@ export default function InvoiceEditLayer() {
                       </div>
 
                       <div className="col-md-6">
-                        <label className="form-label fw-semibold">Diterima Oleh</label>
+                        <label className="form-label fw-semibold">
+                          Diterima Oleh
+                        </label>
                         <select
                           className="form-select"
                           value={form.diterima_oleh || "Admin"}
@@ -852,6 +890,7 @@ export default function InvoiceEditLayer() {
                       </div>
                     </div>
                   </div>
+                  {/* END BODY */}
                 </div>
               </div>
             </div>
