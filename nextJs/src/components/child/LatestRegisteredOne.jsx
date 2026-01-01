@@ -115,26 +115,31 @@ const LatestRegisteredOne = () => {
 
   return (
     <>
-      <div
-        className={`col-xxl-8 col-xl-12 page-in ${pageIn ? "is-in" : ""}`}
-      >
+      <div className={`col-xxl-8 col-xl-12 page-in ${pageIn ? "is-in" : ""}`}>
         <div className="card h-100">
           <div className="card-body p-24">
-            <div className="d-flex flex-wrap align-items-center gap-1 justify-content-between mb-16">
-              <ul className="nav border-gradient-tab nav-pills mb-0">
+            {/* ✅ HEADER TAB */}
+            <div className="d-flex flex-wrap align-items-center gap-2 justify-content-between mb-16">
+              <ul className="nav border-gradient-tab nav-pills mb-0 flex-wrap gap-2">
                 <li className="nav-item">
                   <button
-                    className={`nav-link d-flex align-items-center ${
+                    className={`nav-link d-flex align-items-center justify-content-between ${
                       activeTab === "latest" ? "active" : ""
                     }`}
                     onClick={() => setActiveTab("latest")}
+                    style={{
+                      fontSize: "13px",
+                      padding: "8px 12px",
+                      whiteSpace: "nowrap",
+                    }}
                   >
-                    Latest Customers
+                    Latest
                     <span
                       className="text-sm fw-semibold py-6 px-12 rounded-pill text-white ms-12"
                       style={{
                         backgroundColor:
                           activeTab === "latest" ? "#2563eb" : "#6b7280",
+                        fontSize: "12px",
                       }}
                     >
                       {latestInvoices.length}
@@ -144,17 +149,23 @@ const LatestRegisteredOne = () => {
 
                 <li className="nav-item">
                   <button
-                    className={`nav-link d-flex align-items-center ${
+                    className={`nav-link d-flex align-items-center justify-content-between ${
                       activeTab === "biggest" ? "active" : ""
                     }`}
                     onClick={() => setActiveTab("biggest")}
+                    style={{
+                      fontSize: "13px",
+                      padding: "8px 12px",
+                      whiteSpace: "nowrap",
+                    }}
                   >
-                    Biggest Transactions
+                    Biggest
                     <span
                       className="text-sm fw-semibold py-6 px-12 rounded-pill text-white ms-12"
                       style={{
                         backgroundColor:
                           activeTab === "biggest" ? "#2563eb" : "#6b7280",
+                        fontSize: "12px",
                       }}
                     >
                       {biggestData.length}
@@ -173,17 +184,22 @@ const LatestRegisteredOne = () => {
               </Link>
             </div>
 
+            {/* ✅ TAB CONTENT */}
             <div className="tab-content">
+              {/* ✅ LATEST */}
               <div
                 className={`tab-pane fade ${
                   activeTab === "latest" ? "show active" : ""
                 }`}
               >
                 <div className="table-responsive scroll-sm">
-                  <table className="table bordered-table sm-table mb-0">
+                  <table
+                    className="table bordered-table sm-table mb-0"
+                    style={{ minWidth: "650px" }} // ✅ bikin tetap rapi di mobile
+                  >
                     <thead>
                       <tr className="text-center">
-                        <th>No Invoice</th>
+                        <th>No</th>
                         <th>Customer</th>
                         <th>Tanggal</th>
                         <th>Total</th>
@@ -194,7 +210,14 @@ const LatestRegisteredOne = () => {
                     <tbody>
                       {latestInvoices.map((i) => (
                         <tr key={i.id} className="text-center">
-                          <td>
+                          <td
+                            style={{
+                              maxWidth: "140px",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
                             <Link
                               href={`/invoice-preview?id=${i.id}`}
                               style={{ color: "#2563eb", textDecoration: "none" }}
@@ -202,14 +225,33 @@ const LatestRegisteredOne = () => {
                               {i.no_invoice}
                             </Link>
                           </td>
-                          <td>{i.nama_pelanggan}</td>
-                          <td>{i.tanggal}</td>
-                          <td>Rp {Number(i.total_bayar).toLocaleString("id-ID")}</td>
+
+                          <td
+                            style={{
+                              maxWidth: "160px",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {i.nama_pelanggan}
+                          </td>
+
+                          <td style={{ whiteSpace: "nowrap" }}>{i.tanggal}</td>
+
+                          <td style={{ whiteSpace: "nowrap" }}>
+                            Rp {Number(i.total_bayar).toLocaleString("id-ID")}
+                          </td>
+
                           <td>
                             <span
                               className={`${getStatusClass(
                                 i.status
                               )} px-24 py-4 rounded-pill fw-medium text-sm`}
+                              style={{
+                                fontSize: "12px",
+                                padding: "4px 10px",
+                              }}
                             >
                               {i.status}
                             </span>
@@ -221,16 +263,20 @@ const LatestRegisteredOne = () => {
                 </div>
               </div>
 
+              {/* ✅ BIGGEST */}
               <div
                 className={`tab-pane fade ${
                   activeTab === "biggest" ? "show active" : ""
                 }`}
               >
                 <div className="table-responsive scroll-sm">
-                  <table className="table bordered-table sm-table mb-0">
+                  <table
+                    className="table bordered-table sm-table mb-0"
+                    style={{ minWidth: "650px" }}
+                  >
                     <thead>
                       <tr className="text-center">
-                        <th>No Invoice</th>
+                        <th>No</th>
                         <th>Customer</th>
                         <th>Tanggal</th>
                         <th>Total</th>
@@ -241,7 +287,14 @@ const LatestRegisteredOne = () => {
                     <tbody>
                       {biggestData.map((d) => (
                         <tr key={`${d.type}-${d.id}`} className="text-center">
-                          <td>
+                          <td
+                            style={{
+                              maxWidth: "140px",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
                             <Link
                               href={d.link}
                               style={{
@@ -253,14 +306,33 @@ const LatestRegisteredOne = () => {
                               {d.no}
                             </Link>
                           </td>
-                          <td>{d.customer}</td>
-                          <td>{d.tanggal}</td>
-                          <td>Rp {d.total.toLocaleString("id-ID")}</td>
+
+                          <td
+                            style={{
+                              maxWidth: "160px",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {d.customer}
+                          </td>
+
+                          <td style={{ whiteSpace: "nowrap" }}>{d.tanggal}</td>
+
+                          <td style={{ whiteSpace: "nowrap" }}>
+                            Rp {d.total.toLocaleString("id-ID")}
+                          </td>
+
                           <td>
                             <span
                               className={`${getStatusClass(
                                 d.status
                               )} px-24 py-4 rounded-pill fw-medium text-sm`}
+                              style={{
+                                fontSize: "12px",
+                                padding: "4px 10px",
+                              }}
                             >
                               {d.status}
                             </span>
@@ -275,7 +347,7 @@ const LatestRegisteredOne = () => {
           </div>
         </div>
       </div>
-</>
+    </>
   );
 };
 
