@@ -192,7 +192,6 @@ const MasterLayout = ({ children }) => {
                     </Link>
                   </li>
 
-                  {/* ✅ DOT ADD INCOME HIJAU */}
                   <li>
                     <Link
                       href="/invoice-add"
@@ -203,7 +202,6 @@ const MasterLayout = ({ children }) => {
                     </Link>
                   </li>
 
-                  {/* ✅ DOT ADD EXPENSE MERAH */}
                   <li>
                     <Link
                       href="/invoice-expense"
@@ -240,9 +238,7 @@ const MasterLayout = ({ children }) => {
                   <li>
                     <Link
                       href="/armada-list"
-                      className={
-                        pathname === "/armada-list" ? "active-page" : ""
-                      }
+                      className={pathname === "/armada-list" ? "active-page" : ""}
                     >
                       <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />{" "}
                       List
@@ -433,9 +429,10 @@ const MasterLayout = ({ children }) => {
         }
 
         /* ======================================
-           ✅ SUBMENU HOVER SOFT (TIPIS, GA NABRAK)
+           ✅ SUBMENU HOVER THEME-AWARE FIX
            ====================================== */
 
+        /* base submenu */
         .sidebar-submenu a {
           padding-top: 9px !important;
           padding-bottom: 9px !important;
@@ -443,10 +440,23 @@ const MasterLayout = ({ children }) => {
           transition: background 0.18s ease, color 0.18s ease !important;
         }
 
-        .sidebar-submenu a:hover,
-        .sidebar-submenu a.active-page {
-          background: rgba(91, 140, 255, 0.12) !important;
+        /* ✅ DARK MODE: submenu hover -> putih */
+        html[data-bs-theme="dark"] .sidebar-submenu a:hover,
+        html[data-bs-theme="dark"] .sidebar-submenu a.active-page,
+        html[data-theme="dark"] .sidebar-submenu a:hover,
+        html[data-theme="dark"] .sidebar-submenu a.active-page {
+          background: rgba(91, 140, 255, 0.14) !important;
           color: #ffffff !important;
+        }
+
+        /* ✅ LIGHT MODE: submenu hover -> text gelap */
+        html[data-bs-theme="light"] .sidebar-submenu a:hover,
+        html[data-bs-theme="light"] .sidebar-submenu a.active-page,
+        html[data-theme="light"] .sidebar-submenu a:hover,
+        html[data-theme="light"] .sidebar-submenu a.active-page {
+          background: rgba(91, 140, 255, 0.18) !important;
+          color: #0b1220 !important; /* ✅ teks gelap */
+          font-weight: 600;
         }
 
         /* circle dot tetap keliatan */

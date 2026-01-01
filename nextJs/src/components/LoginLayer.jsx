@@ -263,59 +263,61 @@ const LoginLayer = () => {
             0 0 16px rgba(91, 140, 255, 0.2) !important;
         }
 
-        /* ✅ LEFT BIG ICON AURA (RING SMALLER + DOT SOFTER) */
+        /* ✅ LEFT BIG ICON - Cinematic Orbit + Smaller Orbit */
         .cvant-big-icon-wrap {
           position: relative;
           display: inline-block;
-          padding: 11px; /* ✅ lebih kecil lagi */
+          padding: 10px;
         }
 
         .cvant-big-icon-wrap::before {
           content: "";
           position: absolute;
-          inset: -3.5%;
+          inset: -3%;
           border-radius: 999px;
           background: radial-gradient(
               circle at 30% 30%,
-              rgba(91, 140, 255, 0.16),
+              rgba(91, 140, 255, 0.14),
               transparent 60%
             ),
             radial-gradient(
               circle at 70% 50%,
-              rgba(168, 85, 247, 0.12),
+              rgba(168, 85, 247, 0.1),
               transparent 62%
             ),
             radial-gradient(
               circle at 60% 80%,
-              rgba(34, 211, 238, 0.1),
+              rgba(34, 211, 238, 0.08),
               transparent 65%
             );
           filter: blur(6px);
-          opacity: 0.95;
+          opacity: 0.9;
           pointer-events: none;
         }
 
         .cvant-big-icon-wrap .cvant-icon-ring {
           position: absolute;
-          inset: 5px; /* ✅ ring lebih kecil */
+          inset: 6px;
           border-radius: 999px;
           border: 1px solid rgba(255, 255, 255, 0.07);
-          box-shadow: 0 0 0 1px rgba(91, 140, 255, 0.14),
-            0 0 12px rgba(91, 140, 255, 0.08),
+          box-shadow: 0 0 0 1px rgba(91, 140, 255, 0.12),
+            0 0 12px rgba(91, 140, 255, 0.07),
             0 0 10px rgba(34, 211, 238, 0.06);
           pointer-events: none;
         }
 
+        /* ✅ ORBIT 1 (Oval + Spin) */
         .cvant-big-icon-wrap .cvant-orbit {
           position: absolute;
-          inset: 1px; /* ✅ orbit lebih rapat */
+          inset: 10px; /* ✅ lebih kecil lagi */
           border-radius: 999px;
-          border: 1px dashed rgba(255, 255, 255, 0.05);
+          border: 1px dashed rgba(255, 255, 255, 0.045);
           pointer-events: none;
           animation: cvantOrbitSpin 14s linear infinite;
+          transform: scaleX(1.12); /* ✅ oval */
+          transform-origin: center;
         }
 
-        /* ✅ DOT ORBIT lebih SOFT */
         .cvant-big-icon-wrap .cvant-orbit::after {
           content: "";
           position: absolute;
@@ -324,29 +326,65 @@ const LoginLayer = () => {
           width: 7px;
           height: 7px;
           border-radius: 999px;
-
-          /* warna dibuat lebih soft */
           background: radial-gradient(
             circle,
-            rgba(34, 211, 238, 0.55),
+            rgba(34, 211, 238, 0.5),
             rgba(34, 211, 238, 0)
           );
+          box-shadow: 0 0 10px rgba(34, 211, 238, 0.2),
+            0 0 8px rgba(91, 140, 255, 0.12);
+          filter: blur(0.25px);
+          opacity: 0.68;
+          transform: translateY(-50%);
+        }
 
-          /* glow jauh lebih tipis + blur */
-          box-shadow: 0 0 10px rgba(34, 211, 238, 0.25),
-            0 0 8px rgba(91, 140, 255, 0.18);
+        /* ✅ ORBIT 2 (Smaller + Different speed) */
+        .cvant-big-icon-wrap .cvant-orbit2 {
+          position: absolute;
+          inset: 16px; /* ✅ lebih kecil */
+          border-radius: 999px;
+          border: 1px dashed rgba(255, 255, 255, 0.035);
+          pointer-events: none;
+          animation: cvantOrbitSpin2 9.5s linear infinite reverse;
+          transform: scaleX(1.06);
+          transform-origin: center;
+        }
 
+        .cvant-big-icon-wrap .cvant-orbit2::after {
+          content: "";
+          position: absolute;
+          top: 50%;
+          right: -2px;
+          width: 5px;
+          height: 5px;
+          border-radius: 999px;
+          background: radial-gradient(
+            circle,
+            rgba(168, 85, 247, 0.42),
+            rgba(168, 85, 247, 0)
+          );
+          box-shadow: 0 0 10px rgba(168, 85, 247, 0.18),
+            0 0 8px rgba(91, 140, 255, 0.1);
           filter: blur(0.3px);
-          opacity: 0.7;
+          opacity: 0.6;
           transform: translateY(-50%);
         }
 
         @keyframes cvantOrbitSpin {
           from {
-            transform: rotate(0deg);
+            transform: rotate(0deg) scaleX(1.12);
           }
           to {
-            transform: rotate(360deg);
+            transform: rotate(360deg) scaleX(1.12);
+          }
+        }
+
+        @keyframes cvantOrbitSpin2 {
+          from {
+            transform: rotate(0deg) scaleX(1.06);
+          }
+          to {
+            transform: rotate(360deg) scaleX(1.06);
           }
         }
 
@@ -361,11 +399,11 @@ const LoginLayer = () => {
         .cvant-big-icon-wrap::after {
           content: "";
           position: absolute;
-          inset: -3.5%;
+          inset: -3%;
           background: linear-gradient(
             120deg,
             transparent 22%,
-            rgba(91, 140, 255, 0.12) 45%,
+            rgba(91, 140, 255, 0.1) 45%,
             rgba(34, 211, 238, 0.08) 55%,
             transparent 78%
           );
@@ -375,23 +413,23 @@ const LoginLayer = () => {
           mix-blend-mode: screen;
           border-radius: 18px;
           z-index: 1;
-          opacity: 0.85;
+          opacity: 0.8;
         }
 
         @keyframes cvantShimmer {
           0% {
             transform: translateX(-130%);
-            opacity: 0.35;
+            opacity: 0.3;
           }
           35% {
-            opacity: 0.6;
+            opacity: 0.55;
           }
           60% {
-            opacity: 0.5;
+            opacity: 0.45;
           }
           100% {
             transform: translateX(130%);
-            opacity: 0.35;
+            opacity: 0.3;
           }
         }
 
@@ -524,6 +562,7 @@ const LoginLayer = () => {
           <div className="d-flex align-items-center flex-column h-100 justify-content-center">
             <div className="cvant-big-icon-wrap">
               <div className="cvant-orbit" />
+              <div className="cvant-orbit2" />
               <div className="cvant-icon-ring" />
               <img
                 src="/assets/images/big-icon.webp"
