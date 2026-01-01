@@ -641,7 +641,7 @@ export default function CalendarMainLayer() {
                             className="text-secondary-light"
                             style={{ fontSize: "12px", opacity: 0.85 }}
                           >
-                            No transaction
+                            No data
                           </div>
                         ) : (
                           <div className="d-flex flex-column gap-8">
