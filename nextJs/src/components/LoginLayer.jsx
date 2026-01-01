@@ -147,10 +147,6 @@ const LoginLayer = () => {
           --cv-blue: #5b8cff;
           --cv-purple: #a855f7;
           --cv-cyan: #22d3ee;
-
-          --cv-glow: rgba(91, 140, 255, 0.22);
-          --cv-glow2: rgba(168, 85, 247, 0.16);
-          --cv-glow3: rgba(34, 211, 238, 0.12);
         }
 
         * {
@@ -158,79 +154,68 @@ const LoginLayer = () => {
           -moz-osx-font-smoothing: grayscale;
         }
 
-        /* ✅ ICON FIELD FIX (DESKTOP + MOBILE) */
-        .icon-field {
+        /* ==============================
+           ✅ INPUT ICON HARD CENTER FIX
+           ============================== */
+
+        .cvant-field {
           position: relative !important;
+          width: 100% !important;
         }
 
-        /* icon kiri dalam input benar-benar center */
-        .icon-field .icon {
+        /* Icon kiri -> true center */
+        .cvant-icon-wrap {
           position: absolute !important;
           left: 16px !important;
-          top: 50% !important;
-          transform: translateY(-50%) !important;
-          display: inline-flex !important;
+          top: 0 !important;
+          height: 56px !important;
+          width: 28px !important;
+          display: flex !important;
           align-items: center !important;
           justify-content: center !important;
-          height: 100% !important;
-          line-height: 1 !important;
-          z-index: 2 !important;
+          z-index: 5 !important;
+          pointer-events: none !important;
         }
 
-        /* input kasih padding kiri supaya tidak numpuk sama icon */
-        .icon-field input {
-          padding-left: 46px !important;
+        .cvant-icon-wrap svg {
+          display: block !important;
         }
 
-        /* tombol eye benar-benar center */
+        /* Input -> padding kiri fix */
+        .cvant-input {
+          height: 56px !important;
+          padding-left: 52px !important;
+        }
+
+        /* Placeholder lebih halus dan cocok dark panel */
+        .cvant-input::placeholder {
+          color: rgba(100, 116, 139, 0.95) !important;
+          opacity: 1 !important;
+        }
+
+        /* tombol eye -> true center */
         .cvant-eye-btn {
-          display: inline-flex !important;
+          position: absolute !important;
+          right: 10px !important;
+          top: 0 !important;
+          height: 56px !important;
+          width: 44px !important;
+          display: flex !important;
           align-items: center !important;
           justify-content: center !important;
-          height: 44px !important;
-          width: 44px !important;
+          border: none !important;
+          background: transparent !important;
+          padding: 0 !important;
+          z-index: 6 !important;
         }
 
-        .cvant-animate-in {
-          opacity: 0;
-          transform: translateY(14px);
-          animation: cvantFadeUp 0.75s ease forwards;
+        .cvant-eye-btn svg {
+          display: block !important;
         }
 
-        .cvant-animate-left {
-          opacity: 0;
-          transform: translateX(-18px);
-          animation: cvantFadeLeft 0.9s cubic-bezier(0.2, 0.8, 0.2, 1)
-            forwards;
-        }
-
-        .cvant-animate-right {
-          opacity: 0;
-          transform: translateX(18px);
-          animation: cvantFadeRight 0.9s cubic-bezier(0.2, 0.8, 0.2, 1)
-            forwards;
-        }
-
-        @keyframes cvantFadeUp {
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes cvantFadeLeft {
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        @keyframes cvantFadeRight {
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
+        /* ==============================
+           ✅ FUTURISTIC BG + GLASS PANEL
+           ============================== */
 
         .cvant-auth-bg {
           position: relative;
@@ -253,67 +238,6 @@ const LoginLayer = () => {
             linear-gradient(180deg, #0f1623 0%, #0b1220 100%);
         }
 
-        .cvant-blob {
-          position: absolute;
-          border-radius: 999px;
-          filter: blur(18px);
-          opacity: 0.9;
-          animation: cvantFloat 10s ease-in-out infinite;
-          pointer-events: none;
-          mix-blend-mode: screen;
-        }
-
-        .cvant-blob.b1 {
-          width: 320px;
-          height: 320px;
-          left: -90px;
-          top: 80px;
-          background: radial-gradient(
-            circle at 30% 30%,
-            rgba(91, 140, 255, 0.9),
-            transparent 60%
-          );
-          animation-duration: 12s;
-        }
-
-        .cvant-blob.b2 {
-          width: 360px;
-          height: 360px;
-          right: -120px;
-          top: 140px;
-          background: radial-gradient(
-            circle at 30% 30%,
-            rgba(168, 85, 247, 0.85),
-            transparent 60%
-          );
-          animation-duration: 14s;
-        }
-
-        .cvant-blob.b3 {
-          width: 260px;
-          height: 260px;
-          left: 35%;
-          bottom: -90px;
-          background: radial-gradient(
-            circle at 30% 30%,
-            rgba(34, 211, 238, 0.8),
-            transparent 60%
-          );
-          animation-duration: 16s;
-        }
-
-        @keyframes cvantFloat {
-          0% {
-            transform: translate3d(0, 0, 0) scale(1);
-          }
-          50% {
-            transform: translate3d(0, -22px, 0) scale(1.03);
-          }
-          100% {
-            transform: translate3d(0, 0, 0) scale(1);
-          }
-        }
-
         .cvant-glass {
           background: linear-gradient(
             180deg,
@@ -329,7 +253,7 @@ const LoginLayer = () => {
           overflow: hidden;
         }
 
-        /* ✅ MOBILE ONLY */
+        /* ✅ MOBILE ONLY (rapih, center text) */
         @media (max-width: 991.98px) {
           .cvant-glass {
             padding: 22px !important;
@@ -352,14 +276,16 @@ const LoginLayer = () => {
             margin-bottom: 18px !important;
           }
 
-          .icon-field input {
+          .cvant-icon-wrap {
             height: 52px !important;
           }
 
-          .cvant-mobile-btn {
-            padding-top: 14px !important;
-            padding-bottom: 14px !important;
-            font-size: 14px !important;
+          .cvant-input {
+            height: 52px !important;
+          }
+
+          .cvant-eye-btn {
+            height: 52px !important;
           }
         }
       `}</style>
@@ -376,7 +302,7 @@ const LoginLayer = () => {
           onClick={() => setPopup((p) => ({ ...p, show: false }))}
         >
           <div
-            className="radius-12 shadow-sm p-24 cvant-popup-panel"
+            className="radius-12 shadow-sm p-24"
             style={{
               width: "100%",
               maxWidth: "600px",
@@ -456,13 +382,9 @@ const LoginLayer = () => {
         className="auth bg-base d-flex flex-wrap cvant-auth-bg"
         style={{ height: "100vh" }}
       >
-        <div className="cvant-blob b1" />
-        <div className="cvant-blob b2" />
-        <div className="cvant-blob b3" />
-
         {/* DESKTOP LEFT */}
         <div
-          className="auth-left d-lg-block d-none cvant-animate-left cvant-left-panel"
+          className="auth-left d-lg-block d-none"
           style={{ height: "100%" }}
         >
           <div className="d-flex align-items-center flex-column h-100 justify-content-center">
@@ -478,7 +400,7 @@ const LoginLayer = () => {
 
         {/* RIGHT */}
         <div
-          className="auth-right py-32 px-24 d-flex flex-column justify-content-center cvant-animate-right"
+          className="auth-right py-32 px-24 d-flex flex-column justify-content-center"
           style={{ backgroundColor: "transparent", height: "100%" }}
         >
           <div
@@ -505,13 +427,14 @@ const LoginLayer = () => {
             </div>
 
             <form onSubmit={handleSubmit}>
-              <div className="icon-field mb-16">
-                <span className="icon">
-                  <Icon icon="solar:user-linear" />
+              {/* USERNAME */}
+              <div className="cvant-field mb-16">
+                <span className="cvant-icon-wrap">
+                  <Icon icon="solar:user-linear" fontSize={20} />
                 </span>
                 <input
                   type="text"
-                  className="form-control h-56-px bg-neutral-50 radius-12 cvant-focus-ring"
+                  className="form-control bg-neutral-50 radius-12 cvant-input"
                   placeholder="Username"
                   value={form.username}
                   onChange={onChange("username")}
@@ -519,50 +442,43 @@ const LoginLayer = () => {
                 />
               </div>
 
-              <div className="position-relative mb-18">
-                <div className="icon-field">
-                  <span className="icon">
-                    <Icon icon="solar:lock-password-outline" />
-                  </span>
+              {/* PASSWORD */}
+              <div className="cvant-field mb-18">
+                <span className="cvant-icon-wrap">
+                  <Icon icon="solar:lock-password-outline" fontSize={20} />
+                </span>
 
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    className="form-control h-56-px bg-neutral-50 radius-12 cvant-focus-ring"
-                    id="your-password"
-                    placeholder="Password"
-                    value={form.password}
-                    onChange={onChange("password")}
-                    autoComplete="current-password"
-                    style={{ paddingRight: "54px" }}
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="form-control bg-neutral-50 radius-12 cvant-input"
+                  placeholder="Password"
+                  value={form.password}
+                  onChange={onChange("password")}
+                  autoComplete="current-password"
+                  style={{ paddingRight: "58px" }}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="cvant-eye-btn"
+                >
+                  <Icon
+                    icon={
+                      showPassword
+                        ? "solar:eye-closed-linear"
+                        : "solar:eye-linear"
+                    }
+                    fontSize={20}
+                    style={{ color: "#6b7280" }}
                   />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="btn p-0 position-absolute top-50 translate-middle-y cvant-eye-btn"
-                    style={{
-                      right: "10px",
-                      border: "none",
-                      background: "transparent",
-                      lineHeight: 1,
-                    }}
-                  >
-                    <Icon
-                      icon={
-                        showPassword
-                          ? "solar:eye-closed-linear"
-                          : "solar:eye-linear"
-                      }
-                      style={{ fontSize: "20px", color: "#6b7280" }}
-                    />
-                  </button>
-                </div>
+                </button>
               </div>
 
               <button
                 type="submit"
-                className="btn btn-primary text-sm btn-sm px-12 py-16 w-100 radius-12 mt-5 cvant-mobile-btn"
+                className="btn btn-primary text-sm btn-sm px-12 py-16 w-100 radius-12 mt-5"
                 disabled={loading}
                 style={{
                   boxShadow:
