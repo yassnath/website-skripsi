@@ -13,6 +13,7 @@ return new class extends Migration
 
             $table->string('no_invoice')->unique();
             $table->string('nama_pelanggan');
+
             $table->string('email')->nullable();
             $table->string('no_telp')->nullable();
 
@@ -27,20 +28,22 @@ return new class extends Migration
             $table->date('armada_start_date')->nullable();
             $table->date('armada_end_date')->nullable();
 
-            $table->string('lokasi_muat')->nullable();
-            $table->string('lokasi_bongkar')->nullable();
+            // ✅ wajib
+            $table->string('lokasi_muat');
+            $table->string('lokasi_bongkar');
 
-            $table->decimal('tonase', 12, 2)->default(0);
-            $table->decimal('harga', 12, 2)->default(0);
+            // ✅ jangan default 0, biar benar-benar harus diisi
+            $table->decimal('tonase', 12, 2);
+            $table->decimal('harga', 12, 2);
             $table->decimal('total_biaya', 12, 2)->default(0);
             $table->decimal('pph', 12, 2)->default(0);
             $table->decimal('total_bayar', 12, 2)->default(0);
 
-            // ✅ FIX: rincian harus JSON supaya cast array di Laravel konsisten di hosting
-            $table->json('rincian')->nullable();
+            // ✅ rincian wajib
+            $table->json('rincian');
 
             $table->string('status')->default('Unpaid');
-            $table->string('diterima_oleh')->nullable();
+            $table->string('diterima_oleh')->default('Admin');
 
             $table->timestamps();
         });
