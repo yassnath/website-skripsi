@@ -124,7 +124,6 @@ export default function InvoiceEditLayer() {
     setPopup({ show: true, type, message });
 
     window.clearTimeout(showPopup._t);
-
     if (autoCloseMs > 0) {
       showPopup._t = window.setTimeout(() => {
         setPopup((p) => ({ ...p, show: false }));
@@ -279,7 +278,7 @@ export default function InvoiceEditLayer() {
   const pph = useMemo(() => subtotal * 0.02, [subtotal]);
   const totalBayar = useMemo(() => subtotal - pph, [subtotal, pph]);
 
-  // ✅ VALIDASI "KOSONG" PERSIS INVOICE ADD LAYER
+  // ✅ VALIDASI PERSIS SEPERTI INVOICE ADD LAYER
   const validate = () => {
     const msgGeneral = "Data is still incomplete, please complete it first!";
 
@@ -334,7 +333,6 @@ export default function InvoiceEditLayer() {
         total_biaya: subtotal,
         pph,
         total_bayar: totalBayar,
-
         rincian: (form.rincian || []).map((r) => ({
           lokasi_muat: r.lokasi_muat || "",
           lokasi_bongkar: r.lokasi_bongkar || "",
@@ -353,15 +351,23 @@ export default function InvoiceEditLayer() {
         "Invoice updated successfully! Redirecting to Invoice List Page...",
         3000
       );
+
       setTimeout(() => router.push("/invoice-list"), 3000);
     } catch (e) {
-      showPopup("danger", e?.message || "Gagal mengupdate invoice.", 0);
+      const msg =
+        e?.response?.data?.message ||
+        e?.message ||
+        "Gagal mengupdate invoice";
+      showPopup("danger", msg, 0);
     } finally {
       setSaving(false);
     }
   };
 
-  const handlePdf = () => router.push(`/invoice-preview?id=${id}`);
+  const handlePdf = () => {
+    if (!id) return showPopup("danger", "ID invoice tidak ditemukan.", 0);
+    router.push(`/invoice-preview?id=${id}`);
+  };
 
   const getPublicInvoicePublicPageUrl = (invoiceId) => {
     return `${siteBase}/invoice/${invoiceId}`;
@@ -369,13 +375,16 @@ export default function InvoiceEditLayer() {
 
   const handleSendToEmail = async () => {
     if (!id) return showPopup("danger", "ID invoice tidak ditemukan.", 0);
-    if (!String(form.email || "").trim())
+
+    if (!String(form.email || "").trim()) {
       return showPopup("danger", "Email customer belum diisi.", 0);
+    }
 
     setSending(true);
 
     try {
       const publicUrl = getPublicInvoicePublicPageUrl(id);
+
       const subject = encodeURIComponent(`Invoice ${form.no_invoice || ""}`);
       const body = encodeURIComponent(
         `Yth. ${form.nama_pelanggan},\n\n` +
@@ -388,7 +397,11 @@ export default function InvoiceEditLayer() {
 
       window.open(gmailUrl, "_blank");
     } catch (e) {
-      showPopup("danger", "Gagal membuat link invoice publik.", 0);
+      showPopup(
+        "danger",
+        `Gagal membuat link invoice publik.\n\n${e?.message || "Unknown error"}`,
+        0
+      );
     } finally {
       setSending(false);
     }
@@ -397,7 +410,6 @@ export default function InvoiceEditLayer() {
   return (
     <>
       <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
-        {/* ✅ POPUP */}
         {popup.show && (
           <div
             className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
@@ -427,7 +439,10 @@ export default function InvoiceEditLayer() {
                           ? "solar:check-circle-linear"
                           : "solar:danger-triangle-linear"
                       }
-                      style={{ fontSize: "28px", color: popupAccent }}
+                      style={{
+                        fontSize: "28px",
+                        color: popupAccent,
+                      }}
                     />
                   </span>
 
@@ -469,7 +484,9 @@ export default function InvoiceEditLayer() {
                     popup.type === "success" ? "primary" : "danger"
                   } radius-12 px-16`}
                   onClick={closePopup}
-                  style={{ border: `2px solid ${popupAccent}` }}
+                  style={{
+                    border: `2px solid ${popupAccent}`,
+                  }}
                 >
                   OK
                 </button>
@@ -478,7 +495,6 @@ export default function InvoiceEditLayer() {
           </div>
         )}
 
-        {/* ✅ FORM */}
         <div className="container-fluid py-4">
           {!id ? (
             <div className="alert alert-warning">ID invoice tidak ditemukan</div>
