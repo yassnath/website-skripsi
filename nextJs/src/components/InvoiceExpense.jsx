@@ -163,21 +163,21 @@ export default function InvoiceExpensePage() {
   const validate = () => {
     const msgGeneral = "Data is still incomplete, please complete it first!";
 
-    // wajib diisi: no_expense dan tanggal
-    if (!String(form.no_expense || "").trim() || !String(form.tanggal || "").trim()) {
+    if (
+      !String(form.no_expense || "").trim() ||
+      !String(form.tanggal || "").trim()
+    ) {
       setErr("");
       showPopup("danger", msgGeneral, 0);
       return false;
     }
 
-    // rincian harus ada
     if (!Array.isArray(form.rincian) || form.rincian.length === 0) {
       setErr("");
       showPopup("danger", msgGeneral, 0);
       return false;
     }
 
-    // setiap rincian harus terisi lengkap
     for (let i = 0; i < form.rincian.length; i++) {
       const r = form.rincian[i] || {};
       const namaOk = String(r.nama || "").trim();
@@ -501,7 +501,47 @@ export default function InvoiceExpensePage() {
             </div>
           </div>
         </div>
+
+        {/* ✅ MOBILE FIX: Breadcrumb & Dashboard Title supaya sejajar (TIDAK UBAH DESKTOP) */}
+        <style jsx global>{`
+          @media (max-width: 576px) {
+            .breadcrumb,
+            .breadcrumb ol,
+            nav[aria-label="breadcrumb"] {
+              margin-bottom: 8px !important;
+              padding-bottom: 0 !important;
+            }
+
+            .breadcrumb-item,
+            .breadcrumb-item a,
+            .breadcrumb a {
+              font-size: 11px !important;
+              line-height: 1.2 !important;
+              white-space: nowrap !important;
+            }
+
+            h1,
+            h2,
+            h3,
+            .page-title,
+            .dashboard-title,
+            .breadcrumb-title,
+            .content-title,
+            .card-title {
+              font-size: 14px !important;
+              line-height: 1.25 !important;
+              margin-bottom: 0 !important;
+              white-space: nowrap !important;
+            }
+
+            .d-flex.align-items-center.justify-content-between,
+            .d-flex.align-items-center.flex-wrap.justify-content-between {
+              flex-wrap: nowrap !important;
+              gap: 8px !important;
+            }
+          }
+        `}</style>
       </div>
-</>
+    </>
   );
 }

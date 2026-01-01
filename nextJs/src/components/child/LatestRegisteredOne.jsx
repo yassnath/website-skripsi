@@ -241,7 +241,7 @@ const LatestRegisteredOne = () => {
         <div className="card h-100">
           <div className="card-body p-24">
             {/* ✅ HEADER: Tabs + ViewAll sejajar (desktop & mobile) */}
-            <div className="d-flex align-items-center justify-content-between gap-2 mb-16 flex-wrap flex-md-nowrap">
+            <div className="d-flex align-items-center justify-content-between gap-2 mb-16 flex-nowrap">
               {/* ✅ Tabs */}
               <ul className="nav border-gradient-tab nav-pills mb-0 d-flex flex-row gap-2 cvant-latest-tabs">
                 <li className="nav-item">
@@ -418,31 +418,39 @@ const LatestRegisteredOne = () => {
         </div>
       </div>
 
-      {/* ✅ STYLE KHUSUS MOBILE untuk tab agar ViewAll bisa sejajar */}
+      {/* ✅ STYLE KHUSUS MOBILE: TAB + VIEW ALL sama ukuran & tetap 1 baris */}
       <style jsx global>{`
         @media (max-width: 767.98px) {
+          /* ✅ paksa header tetap 1 baris */
           .cvant-latest-tabs {
             gap: 6px !important;
+            flex-wrap: nowrap !important;
           }
 
+          /* ✅ Tab font sama seperti ViewAll */
           .cvant-latest-tabs .nav-link {
-            font-size: 15px !important;
-            padding: 6px 10px !important;
+            font-size: 13px !important;
+            padding: 7px 10px !important;
             border-radius: 10px !important;
+            white-space: nowrap !important;
           }
 
+          /* ✅ Badge lebih kecil tapi tetap jelas */
           .cvant-tab-badge {
-            font-size: 10px !important;
+            font-size: 11px !important;
             padding: 4px 8px !important;
             margin-left: 6px !important;
           }
 
+          /* ✅ ViewAll font sama dengan tab */
           .cvant-view-all {
-            font-size: 12px !important;
+            font-size: 13px !important;
+            font-weight: 600;
+            white-space: nowrap !important;
           }
 
           .cvant-view-all .icon {
-            font-size: 14px !important;
+            font-size: 15px !important;
           }
         }
       `}</style>

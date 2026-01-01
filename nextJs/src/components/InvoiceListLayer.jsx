@@ -265,29 +265,27 @@ export default function InvoiceListLayer() {
       minimumFractionDigits: 0,
     }).format(num || 0);
 
-  const handleDeleteConfirmed = async () => {
-    const item = deleteConfirm.item;
-    if (!item?.id) return;
-
-    setDeleteConfirm((p) => ({ ...p, deleting: true }));
-
+  const handleGenerateReport = async (range) => {
     try {
-      if (item.type === "Income") {
-        await api.delete(`/invoices/${item.id}`);
-      } else {
-        await api.delete(`/expenses/${item.id}`);
-      }
+      setPrinting(true);
+      setPrintingRange(range);
+      setPrintError("");
 
-      setData((prev) =>
-        prev.filter((p) => !(p.id === item.id && p.type === item.type))
-      );
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-      closeDeleteConfirm();
-      showPopup("success", `${item.type} berhasil dihapus.`, 3000);
+      if (!token) throw new Error("Token tidak ditemukan. Silakan login ulang.");
+
+      const url = `${apiBase}/api/reports/summary?range=${encodeURIComponent(
+        range
+      )}&token=${encodeURIComponent(token)}`;
+
+      window.open(url, "_blank");
     } catch (e) {
-      const msg = e?.message || "Gagal menghapus data";
-      setDeleteConfirm((p) => ({ ...p, deleting: false }));
-      showPopup("danger", msg, 0);
+      setPrintError(e.message || "Gagal mencetak laporan");
+    } finally {
+      setPrinting(false);
+      setPrintingRange("");
     }
   };
 
@@ -296,13 +294,11 @@ export default function InvoiceListLayer() {
   const searchBorder = isLightMode ? "#c7c8ca" : "#6c757d";
   const searchIcon = isLightMode ? "#0b1220" : "#ffffff";
 
-  // ✅ MOBILE CARD STYLE
   const cardBg = isLightMode ? "#ffffff" : "#1b2431";
   const cardBorder = isLightMode ? "rgba(148,163,184,0.35)" : "#273142";
   const textMain = isLightMode ? "#0b1220" : "#ffffff";
   const textSub = isLightMode ? "#64748b" : "#94a3b8";
 
-  // ✅ FIX BUTTON ICON CENTER VERTICALLY
   const mobileActionBtnStyle = {
     width: 44,
     height: 38,
@@ -316,6 +312,52 @@ export default function InvoiceListLayer() {
   return (
     <>
       <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
+        {/* ✅ REPORT MODAL (OWNER ONLY) */}
+        {showPrintModal && (
+          <div
+            className="modal fade show d-block"
+            tabIndex={-1}
+            style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          >
+            <div className="modal-dialog modal-sm modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5>Report PDF</h5>
+                  <button
+                    className="btn-close"
+                    onClick={() => !printing && setShowPrintModal(false)}
+                  />
+                </div>
+                <div className="modal-body">
+                  {printError && (
+                    <div className="alert alert-danger py-2">{printError}</div>
+                  )}
+
+                  <button
+                    className="btn btn-outline-success w-100"
+                    disabled={printing}
+                    onClick={() => handleGenerateReport("month")}
+                  >
+                    {printing && printingRange === "month"
+                      ? "Menghasilkan..."
+                      : "Monthly Report"}
+                  </button>
+
+                  <button
+                    className="btn btn-outline-primary w-100 mt-3"
+                    disabled={printing}
+                    onClick={() => handleGenerateReport("year")}
+                  >
+                    {printing && printingRange === "year"
+                      ? "Menghasilkan..."
+                      : "Yearly Report"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="card armada-card">
           <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
             <div className="d-flex flex-wrap align-items-center gap-3">
@@ -359,6 +401,17 @@ export default function InvoiceListLayer() {
             </div>
 
             <div className="d-flex align-items-center gap-2">
+              {/* ✅ REPORT PDF BUTTON (OWNER ONLY) */}
+              {userRole === "owner" && (
+                <button
+                  className="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1"
+                  onClick={() => setShowPrintModal(true)}
+                >
+                  <Icon icon="mdi:printer" />
+                  Report PDF
+                </button>
+              )}
+
               <Link
                 href="/invoice-add"
                 className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
@@ -411,8 +464,9 @@ export default function InvoiceListLayer() {
                               {item.no}
                             </div>
 
+                            {/* ✅ REVISI: BARIS BAWAH DIISI NAMA SAJA */}
                             <div style={{ fontSize: "13px", color: textSub }}>
-                              {item.type} • {item.tanggal_display}
+                              {item.nama || "-"}
                             </div>
                           </div>
 
@@ -431,22 +485,7 @@ export default function InvoiceListLayer() {
                         </div>
 
                         <div className="mt-10">
-                          <div style={{ fontSize: "13px", color: textSub }}>
-                            Nama:{" "}
-                            <span style={{ fontWeight: 600, color: textMain }}>
-                              {item.nama}
-                            </span>
-                          </div>
-
-                          <div style={{ fontSize: "13px", color: textSub }}>
-                            Plat:{" "}
-                            <span style={{ fontWeight: 600, color: textMain }}>
-                              {item.plat}
-                            </span>
-                          </div>
-
                           <div
-                            className="mt-10"
                             style={{
                               fontWeight: 800,
                               fontSize: "14px",
@@ -454,6 +493,11 @@ export default function InvoiceListLayer() {
                             }}
                           >
                             {formatRupiah(item.total)}
+                          </div>
+
+                          {/* ✅ OPTIONAL: DATE KECIL */}
+                          <div style={{ fontSize: "12px", color: textSub }}>
+                            {item.tanggal_display}
                           </div>
                         </div>
 
@@ -522,7 +566,7 @@ export default function InvoiceListLayer() {
                   )}
                 </div>
 
-                {/* ✅ DESKTOP TABLE TETAP (tidak diubah) */}
+                {/* ✅ DESKTOP TABLE (TIDAK DIUBAH) */}
                 <div className="d-none d-md-block card-body table-responsive d-flex">
                   <table className="table bordered-table text-center align-middle">
                     <thead className="table-dark">
@@ -549,10 +593,13 @@ export default function InvoiceListLayer() {
                         filtered.map((item, i) => (
                           <tr key={`${item.type}-${item.id}`}>
                             <td>{i + 1}</td>
+
                             <td
                               style={{
                                 color:
-                                  item.type === "Income" ? "#0d6efd" : "#dc3545",
+                                  item.type === "Income"
+                                    ? "#0d6efd"
+                                    : "#dc3545",
                               }}
                             >
                               {item.no}
@@ -600,6 +647,7 @@ export default function InvoiceListLayer() {
                                   >
                                     <Icon icon="mdi:pencil" />
                                   </button>
+
                                   <button
                                     className="btn btn-xs btn-outline-warning"
                                     style={{ width: 50, height: 40 }}
@@ -621,6 +669,7 @@ export default function InvoiceListLayer() {
                                   >
                                     <Icon icon="mdi:pencil" />
                                   </button>
+
                                   <button
                                     className="btn btn-xs btn-outline-warning"
                                     style={{ width: 50, height: 40 }}

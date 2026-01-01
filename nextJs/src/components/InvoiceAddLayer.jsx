@@ -370,7 +370,7 @@ export default function InvoiceAddPage() {
     popup.type === "success"
       ? "#22c55e"
       : popup.type === "warning"
-      ? "#d97706" // ✅ warning-600
+      ? "#d97706"
       : "#ef4444";
 
   const controlBg = isLightMode ? "#ffffff" : "#273142";
@@ -497,7 +497,7 @@ export default function InvoiceAddPage() {
                 width: "100%",
                 maxWidth: "600px",
                 backgroundColor: "#1b2431",
-                border: `2px solid #d97706`, // ✅ warning-600
+                border: `2px solid #d97706`,
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -583,7 +583,7 @@ export default function InvoiceAddPage() {
           </div>
         )}
 
-        {/* === FORM ASLI KAMU TETAP SAMA (TIDAK DIUBAH) === */}
+        {/* FORM */}
         <div className="container-fluid py-4">
           <div className="row g-4">
             <div className="col-lg-12">
@@ -648,6 +648,7 @@ export default function InvoiceAddPage() {
                         placeholder="Nama pelanggan"
                       />
                     </div>
+
                     <div className="col-md-4">
                       <label className="form-label fw-semibold">
                         Email Customer
@@ -937,7 +938,51 @@ export default function InvoiceAddPage() {
             </div>
           </div>
         </div>
+
+        {/* ✅ MOBILE FIX: Breadcrumb & Dashboard Title supaya sejajar (TIDAK UBAH DESKTOP) */}
+        <style jsx global>{`
+          @media (max-width: 576px) {
+            /* Breadcrumb wrapper */
+            .breadcrumb,
+            .breadcrumb ol,
+            nav[aria-label="breadcrumb"] {
+              margin-bottom: 8px !important;
+              padding-bottom: 0 !important;
+            }
+
+            /* Breadcrumb item text */
+            .breadcrumb-item,
+            .breadcrumb-item a,
+            .breadcrumb a {
+              font-size: 11px !important;
+              line-height: 1.2 !important;
+              white-space: nowrap !important;
+            }
+
+            /* Title / dashboard heading */
+            h1,
+            h2,
+            h3,
+            .page-title,
+            .dashboard-title,
+            .breadcrumb-title,
+            .content-title,
+            .card-title {
+              font-size: 14px !important;
+              line-height: 1.25 !important;
+              margin-bottom: 0 !important;
+              white-space: nowrap !important;
+            }
+
+            /* Agar title + breadcrumb bisa 1 baris (kalau parent flex) */
+            .d-flex.align-items-center.justify-content-between,
+            .d-flex.align-items-center.flex-wrap.justify-content-between {
+              flex-wrap: nowrap !important;
+              gap: 8px !important;
+            }
+          }
+        `}</style>
       </div>
-</>
+    </>
   );
 }
