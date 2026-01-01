@@ -500,7 +500,7 @@ const LoginLayer = () => {
         >
           <div className="d-flex align-items-center flex-column h-100 justify-content-center">
             <img
-              src="/assets/images/big-icon.png"
+              src="/assets/images/big-icon.webp"
               alt=""
               style={{
                 filter: "drop-shadow(0 18px 24px rgba(0,0,0,0.35))",
@@ -523,7 +523,7 @@ const LoginLayer = () => {
                 className="mb-24 max-w-290-px d-inline-block cvant-animate-in cvant-delay-1"
               >
                 <img
-                  src="/assets/images/logo.png"
+                  src="/assets/images/logo.webp"
                   alt=""
                   style={{
                     filter: "drop-shadow(0 10px 14px rgba(0,0,0,0.35))",

@@ -12,7 +12,7 @@ const MasterLayout = ({ children }) => {
   const location = usePathname();
   const [profileName, setProfileName] = useState("User");
   const [profileRole, setProfileRole] = useState("Admin");
-  const [profileImage, setProfileImage] = useState("/assets/images/icon.png");
+  const [profileImage, setProfileImage] = useState("/assets/images/icon.webp");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -22,15 +22,15 @@ const MasterLayout = ({ children }) => {
       if (storedRole === "owner") {
         setProfileName("Bezallael Antok");
         setProfileRole("Owner");
-        setProfileImage("/assets/images/pp-owner.png");
+        setProfileImage("/assets/images/pp-owner.webp");
       } else if (storedRole === "admin") {
         setProfileName("Andi");
         setProfileRole("Admin");
-        setProfileImage("/assets/images/pp-admin.png");
+        setProfileImage("/assets/images/pp-admin.webp");
       } else {
         setProfileName(storedUsername || "User");
         setProfileRole("User");
-        setProfileImage("/assets/images/icon.png");
+        setProfileImage("/assets/images/icon.webp");
       }
     }
   }, []);
@@ -133,9 +133,9 @@ const MasterLayout = ({ children }) => {
 
         <div>
           <Link href="/" className="sidebar-logo" style={{display: "flex", alignItems: "center", justifyContent: "center",}}>
-            <img src="/assets/images/logo.png" alt="site logo" className="light-logo" />
-            <img src="/assets/images/logo-light.png" alt="site logo" className="dark-logo" />
-            <img src="/assets/images/logo-icon.png" alt="site logo" className="logo-icon" />
+            <img src="/assets/images/logo.webp" alt="site logo" className="light-logo" />
+            <img src="/assets/images/logo-light.webp" alt="site logo" className="dark-logo" />
+            <img src="/assets/images/logo-icon.webp" alt="site logo" className="logo-icon" />
           </Link>
         </div>
 
