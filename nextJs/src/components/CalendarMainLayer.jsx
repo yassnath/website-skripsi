@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import listPlugin from "@fullcalendar/list"; // ✅ TAMBAH
 import { api } from "@/lib/api";
 
 export default function CalendarMainLayer() {
@@ -24,18 +23,13 @@ export default function CalendarMainLayer() {
   const [currentRange, setCurrentRange] = useState({ start: "", end: "" });
 
   const [isLightMode, setIsLightMode] = useState(false);
-
   const tooltipRef = useRef(null);
 
-  // ✅ MOBILE DETECTOR
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth <= 991);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
+  /** ✅ Mobile month state */
+  const [mobileMonth, setMobileMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
 
   const getCssVar = (name, fallback) => {
     if (typeof window === "undefined") return fallback;
@@ -140,6 +134,46 @@ export default function CalendarMainLayer() {
     const [y, m, d] = norm.split("-");
     return `${d}-${m}-${y}`;
   };
+
+  /** ✅ format month title */
+  const monthTitle = useMemo(() => {
+    const y = mobileMonth.getFullYear();
+    const m = mobileMonth.getMonth();
+    const monthNames = [
+      "Januari",
+      "Februari",
+      "Maret",
+      "April",
+      "Mei",
+      "Juni",
+      "Juli",
+      "Agustus",
+      "September",
+      "Oktober",
+      "November",
+      "Desember",
+    ];
+    return `${monthNames[m]} ${y}`;
+  }, [mobileMonth]);
+
+  /** ✅ generate all dates of month for mobile list */
+  const mobileDays = useMemo(() => {
+    const year = mobileMonth.getFullYear();
+    const month = mobileMonth.getMonth();
+    const last = new Date(year, month + 1, 0).getDate();
+
+    const out = [];
+    for (let day = 1; day <= last; day++) {
+      const d = new Date(year, month, day);
+      const iso = normalizeDate(d.toISOString());
+      out.push({
+        iso,
+        day,
+        weekDay: d.getDay(), // 0..6
+      });
+    }
+    return out;
+  }, [mobileMonth]);
 
   useEffect(() => {
     const load = async () => {
@@ -280,6 +314,87 @@ export default function CalendarMainLayer() {
     return all;
   }, [invoices, expenses, currentRange]);
 
+  /** ✅ MOBILE EVENTS MAP (tanggal => events) */
+  const mobileEventsByDate = useMemo(() => {
+    const map = new Map();
+
+    // income + expense by date
+    invoices.forEach((inv) => {
+      const dateISO = normalizeDate(inv.tanggal);
+      if (!dateISO) return;
+      const list = map.get(dateISO) || [];
+      list.push({
+        type: "income",
+        title: inv.no_invoice,
+        total: Number(inv.total_bayar || 0),
+        id: inv.id,
+        color: "#0d6efd",
+      });
+      map.set(dateISO, list);
+    });
+
+    expenses.forEach((exp) => {
+      const dateISO = normalizeDate(exp.tanggal);
+      if (!dateISO) return;
+      const list = map.get(dateISO) || [];
+      list.push({
+        type: "expense",
+        title: exp.no_expense,
+        total: Number(exp.total_pengeluaran || 0),
+        id: exp.id,
+        color: "#dc3545",
+      });
+      map.set(dateISO, list);
+    });
+
+    // armada events spread across date range
+    invoices
+      .filter(
+        (inv) =>
+          inv.armada &&
+          inv.armada_start_date &&
+          inv.armada_end_date &&
+          inv.armada_id
+      )
+      .forEach((inv) => {
+        const startISO = normalizeDate(inv.armada_start_date);
+        const endISO = normalizeDate(inv.armada_end_date);
+        if (!startISO || !endISO) return;
+
+        const start = new Date(`${startISO}T00:00:00`);
+        const end = new Date(`${endISO}T00:00:00`);
+
+        for (
+          let d = new Date(start);
+          d <= end;
+          d.setDate(d.getDate() + 1)
+        ) {
+          const iso = normalizeDate(d.toISOString());
+          const list = map.get(iso) || [];
+          list.push({
+            type: "armada",
+            title: `${inv.armada.nama_truk} – ${inv.armada.plat_nomor}`,
+            id: inv.id,
+            color: getArmadaColor(inv.armada_id),
+            startOriginal: startISO,
+            endOriginal: endISO,
+          });
+          map.set(iso, list);
+        }
+      });
+
+    // sort: armada first, income, expense
+    for (const [key, arr] of map.entries()) {
+      arr.sort((a, b) => {
+        const order = { armada: 0, income: 1, expense: 2 };
+        return (order[a.type] ?? 9) - (order[b.type] ?? 9);
+      });
+      map.set(key, arr);
+    }
+
+    return map;
+  }, [invoices, expenses]);
+
   const ensureTooltipEl = () => {
     if (typeof document === "undefined") return null;
 
@@ -341,10 +456,25 @@ export default function CalendarMainLayer() {
 
   const btnTextColor = isLightMode ? "#111827" : "#ffffff";
 
+  const weekNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+
+  const goPrevMonth = () => {
+    const y = mobileMonth.getFullYear();
+    const m = mobileMonth.getMonth();
+    setMobileMonth(new Date(y, m - 1, 1));
+  };
+
+  const goNextMonth = () => {
+    const y = mobileMonth.getFullYear();
+    const m = mobileMonth.getMonth();
+    setMobileMonth(new Date(y, m + 1, 1));
+  };
+
   return (
     <>
       {/* ✅ efek-in ditempel ke wrapper root */}
       <div className={`row gy-4 page-in ${pageIn ? "is-in" : ""}`}>
+        {/* ✅ LEFT SIDE */}
         <div className="col-xxl-3 col-lg-4">
           <div className="card h-100 p-0">
             <div
@@ -423,6 +553,7 @@ export default function CalendarMainLayer() {
           </div>
         </div>
 
+        {/* ✅ RIGHT SIDE */}
         <div className="col-xxl-9 col-lg-8">
           <div className="card h-100 p-0">
             <div
@@ -433,15 +564,158 @@ export default function CalendarMainLayer() {
                 overflow: "visible",
               }}
             >
+              {/* ✅ MOBILE LIST CALENDAR */}
+              <div className="d-lg-none">
+                <div className="d-flex align-items-center justify-content-between mb-12">
+                  <button
+                    className="btn btn-sm"
+                    style={{
+                      border: "1px solid rgba(255,255,255,0.14)",
+                      color: btnTextColor,
+                    }}
+                    onClick={goPrevMonth}
+                  >
+                    <Icon icon="solar:alt-arrow-left-linear" />
+                  </button>
+
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: "16px",
+                      color: btnTextColor,
+                    }}
+                  >
+                    {monthTitle}
+                  </div>
+
+                  <button
+                    className="btn btn-sm"
+                    style={{
+                      border: "1px solid rgba(255,255,255,0.14)",
+                      color: btnTextColor,
+                    }}
+                    onClick={goNextMonth}
+                  >
+                    <Icon icon="solar:alt-arrow-right-linear" />
+                  </button>
+                </div>
+
+                <div className="d-flex flex-column gap-10">
+                  {mobileDays.map((d) => {
+                    const items = mobileEventsByDate.get(d.iso) || [];
+                    return (
+                      <div
+                        key={d.iso}
+                        className="radius-12 p-16"
+                        style={{
+                          border: "1px solid rgba(255,255,255,0.10)",
+                        }}
+                      >
+                        <div className="d-flex align-items-center justify-content-between mb-8">
+                          <div className="d-flex align-items-center gap-10">
+                            <span
+                              className="fw-semibold"
+                              style={{ fontSize: "14px", color: btnTextColor }}
+                            >
+                              {d.day}
+                            </span>
+
+                            <span
+                              className="text-secondary-light"
+                              style={{ fontSize: "13px" }}
+                            >
+                              {weekNames[d.weekDay]}
+                            </span>
+                          </div>
+
+                          <span
+                            className="text-secondary-light"
+                            style={{ fontSize: "12px" }}
+                          >
+                            {toDisplayDDMMYYYY(d.iso)}
+                          </span>
+                        </div>
+
+                        {items.length === 0 ? (
+                          <div
+                            className="text-secondary-light"
+                            style={{ fontSize: "12px", opacity: 0.85 }}
+                          >
+                            No transaction
+                          </div>
+                        ) : (
+                          <div className="d-flex flex-column gap-8">
+                            {items.map((ev, idx) => (
+                              <button
+                                key={`${ev.type}-${ev.id}-${idx}`}
+                                className="btn p-0 text-start border-0 bg-transparent"
+                                onClick={() =>
+                                  (window.location.href =
+                                    ev.type === "income"
+                                      ? `/invoice-preview?id=${ev.id}`
+                                      : ev.type === "expense"
+                                      ? `/expense-preview?id=${ev.id}`
+                                      : `/invoice-preview?id=${ev.id}`)
+                                }
+                                style={{ cursor: "pointer" }}
+                              >
+                                <div className="d-flex align-items-center justify-content-between gap-2">
+                                  <div className="d-flex align-items-center gap-10">
+                                    <span
+                                      className="w-10-px h-10-px rounded-circle"
+                                      style={{
+                                        background: ev.color,
+                                        display: "inline-block",
+                                      }}
+                                    />
+                                    <span
+                                      style={{
+                                        fontWeight: 700,
+                                        fontSize: "13px",
+                                        color: ev.color,
+                                      }}
+                                    >
+                                      {ev.title}
+                                    </span>
+                                  </div>
+
+                                  {ev.type !== "armada" && (
+                                    <span
+                                      className="text-secondary-light"
+                                      style={{ fontSize: "12px" }}
+                                    >
+                                      Rp {Number(ev.total || 0).toLocaleString("id-ID")}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {ev.type === "armada" && (
+                                  <div
+                                    className="text-secondary-light mt-1"
+                                    style={{ fontSize: "12px" }}
+                                  >
+                                    {toDisplayDDMMYYYY(ev.startOriginal)} →{" "}
+                                    {toDisplayDDMMYYYY(ev.endOriginal)}
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* ✅ DESKTOP FULLCALENDAR (TIDAK DIUBAH) */}
               <div
-                className="apexcharts-tooltip-style-1"
-                style={{
-                  height: "100%",
-                }}
+                className="apexcharts-tooltip-style-1 d-none d-lg-block"
+                style={{ height: "100%" }}
               >
                 <FullCalendar
-                  plugins={[dayGridPlugin, listPlugin]} // ✅ TAMBAH listPlugin
-                  initialView={isMobile ? "listMonth" : "dayGridMonth"} // ✅ MOBILE = LIST FULL TANGGAL
+                  plugins={[dayGridPlugin]}
+                  initialView="dayGridMonth"
                   headerToolbar={{
                     left: "prev",
                     center: "title",
@@ -518,9 +792,6 @@ export default function CalendarMainLayer() {
                   eventContent={(arg) => {
                     const type = arg.event.extendedProps.type;
 
-                    // ✅ LIST VIEW (mobile) biarkan default, supaya "full tanggal" rapi
-                    if (isMobile) return undefined;
-
                     if (type === "armada") {
                       return {
                         html: `
@@ -557,7 +828,7 @@ export default function CalendarMainLayer() {
         </div>
       </div>
 
-      {/* ✅ CSS existing JANGAN DIUBAH */}
+      {/* ✅ CSS animasi scoped (bukan global.css) */}
       <style jsx global>{`
         .cvant-eye-btn:hover .cvant-eye-icon {
           color: var(--primary-600, #487fff) !important;
@@ -650,30 +921,14 @@ export default function CalendarMainLayer() {
           color: #ffffff !important;
         }
 
-        html[data-bs-theme="light"]
-          .fc
-          .fc-col-header-cell
-          .fc-scrollgrid-sync-inner,
-        html[data-theme="light"]
-          .fc
-          .fc-col-header-cell
-          .fc-scrollgrid-sync-inner {
+        /* ✅ jangan ubah styling nama hari (tetap ada seperti permintaanmu) */
+        html[data-bs-theme="light"] .fc .fc-col-header-cell .fc-scrollgrid-sync-inner,
+        html[data-theme="light"] .fc .fc-col-header-cell .fc-scrollgrid-sync-inner {
           background: #ffffff !important;
         }
-        html[data-bs-theme="dark"]
-          .fc
-          .fc-col-header-cell
-          .fc-scrollgrid-sync-inner,
-        html[data-theme="dark"]
-          .fc
-          .fc-col-header-cell
-          .fc-scrollgrid-sync-inner {
+        html[data-bs-theme="dark"] .fc .fc-col-header-cell .fc-scrollgrid-sync-inner,
+        html[data-theme="dark"] .fc .fc-col-header-cell .fc-scrollgrid-sync-inner {
           background: #273142 !important;
-        }
-
-        /* ✅ tambahan kecil untuk list view mobile tapi tetap ikut style existing */
-        .fc .fc-list-day-cushion {
-          background: transparent !important;
         }
       `}</style>
     </>
