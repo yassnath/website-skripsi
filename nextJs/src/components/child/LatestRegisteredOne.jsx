@@ -19,7 +19,9 @@ function isLightModeNow() {
   if (bs === "dark") return false;
 
   const dt =
-    (html.getAttribute("data-theme") || body?.getAttribute("data-theme") || "").toLowerCase();
+    (html.getAttribute("data-theme") ||
+      body?.getAttribute("data-theme") ||
+      "").toLowerCase();
   if (dt === "light") return true;
   if (dt === "dark") return false;
 
@@ -240,11 +242,8 @@ const LatestRegisteredOne = () => {
           <div className="card-body p-24">
             {/* ✅ HEADER: Tabs + ViewAll sejajar (desktop & mobile) */}
             <div className="d-flex align-items-center justify-content-between gap-2 mb-16 flex-wrap flex-md-nowrap">
-              
               {/* ✅ Tabs */}
-              <ul className="nav border-gradient-tab nav-pills mb-0 d-flex flex-row gap-2">
-                
-                {/* ✅ Mobile text jadi "Latest", Desktop tetap full */}
+              <ul className="nav border-gradient-tab nav-pills mb-0 d-flex flex-row gap-2 cvant-latest-tabs">
                 <li className="nav-item">
                   <button
                     className={`nav-link d-flex align-items-center ${
@@ -256,7 +255,7 @@ const LatestRegisteredOne = () => {
                     <span className="d-inline d-md-none">Latest</span>
 
                     <span
-                      className="text-sm fw-semibold py-6 px-12 rounded-pill text-white ms-12"
+                      className="text-sm fw-semibold py-6 px-12 rounded-pill text-white ms-12 cvant-tab-badge"
                       style={{
                         backgroundColor:
                           activeTab === "latest" ? "#2563eb" : "#6b7280",
@@ -267,7 +266,6 @@ const LatestRegisteredOne = () => {
                   </button>
                 </li>
 
-                {/* ✅ Mobile text jadi "Biggest", Desktop tetap full */}
                 <li className="nav-item">
                   <button
                     className={`nav-link d-flex align-items-center ${
@@ -279,7 +277,7 @@ const LatestRegisteredOne = () => {
                     <span className="d-inline d-md-none">Biggest</span>
 
                     <span
-                      className="text-sm fw-semibold py-6 px-12 rounded-pill text-white ms-12"
+                      className="text-sm fw-semibold py-6 px-12 rounded-pill text-white ms-12 cvant-tab-badge"
                       style={{
                         backgroundColor:
                           activeTab === "biggest" ? "#2563eb" : "#6b7280",
@@ -299,7 +297,7 @@ const LatestRegisteredOne = () => {
                   textDecoration: "none",
                   whiteSpace: "nowrap",
                 }}
-                className="d-flex align-items-center gap-1"
+                className="d-flex align-items-center gap-1 cvant-view-all"
               >
                 View All{" "}
                 <Icon icon="solar:alt-arrow-right-linear" className="icon" />
@@ -419,6 +417,35 @@ const LatestRegisteredOne = () => {
           </div>
         </div>
       </div>
+
+      {/* ✅ STYLE KHUSUS MOBILE untuk tab agar ViewAll bisa sejajar */}
+      <style jsx global>{`
+        @media (max-width: 767.98px) {
+          .cvant-latest-tabs {
+            gap: 6px !important;
+          }
+
+          .cvant-latest-tabs .nav-link {
+            font-size: 12px !important;
+            padding: 6px 10px !important;
+            border-radius: 10px !important;
+          }
+
+          .cvant-tab-badge {
+            font-size: 10px !important;
+            padding: 4px 8px !important;
+            margin-left: 6px !important;
+          }
+
+          .cvant-view-all {
+            font-size: 12px !important;
+          }
+
+          .cvant-view-all .icon {
+            font-size: 14px !important;
+          }
+        }
+      `}</style>
     </>
   );
 };
