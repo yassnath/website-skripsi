@@ -114,51 +114,6 @@ const MasterLayout = ({ children }) => {
 
   return (
     <>
-      {/* ✅ Tambahan CSS untuk spacing sidebar (GLOBAL, desktop & mobile) */}
-      <style jsx global>{`
-        /* ✅ GAP antar menu utama */
-        .sidebar-menu > li {
-          margin-bottom: 8px !important;
-        }
-
-        /* ✅ GAP untuk submenu items */
-        .sidebar-submenu > li {
-          margin-bottom: 6px !important;
-        }
-
-        /* ✅ memberikan jarak ekstra ketika menu aktif supaya tidak dempet */
-        .sidebar-menu > li > a.active-page,
-        .sidebar-submenu > li > a.active-page {
-          margin-bottom: 6px !important;
-          display: flex;
-        }
-
-        /* ✅ jika dropdown open, kasih padding bawah agar tidak dempet ke item selanjutnya */
-        .sidebar-menu .dropdown.open {
-          padding-bottom: 6px !important;
-        }
-
-        /* ✅ khusus item yang setelah dropdown agar tidak terlalu nempel */
-        .sidebar-menu .dropdown + li {
-          margin-top: 6px !important;
-        }
-
-        /* ✅ untuk mobile sidebar spacing juga lebih aman */
-        @media (max-width: 991px) {
-          .sidebar-menu > li {
-            margin-bottom: 10px !important;
-          }
-
-          .sidebar-submenu > li {
-            margin-bottom: 8px !important;
-          }
-
-          .sidebar-menu .dropdown.open {
-            padding-bottom: 10px !important;
-          }
-        }
-      `}</style>
-
       <section className={mobileMenu ? "overlay active" : "overlay "}>
         <aside
           className={
@@ -208,10 +163,7 @@ const MasterLayout = ({ children }) => {
           <div className="sidebar-menu-area">
             <ul className="sidebar-menu" id="sidebar-menu">
               <li>
-                <Link
-                  href="/"
-                  className={pathname === "/" ? "active-page" : ""}
-                >
+                <Link href="/" className={pathname === "/" ? "active-page" : ""}>
                   <Icon
                     icon="solar:home-smile-angle-outline"
                     className="menu-icon"
@@ -242,9 +194,7 @@ const MasterLayout = ({ children }) => {
                   <li>
                     <Link
                       href="/invoice-add"
-                      className={
-                        pathname === "/invoice-add" ? "active-page" : ""
-                      }
+                      className={pathname === "/invoice-add" ? "active-page" : ""}
                     >
                       <i className="ri-circle-fill circle-icon text-info-main w-auto" />{" "}
                       Add Income
@@ -297,9 +247,7 @@ const MasterLayout = ({ children }) => {
                   <li>
                     <Link
                       href="/armada-add"
-                      className={
-                        pathname === "/armada-add" ? "active-page" : ""
-                      }
+                      className={pathname === "/armada-add" ? "active-page" : ""}
                     >
                       <i className="ri-circle-fill circle-icon text-warning-main w-auto" />{" "}
                       Add New
@@ -416,6 +364,69 @@ const MasterLayout = ({ children }) => {
           </footer>
         </main>
       </section>
+
+      {/* ✅ FIX: SPACING SIDEBAR MENU supaya hover/active tidak nempel */}
+      <style jsx global>{`
+        /* ===== SIDEBAR MENU SPACING FIX ===== */
+
+        /* Semua item menu utama dikasih jarak bawah */
+        .sidebar-menu > li:not(.sidebar-menu-group-title) {
+          margin-bottom: 8px !important;
+        }
+
+        /* Group title jangan ikut jarak besar */
+        .sidebar-menu-group-title {
+          margin: 14px 0 10px !important;
+          padding-top: 6px;
+        }
+
+        /* Dropdown wrapper juga dikasih jarak agar tidak nempel */
+        .sidebar-menu > li.dropdown {
+          margin-bottom: 10px !important;
+        }
+
+        /* Submenu spacing agar setiap submenu rapih */
+        .sidebar-submenu > li {
+          margin-bottom: 6px !important;
+        }
+
+        .sidebar-submenu > li:last-child {
+          margin-bottom: 0 !important;
+        }
+
+        /* Pastikan hover/active punya sedikit padding visual supaya lebih lega */
+        .sidebar-menu a,
+        .sidebar-submenu a {
+          display: flex;
+          align-items: center;
+          padding-top: 10px !important;
+          padding-bottom: 10px !important;
+        }
+
+        /* Khusus calendar yg sebelumnya pakai margin-top negatif,
+           tetep dijaga tapi diberi jarak bawah agar tidak mepet */
+        .sidebar-menu > li[style*="marginTop: -10px"],
+        .sidebar-menu > li[style*="margin-top: -10px"] {
+          margin-bottom: 10px !important;
+        }
+
+        /* Jika active-page menempel, kasih extra breathing space */
+        .sidebar-menu a.active-page,
+        .sidebar-submenu a.active-page {
+          margin-bottom: 2px !important;
+        }
+
+        /* Mobile sidebar juga ikut */
+        @media (max-width: 991px) {
+          .sidebar-menu > li:not(.sidebar-menu-group-title) {
+            margin-bottom: 10px !important;
+          }
+
+          .sidebar-submenu > li {
+            margin-bottom: 8px !important;
+          }
+        }
+      `}</style>
     </>
   );
 };
