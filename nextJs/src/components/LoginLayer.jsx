@@ -135,7 +135,6 @@ const LoginLayer = () => {
 
   return (
     <>
-      {/* ✅ FUTURISTIC UI (GLOBAL) */}
       <style jsx global>{`
         :root {
           --cv-bg: #0f1623;
@@ -163,7 +162,6 @@ const LoginLayer = () => {
           width: 100% !important;
         }
 
-        /* Icon kiri -> true center */
         .cvant-icon-wrap {
           position: absolute !important;
           left: 16px !important;
@@ -181,19 +179,16 @@ const LoginLayer = () => {
           display: block !important;
         }
 
-        /* Input -> padding kiri fix */
         .cvant-input {
           height: 56px !important;
           padding-left: 52px !important;
         }
 
-        /* Placeholder lebih halus dan cocok dark panel */
         .cvant-input::placeholder {
           color: rgba(100, 116, 139, 0.95) !important;
           opacity: 1 !important;
         }
 
-        /* tombol eye -> true center */
         .cvant-eye-btn {
           position: absolute !important;
           right: 10px !important;
@@ -211,6 +206,32 @@ const LoginLayer = () => {
 
         .cvant-eye-btn svg {
           display: block !important;
+        }
+
+        /* ==============================
+           ✅ CENTER + GLOW HEADER (ALL)
+           ============================== */
+
+        .cvant-header-center {
+          width: 100% !important;
+          text-align: center !important;
+        }
+
+        .cvant-logo-wrap {
+          width: 100% !important;
+          display: flex !important;
+          justify-content: center !important;
+        }
+
+        .cvant-logo-glow {
+          filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.35))
+            drop-shadow(0 0 18px rgba(91, 140, 255, 0.18))
+            drop-shadow(0 0 12px rgba(168, 85, 247, 0.12));
+        }
+
+        .cvant-title-glow {
+          text-shadow: 0 0 18px rgba(91, 140, 255, 0.18),
+            0 0 10px rgba(168, 85, 247, 0.14);
         }
 
         /* ==============================
@@ -253,26 +274,22 @@ const LoginLayer = () => {
           overflow: hidden;
         }
 
-        /* ✅ MOBILE ONLY (rapih, center text) */
+        /* ✅ MOBILE ONLY */
         @media (max-width: 991.98px) {
           .cvant-glass {
             padding: 22px !important;
             border-radius: 16px !important;
           }
 
-          .cvant-mobile-center {
-            text-align: center !important;
-          }
-
           .cvant-mobile-title {
             font-size: 20px !important;
             line-height: 1.25 !important;
-            margin-top: 8px !important;
+            margin-top: 10px !important;
           }
 
           .cvant-mobile-desc {
             font-size: 14px !important;
-            line-height: 1.4 !important;
+            line-height: 1.45 !important;
             margin-bottom: 18px !important;
           }
 
@@ -383,10 +400,7 @@ const LoginLayer = () => {
         style={{ height: "100vh" }}
       >
         {/* DESKTOP LEFT */}
-        <div
-          className="auth-left d-lg-block d-none"
-          style={{ height: "100%" }}
-        >
+        <div className="auth-left d-lg-block d-none" style={{ height: "100%" }}>
           <div className="d-flex align-items-center flex-column h-100 justify-content-center">
             <img
               src="/assets/images/big-icon.webp"
@@ -407,20 +421,23 @@ const LoginLayer = () => {
             className="max-w-464-px mx-auto w-100 cvant-glass"
             style={{ padding: "28px" }}
           >
-            <div className="cvant-mobile-center">
-              <Link href="/" className="mb-24 max-w-290-px d-inline-block">
-                <img
-                  src="/assets/images/logo.webp"
-                  alt=""
-                  style={{
-                    filter: "drop-shadow(0 10px 14px rgba(0,0,0,0.35))",
-                  }}
-                />
-              </Link>
+            {/* ✅ HEADER MUST CENTER (MOBILE + DESKTOP) */}
+            <div className="cvant-header-center">
+              <div className="cvant-logo-wrap mb-24">
+                <Link href="/" className="d-inline-flex">
+                  <img
+                    src="/assets/images/logo.webp"
+                    alt=""
+                    className="cvant-logo-glow"
+                    style={{ maxWidth: "290px", height: "auto" }}
+                  />
+                </Link>
+              </div>
 
-              <h4 className="mb-10 text-white cvant-mobile-title">
+              <h4 className="mb-10 text-white cvant-mobile-title cvant-title-glow">
                 Login to your Account
               </h4>
+
               <p className="mb-26 text-neutral-500 text-lg cvant-mobile-desc">
                 Welcome back! please enter your username and password
               </p>
