@@ -408,7 +408,7 @@ export default function InvoiceEditLayer() {
           ) : (
             <div className="row g-4">
               <div className="col-lg-12">
-                <div className="card shadow-sm border-0">
+                <div className="card shadow-sm border-0 gap-3">
                   {/* ✅ DISAMAKAN SEPERTI INVOICE ADD LAYER */}
                   <div className="card-header bg-transparent d-flex justify-content-end">
                     <button
