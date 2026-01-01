@@ -22,73 +22,45 @@ class InvoiceController extends Controller
      */
     public function store(Request $request)
     {
-        $msgGeneral = "Data is still incomplete, please complete it first!";
-
         $validated = $request->validate([
             'no_invoice' => 'required|string|unique:invoices,no_invoice',
             'nama_pelanggan' => 'required|string',
-            'email' => 'nullable|string',
-            'no_telp' => 'nullable|string',
+            'email' => 'required|string',
+            'no_telp' => 'required|string',
             'tanggal' => 'required|date',
-            'due_date' => 'nullable|date',
-
-            'total_biaya' => 'nullable|numeric',
-            'pph' => 'nullable|numeric',
-            'total_bayar' => 'nullable|numeric',
+            'due_date' => 'required|date',
 
             'status' => 'required|string',
-            'diterima_oleh' => 'nullable|string',
+            'diterima_oleh' => 'required|string',
 
-            // ✅ rincian WAJIB ada & minimal 1
+            // ✅ rincian wajib
             'rincian' => 'required|array|min:1',
-
-            // ✅ wajib lengkap per rincian
             'rincian.*.lokasi_muat' => 'required|string',
             'rincian.*.lokasi_bongkar' => 'required|string',
             'rincian.*.armada_id' => 'required|exists:armadas,id',
             'rincian.*.armada_start_date' => 'required|date',
             'rincian.*.armada_end_date' => 'required|date',
-            'rincian.*.tonase' => 'required|numeric|min:1',
-            'rincian.*.harga' => 'required|numeric|min:1',
-        ], [
-            // ✅ override message agar selalu sesuai request kamu
-            'required' => $msgGeneral,
-            'rincian.required' => $msgGeneral,
-            'rincian.array' => $msgGeneral,
-            'rincian.min' => $msgGeneral,
+            'rincian.*.tonase' => 'required|numeric|gt:0',
+            'rincian.*.harga' => 'required|numeric|gt:0',
+
+            // total hitungan
+            'total_biaya' => 'required|numeric|gte:0',
+            'pph' => 'required|numeric|gte:0',
+            'total_bayar' => 'required|numeric|gte:0',
         ]);
 
-        // ✅ inject rincian pertama ke top-level field agar tetap kompatibel
+        // ✅ biar tetap konsisten simpan data utama dari rincian pertama juga
         $first = $validated['rincian'][0];
 
-        $payload = [
-            'no_invoice' => $validated['no_invoice'],
-            'nama_pelanggan' => $validated['nama_pelanggan'],
-            'email' => $validated['email'] ?? null,
-            'no_telp' => $validated['no_telp'] ?? null,
-            'tanggal' => $validated['tanggal'],
-            'due_date' => $validated['due_date'] ?? null,
+        $validated['lokasi_muat'] = $first['lokasi_muat'];
+        $validated['lokasi_bongkar'] = $first['lokasi_bongkar'];
+        $validated['armada_id'] = $first['armada_id'];
+        $validated['armada_start_date'] = $first['armada_start_date'];
+        $validated['armada_end_date'] = $first['armada_end_date'];
+        $validated['tonase'] = $first['tonase'];
+        $validated['harga'] = $first['harga'];
 
-            'armada_id' => $first['armada_id'],
-            'armada_start_date' => $first['armada_start_date'],
-            'armada_end_date' => $first['armada_end_date'],
-            'lokasi_muat' => $first['lokasi_muat'],
-            'lokasi_bongkar' => $first['lokasi_bongkar'],
-            'tonase' => $first['tonase'],
-            'harga' => $first['harga'],
-
-            'total_biaya' => $validated['total_biaya'] ?? 0,
-            'pph' => $validated['pph'] ?? 0,
-            'total_bayar' => $validated['total_bayar'] ?? 0,
-
-            'status' => $validated['status'],
-            'diterima_oleh' => $validated['diterima_oleh'] ?? null,
-
-            // ✅ simpan JSON rincian
-            'rincian' => json_encode($validated['rincian']),
-        ];
-
-        $invoice = Invoice::create($payload);
+        $invoice = Invoice::create($validated);
 
         return $invoice->load('armada');
     }
@@ -100,7 +72,6 @@ class InvoiceController extends Controller
     {
         $invoice = Invoice::with('armada')->findOrFail($id);
 
-        // ✅ pastikan rincian selalu array
         if (!is_array($invoice->rincian)) {
             $invoice->rincian = $invoice->rincian ? json_decode($invoice->rincian, true) : [];
         }
@@ -115,8 +86,6 @@ class InvoiceController extends Controller
     {
         $invoice = Invoice::findOrFail($id);
 
-        $msgGeneral = "Data is still incomplete, please complete it first!";
-
         $validated = $request->validate([
             'no_invoice' => 'required|string|unique:invoices,no_invoice,' . $invoice->id,
             'nama_pelanggan' => 'required|string',
@@ -125,62 +94,36 @@ class InvoiceController extends Controller
             'tanggal' => 'required|date',
             'due_date' => 'nullable|date',
 
-            'total_biaya' => 'nullable|numeric',
-            'pph' => 'nullable|numeric',
-            'total_bayar' => 'nullable|numeric',
-
             'status' => 'required|string',
-            'diterima_oleh' => 'nullable|string',
+            'diterima_oleh' => 'required|string',
 
-            // ✅ rincian WAJIB ada & minimal 1
+            // ✅ rincian wajib
             'rincian' => 'required|array|min:1',
-
-            // ✅ wajib lengkap per rincian
             'rincian.*.lokasi_muat' => 'required|string',
             'rincian.*.lokasi_bongkar' => 'required|string',
             'rincian.*.armada_id' => 'required|exists:armadas,id',
             'rincian.*.armada_start_date' => 'required|date',
             'rincian.*.armada_end_date' => 'required|date',
-            'rincian.*.tonase' => 'required|numeric|min:1',
-            'rincian.*.harga' => 'required|numeric|min:1',
-        ], [
-            'required' => $msgGeneral,
-            'rincian.required' => $msgGeneral,
-            'rincian.array' => $msgGeneral,
-            'rincian.min' => $msgGeneral,
+            'rincian.*.tonase' => 'required|numeric|gt:0',
+            'rincian.*.harga' => 'required|numeric|gt:0',
+
+            // total hitungan
+            'total_biaya' => 'required|numeric|gte:0',
+            'pph' => 'required|numeric|gte:0',
+            'total_bayar' => 'required|numeric|gte:0',
         ]);
 
         $first = $validated['rincian'][0];
 
-        $payload = [
-            'no_invoice' => $validated['no_invoice'],
-            'nama_pelanggan' => $validated['nama_pelanggan'],
-            'email' => $validated['email'] ?? null,
-            'no_telp' => $validated['no_telp'] ?? null,
-            'tanggal' => $validated['tanggal'],
-            'due_date' => $validated['due_date'] ?? null,
+        $validated['lokasi_muat'] = $first['lokasi_muat'];
+        $validated['lokasi_bongkar'] = $first['lokasi_bongkar'];
+        $validated['armada_id'] = $first['armada_id'];
+        $validated['armada_start_date'] = $first['armada_start_date'];
+        $validated['armada_end_date'] = $first['armada_end_date'];
+        $validated['tonase'] = $first['tonase'];
+        $validated['harga'] = $first['harga'];
 
-            // ✅ update top-level sesuai rincian pertama (kompatibel)
-            'armada_id' => $first['armada_id'],
-            'armada_start_date' => $first['armada_start_date'],
-            'armada_end_date' => $first['armada_end_date'],
-            'lokasi_muat' => $first['lokasi_muat'],
-            'lokasi_bongkar' => $first['lokasi_bongkar'],
-            'tonase' => $first['tonase'],
-            'harga' => $first['harga'],
-
-            'total_biaya' => $validated['total_biaya'] ?? 0,
-            'pph' => $validated['pph'] ?? 0,
-            'total_bayar' => $validated['total_bayar'] ?? 0,
-
-            'status' => $validated['status'],
-            'diterima_oleh' => $validated['diterima_oleh'] ?? null,
-
-            // ✅ simpan rincian JSON
-            'rincian' => json_encode($validated['rincian']),
-        ];
-
-        $invoice->update($payload);
+        $invoice->update($validated);
 
         return $invoice->load('armada');
     }
