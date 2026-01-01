@@ -131,7 +131,6 @@ export default function InvoiceEditLayer() {
 
   const closePopup = () => setPopup((p) => ({ ...p, show: false }));
 
-  // ✅ ini sesuai style popup edit kamu
   const popupAccent = popup.type === "success" ? "#22c55e" : "#ef4444";
 
   const controlBg = isLightMode ? "#ffffff" : "#273142";
@@ -173,7 +172,10 @@ export default function InvoiceEditLayer() {
   }, []);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      showPopup("danger", "ID invoice tidak ditemukan.", 0);
+      return;
+    }
 
     api
       .get(`/invoices/${id}`)
@@ -339,7 +341,7 @@ export default function InvoiceEditLayer() {
       showPopup(
         "success",
         "Invoice updated successfully! Redirecting to Invoice List Page...",
-        2500
+        3000
       );
       setTimeout(() => router.push("/invoice-list"), 3000);
     } catch (e) {
@@ -359,12 +361,10 @@ export default function InvoiceEditLayer() {
     router.push(`/invoice-preview?id=${id}`);
   };
 
-  // ✅ sama seperti PreviewLayer
   const getPublicInvoicePublicPageUrl = (invoiceId) => {
     return `${siteBase}/invoice/${invoiceId}`;
   };
 
-  // ✅ dibuat sama persis seperti PreviewLayer (ISI EMAIL INDONESIA)
   const handleSendToEmail = async () => {
     if (!id) return showPopup("danger", "ID invoice tidak ditemukan.", 0);
 
@@ -402,6 +402,91 @@ export default function InvoiceEditLayer() {
   return (
     <>
       <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
+        {popup.show && (
+          <div
+            className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+            style={{
+              zIndex: 9999,
+              background: "rgba(0,0,0,0.55)",
+              padding: "16px",
+            }}
+            onClick={closePopup}
+          >
+            <div
+              className="radius-12 shadow-sm p-24"
+              style={{
+                width: "100%",
+                maxWidth: "600px",
+                backgroundColor: "#1b2431",
+                border: `2px solid ${popupAccent}`,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="d-flex align-items-start justify-content-between gap-2">
+                <div className="d-flex align-items-start gap-12">
+                  <span style={{ marginTop: "2px" }}>
+                    <Icon
+                      icon={
+                        popup.type === "success"
+                          ? "solar:check-circle-linear"
+                          : "solar:danger-triangle-linear"
+                      }
+                      style={{
+                        fontSize: "28px",
+                        color: popupAccent,
+                      }}
+                    />
+                  </span>
+
+                  <div>
+                    <h5 className="mb-8 fw-bold" style={{ color: "#ffffff" }}>
+                      {popup.type === "success" ? "Success" : "Error"}
+                    </h5>
+                    <p
+                      className="mb-0"
+                      style={{ color: "#cbd5e1", fontSize: "15px" }}
+                    >
+                      {popup.message}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn p-0"
+                  aria-label="Close"
+                  onClick={closePopup}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    lineHeight: 1,
+                  }}
+                >
+                  <Icon
+                    icon="solar:close-circle-linear"
+                    style={{ fontSize: 24, color: "#94a3b8" }}
+                  />
+                </button>
+              </div>
+
+              <div className="d-flex justify-content-end mt-20">
+                <button
+                  type="button"
+                  className={`btn btn-${
+                    popup.type === "success" ? "primary" : "danger"
+                  } radius-12 px-16`}
+                  onClick={closePopup}
+                  style={{
+                    border: `2px solid ${popupAccent}`,
+                  }}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="container-fluid py-4">
           {!id ? (
             <div className="alert alert-warning">ID invoice tidak ditemukan</div>
@@ -409,7 +494,6 @@ export default function InvoiceEditLayer() {
             <div className="row g-4">
               <div className="col-lg-12">
                 <div className="card shadow-sm border-0">
-                  {/* ✅ DISAMAKAN SEPERTI INVOICE ADD LAYER */}
                   <div className="card-header bg-transparent d-flex justify-content-end gap-2">
                     <button
                       onClick={handleSendToEmail}
@@ -477,7 +561,6 @@ export default function InvoiceEditLayer() {
                         <hr className="my-2" />
                       </div>
 
-                      {/* ✅ DISAMAKAN DENGAN INVOICE ADD LAYER (3 kolom sejajar) */}
                       <div className="col-md-4">
                         <label className="form-label fw-semibold">
                           Nama Customer
@@ -512,7 +595,6 @@ export default function InvoiceEditLayer() {
                         />
                       </div>
 
-                      {/* ✅ setelah ini TIDAK aku ubah sama sekali */}
                       <div className="col-12">
                         <label className="form-label fw-semibold">
                           Rincian Muat / Bongkar & Armada
@@ -566,11 +648,7 @@ export default function InvoiceEditLayer() {
                                   className="form-select"
                                   value={r.armada_id}
                                   onChange={(e) =>
-                                    updateRincian(
-                                      i,
-                                      "armada_id",
-                                      e.target.value
-                                    )
+                                    updateRincian(i, "armada_id", e.target.value)
                                   }
                                   style={{
                                     backgroundColor: controlBg,
@@ -673,9 +751,7 @@ export default function InvoiceEditLayer() {
                                 <input
                                   type="text"
                                   className="form-control"
-                                  value={`Rp ${rowTotal.toLocaleString(
-                                    "id-ID"
-                                  )}`}
+                                  value={`Rp ${rowTotal.toLocaleString("id-ID")}`}
                                   readOnly
                                 />
                               </div>
@@ -693,9 +769,7 @@ export default function InvoiceEditLayer() {
                       </div>
 
                       <div className="col-md-4">
-                        <label className="form-label fw-semibold">
-                          Subtotal
-                        </label>
+                        <label className="form-label fw-semibold">Subtotal</label>
                         <input
                           type="text"
                           className="form-control"
