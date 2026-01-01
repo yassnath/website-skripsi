@@ -173,6 +173,17 @@ export default function InvoiceListLayer() {
         const invList = Array.isArray(invoices)
           ? invoices.map((i) => {
               const normTanggal = normalizeDate(i.tanggal);
+              const rinc = Array.isArray(i.rincian) ? i.rincian : [];
+
+              const platsFromRincian = rinc
+                .map((r) => r?.armada?.plat_nomor || r?.plat_nomor || null)
+                .filter(Boolean);
+
+              const uniquePlats = Array.from(new Set(platsFromRincian));
+              const platText =
+                uniquePlats.length > 0
+                  ? uniquePlats.join(", ")
+                  : i.armada?.plat_nomor || "-";
 
               return {
                 ...i,
@@ -182,7 +193,10 @@ export default function InvoiceListLayer() {
                 tanggal_display: toDisplay(i.tanggal),
                 total: i.total_bayar,
                 nama: i.nama_pelanggan,
-                dicatat_oleh: i.diterima_oleh || "-",
+                plat: platText,
+
+                // ✅ untuk mobile info
+                recorded_by: i.diterima_oleh || "-",
               };
             })
           : [];
@@ -198,7 +212,10 @@ export default function InvoiceListLayer() {
                 tanggal_display: toDisplay(e.tanggal),
                 total: e.total_pengeluaran,
                 nama: "-",
-                dicatat_oleh: e.dicatat_oleh || "-",
+                plat: "-",
+
+                // ✅ untuk mobile info
+                recorded_by: e.dicatat_oleh || "Admin",
               };
             })
           : [];
@@ -230,7 +247,8 @@ export default function InvoiceListLayer() {
       list = data.filter(
         (i) =>
           (i.nama || "").toLowerCase().includes(s) ||
-          (i.no || "").toLowerCase().includes(s)
+          (i.no || "").toLowerCase().includes(s) ||
+          (i.plat || "").toLowerCase().includes(s)
       );
     }
 
@@ -252,6 +270,56 @@ export default function InvoiceListLayer() {
       currency: "IDR",
       minimumFractionDigits: 0,
     }).format(num || 0);
+
+  const handleDeleteConfirmed = async () => {
+    const item = deleteConfirm.item;
+    if (!item?.id) return;
+
+    setDeleteConfirm((p) => ({ ...p, deleting: true }));
+
+    try {
+      if (item.type === "Income") {
+        await api.delete(`/invoices/${item.id}`);
+      } else {
+        await api.delete(`/expenses/${item.id}`);
+      }
+
+      setData((prev) =>
+        prev.filter((p) => !(p.id === item.id && p.type === item.type))
+      );
+
+      closeDeleteConfirm();
+      showPopup("success", `${item.type} berhasil dihapus.`, 3000);
+    } catch (e) {
+      const msg = e?.message || "Gagal menghapus data";
+      setDeleteConfirm((p) => ({ ...p, deleting: false }));
+      showPopup("danger", msg, 0);
+    }
+  };
+
+  const handleGenerateReport = async (range) => {
+    try {
+      setPrinting(true);
+      setPrintingRange(range);
+      setPrintError("");
+
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+      if (!token) throw new Error("Token tidak ditemukan. Silakan login ulang.");
+
+      const url = `${apiBase}/api/reports/summary?range=${encodeURIComponent(
+        range
+      )}&token=${encodeURIComponent(token)}`;
+
+      window.open(url, "_blank");
+    } catch (e) {
+      setPrintError(e.message || "Gagal mencetak laporan");
+    } finally {
+      setPrinting(false);
+      setPrintingRange("");
+    }
+  };
 
   const searchBg = isLightMode ? "#f5f6fa" : "#1b2431";
   const searchText = isLightMode ? "#0b1220" : "#ffffff";
@@ -276,6 +344,7 @@ export default function InvoiceListLayer() {
   return (
     <>
       <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
+        {/* ✅ CARD HEADER TETAP */}
         <div className="card armada-card">
           <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
             <div className="d-flex flex-wrap align-items-center gap-3">
@@ -319,7 +388,7 @@ export default function InvoiceListLayer() {
             </div>
 
             <div className="d-flex align-items-center gap-2">
-              {/* ✅ REPORT PDF KHUSUS OWNER (TIDAK DIHAPUS) */}
+              {/* ✅ REPORT TIDAK DIHAPUS */}
               {userRole === "owner" && (
                 <button
                   className="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1"
@@ -348,12 +417,13 @@ export default function InvoiceListLayer() {
             </div>
           </div>
 
+          {/* ✅ BODY */}
           <div className="card-body p-0">
             {loading ? (
               <div className="p-4">Loading…</div>
             ) : (
               <>
-                {/* ✅ MOBILE CARD LIST */}
+                {/* ✅ MOBILE CARD LIST (TATANAN TETAP) */}
                 <div className="d-md-none p-3 d-flex flex-column gap-12">
                   {filtered.length === 0 ? (
                     <div className="text-center py-4" style={{ color: textSub }}>
@@ -382,19 +452,8 @@ export default function InvoiceListLayer() {
                               {item.no}
                             </div>
 
-                            {/* ✅ REVISI: BAWAHNYA ISI NAMA & DICATAT OLEH */}
                             <div style={{ fontSize: "13px", color: textSub }}>
-                              Nama:{" "}
-                              <span style={{ fontWeight: 600, color: textMain }}>
-                                {item.nama || "-"}
-                              </span>
-                            </div>
-
-                            <div style={{ fontSize: "13px", color: textSub }}>
-                              Dicatat oleh:{" "}
-                              <span style={{ fontWeight: 600, color: textMain }}>
-                                {item.dicatat_oleh || "-"}
-                              </span>
+                              {item.type} • {item.tanggal_display}
                             </div>
                           </div>
 
@@ -412,18 +471,37 @@ export default function InvoiceListLayer() {
                           </span>
                         </div>
 
-                        <div
-                          className="mt-10"
-                          style={{
-                            fontWeight: 800,
-                            fontSize: "14px",
-                            color: textMain,
-                          }}
-                        >
-                          {formatRupiah(item.total)}
+                        {/* ✅ ISI DIGANTI: NAMA + DICATAT OLEH (TANPA PLAT) */}
+                        <div className="mt-10">
+                          <div style={{ fontSize: "13px", color: textSub }}>
+                            Nama:{" "}
+                            <span style={{ fontWeight: 600, color: textMain }}>
+                              {item.type === "Income"
+                                ? item.nama || "-"
+                                : "-"}
+                            </span>
+                          </div>
+
+                          <div style={{ fontSize: "13px", color: textSub }}>
+                            Dicatat oleh:{" "}
+                            <span style={{ fontWeight: 600, color: textMain }}>
+                              {item.recorded_by || "-"}
+                            </span>
+                          </div>
+
+                          <div
+                            className="mt-10"
+                            style={{
+                              fontWeight: 800,
+                              fontSize: "14px",
+                              color: textMain,
+                            }}
+                          >
+                            {formatRupiah(item.total)}
+                          </div>
                         </div>
 
-                        {/* ✅ ACTION BUTTONS FIXED */}
+                        {/* ✅ ACTION BUTTONS (TIDAK DIUBAH) */}
                         <div className="d-flex justify-content-end gap-2 mt-12">
                           {item.type === "Income" ? (
                             <>
@@ -488,7 +566,7 @@ export default function InvoiceListLayer() {
                   )}
                 </div>
 
-                {/* ✅ DESKTOP TABLE TETAP */}
+                {/* ✅ DESKTOP TABLE (TIDAK DIUBAH) */}
                 <div className="d-none d-md-block card-body table-responsive d-flex">
                   <table className="table bordered-table text-center align-middle">
                     <thead className="table-dark">
@@ -515,6 +593,7 @@ export default function InvoiceListLayer() {
                         filtered.map((item, i) => (
                           <tr key={`${item.type}-${item.id}`}>
                             <td>{i + 1}</td>
+
                             <td
                               style={{
                                 color:
@@ -568,6 +647,7 @@ export default function InvoiceListLayer() {
                                   >
                                     <Icon icon="mdi:pencil" />
                                   </button>
+
                                   <button
                                     className="btn btn-xs btn-outline-warning"
                                     style={{ width: 50, height: 40 }}
@@ -589,6 +669,7 @@ export default function InvoiceListLayer() {
                                   >
                                     <Icon icon="mdi:pencil" />
                                   </button>
+
                                   <button
                                     className="btn btn-xs btn-outline-warning"
                                     style={{ width: 50, height: 40 }}
