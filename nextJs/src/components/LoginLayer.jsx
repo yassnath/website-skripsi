@@ -263,86 +263,81 @@ const LoginLayer = () => {
             0 0 16px rgba(91, 140, 255, 0.2) !important;
         }
 
-        /* ✅ LEFT BIG ICON AURA (SMALLER AGAIN -25%) */
+        /* ✅ LEFT BIG ICON AURA (RING SMALLER + DOT SOFTER) */
         .cvant-big-icon-wrap {
           position: relative;
           display: inline-block;
-
-          /* ✅ 17px → 13px */
-          padding: 13px;
+          padding: 11px; /* ✅ lebih kecil lagi */
         }
 
         .cvant-big-icon-wrap::before {
           content: "";
           position: absolute;
-
-          /* ✅ -5% → -4% */
-          inset: -4%;
-
+          inset: -3.5%;
           border-radius: 999px;
           background: radial-gradient(
               circle at 30% 30%,
-              rgba(91, 140, 255, 0.18),
+              rgba(91, 140, 255, 0.16),
               transparent 60%
             ),
             radial-gradient(
               circle at 70% 50%,
-              rgba(168, 85, 247, 0.14),
+              rgba(168, 85, 247, 0.12),
               transparent 62%
             ),
             radial-gradient(
               circle at 60% 80%,
-              rgba(34, 211, 238, 0.12),
+              rgba(34, 211, 238, 0.1),
               transparent 65%
             );
-          filter: blur(7px); /* ✅ 9px → 7px */
-          opacity: 1;
+          filter: blur(6px);
+          opacity: 0.95;
           pointer-events: none;
         }
 
         .cvant-big-icon-wrap .cvant-icon-ring {
           position: absolute;
-
-          /* ✅ 8px → 6px */
-          inset: 6px;
-
+          inset: 5px; /* ✅ ring lebih kecil */
           border-radius: 999px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 0 0 1px rgba(91, 140, 255, 0.18),
-            0 0 16px rgba(91, 140, 255, 0.1),
-            0 0 12px rgba(34, 211, 238, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          box-shadow: 0 0 0 1px rgba(91, 140, 255, 0.14),
+            0 0 12px rgba(91, 140, 255, 0.08),
+            0 0 10px rgba(34, 211, 238, 0.06);
           pointer-events: none;
         }
 
         .cvant-big-icon-wrap .cvant-orbit {
           position: absolute;
-
-          /* ✅ -1px → 0px */
-          inset: 0px;
-
+          inset: 1px; /* ✅ orbit lebih rapat */
           border-radius: 999px;
-          border: 1px dashed rgba(255, 255, 255, 0.06);
+          border: 1px dashed rgba(255, 255, 255, 0.05);
           pointer-events: none;
-          animation: cvantOrbitSpin 12s linear infinite;
+          animation: cvantOrbitSpin 14s linear infinite;
         }
 
+        /* ✅ DOT ORBIT lebih SOFT */
         .cvant-big-icon-wrap .cvant-orbit::after {
           content: "";
           position: absolute;
           top: 50%;
-          left: -4px; /* ✅ -5px → -4px */
-
-          width: 8px; /* ✅ 10px → 8px */
-          height: 8px;
-
+          left: -3px;
+          width: 7px;
+          height: 7px;
           border-radius: 999px;
+
+          /* warna dibuat lebih soft */
           background: radial-gradient(
             circle,
-            rgba(34, 211, 238, 0.9),
+            rgba(34, 211, 238, 0.55),
             rgba(34, 211, 238, 0)
           );
-          box-shadow: 0 0 16px rgba(34, 211, 238, 0.5),
-            0 0 10px rgba(91, 140, 255, 0.3);
+
+          /* glow jauh lebih tipis + blur */
+          box-shadow: 0 0 10px rgba(34, 211, 238, 0.25),
+            0 0 8px rgba(91, 140, 255, 0.18);
+
+          filter: blur(0.3px);
+          opacity: 0.7;
           transform: translateY(-50%);
         }
 
@@ -359,46 +354,44 @@ const LoginLayer = () => {
           position: relative;
           z-index: 2;
           filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.35))
-            drop-shadow(0 0 16px rgba(34, 211, 238, 0.12))
-            drop-shadow(0 0 18px rgba(91, 140, 255, 0.16));
+            drop-shadow(0 0 14px rgba(34, 211, 238, 0.1))
+            drop-shadow(0 0 16px rgba(91, 140, 255, 0.12));
         }
 
         .cvant-big-icon-wrap::after {
           content: "";
           position: absolute;
-
-          /* ✅ -5% → -4% */
-          inset: -4%;
-
+          inset: -3.5%;
           background: linear-gradient(
             120deg,
-            transparent 20%,
-            rgba(91, 140, 255, 0.16) 45%,
-            rgba(34, 211, 238, 0.12) 55%,
-            transparent 80%
+            transparent 22%,
+            rgba(91, 140, 255, 0.12) 45%,
+            rgba(34, 211, 238, 0.08) 55%,
+            transparent 78%
           );
           transform: translateX(-130%);
-          animation: cvantShimmer 6.5s ease-in-out infinite;
+          animation: cvantShimmer 7s ease-in-out infinite;
           pointer-events: none;
           mix-blend-mode: screen;
           border-radius: 18px;
           z-index: 1;
+          opacity: 0.85;
         }
 
         @keyframes cvantShimmer {
           0% {
             transform: translateX(-130%);
-            opacity: 0.4;
+            opacity: 0.35;
           }
           35% {
-            opacity: 0.7;
+            opacity: 0.6;
           }
           60% {
-            opacity: 0.55;
+            opacity: 0.5;
           }
           100% {
             transform: translateX(130%);
-            opacity: 0.4;
+            opacity: 0.35;
           }
         }
 
