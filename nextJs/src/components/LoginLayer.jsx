@@ -88,7 +88,6 @@ const LoginLayer = () => {
     setLoading(true);
 
     try {
-      // ✅ LOGIN KE API
       const res = await api.post("/login", {
         username: u,
         password: p,
@@ -100,23 +99,17 @@ const LoginLayer = () => {
         throw new Error("Login failed. Please check your username and password!");
       }
 
-      // ✅ SIMPAN KE LOCALSTORAGE
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("role", user.role || "");
       localStorage.setItem("username", user.username || "");
 
-      /**
-       * ✅ SET COOKIE untuk Middleware Next.js
-       * - Pakai max-age supaya cookie tetap ada
-       * - Secure hanya untuk https
-       */
       const isHttps = window.location.protocol === "https:";
       document.cookie = [
         `token=${token}`,
         "path=/",
         "SameSite=Lax",
-        "max-age=86400", // 1 hari
+        "max-age=86400",
         isHttps ? "Secure" : "",
       ]
         .filter(Boolean)
@@ -165,6 +158,39 @@ const LoginLayer = () => {
           -moz-osx-font-smoothing: grayscale;
         }
 
+        /* ✅ ICON FIELD FIX (DESKTOP + MOBILE) */
+        .icon-field {
+          position: relative !important;
+        }
+
+        /* icon kiri dalam input benar-benar center */
+        .icon-field .icon {
+          position: absolute !important;
+          left: 16px !important;
+          top: 50% !important;
+          transform: translateY(-50%) !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          height: 100% !important;
+          line-height: 1 !important;
+          z-index: 2 !important;
+        }
+
+        /* input kasih padding kiri supaya tidak numpuk sama icon */
+        .icon-field input {
+          padding-left: 46px !important;
+        }
+
+        /* tombol eye benar-benar center */
+        .cvant-eye-btn {
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          height: 44px !important;
+          width: 44px !important;
+        }
+
         .cvant-animate-in {
           opacity: 0;
           transform: translateY(14px);
@@ -183,31 +209,6 @@ const LoginLayer = () => {
           transform: translateX(18px);
           animation: cvantFadeRight 0.9s cubic-bezier(0.2, 0.8, 0.2, 1)
             forwards;
-        }
-
-        .cvant-delay-1 {
-          animation-delay: 0.06s;
-        }
-        .cvant-delay-2 {
-          animation-delay: 0.12s;
-        }
-        .cvant-delay-3 {
-          animation-delay: 0.18s;
-        }
-        .cvant-delay-4 {
-          animation-delay: 0.24s;
-        }
-        .cvant-delay-5 {
-          animation-delay: 0.3s;
-        }
-        .cvant-delay-6 {
-          animation-delay: 0.36s;
-        }
-        .cvant-delay-7 {
-          animation-delay: 0.42s;
-        }
-        .cvant-delay-8 {
-          animation-delay: 0.48s;
         }
 
         @keyframes cvantFadeUp {
@@ -229,39 +230,6 @@ const LoginLayer = () => {
             opacity: 1;
             transform: translateX(0);
           }
-        }
-
-        @keyframes cvantPopupIn {
-          from {
-            opacity: 0;
-            transform: scale(0.985) translateY(10px);
-            filter: blur(0.5px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-            filter: blur(0px);
-          }
-        }
-        .cvant-popup-panel {
-          animation: cvantPopupIn 0.22s ease-out forwards;
-        }
-
-        .cvant-btn-pop {
-          transition: transform 0.12s ease, filter 0.12s ease,
-            box-shadow 0.2s ease;
-        }
-        .cvant-btn-pop:active {
-          transform: translateY(1px) scale(0.99);
-        }
-        .cvant-btn-pop:hover {
-          filter: brightness(1.05);
-          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
-        }
-
-        .cvant-focus-ring:focus {
-          box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.25) !important;
-          border-color: rgba(91, 140, 255, 0.75) !important;
         }
 
         .cvant-auth-bg {
@@ -361,40 +329,7 @@ const LoginLayer = () => {
           overflow: hidden;
         }
 
-        .cvant-glass::before {
-          content: "";
-          position: absolute;
-          inset: -2px;
-          background: radial-gradient(
-              900px 120px at 20% 0%,
-              rgba(91, 140, 255, 0.18),
-              transparent 55%
-            ),
-            radial-gradient(
-              900px 120px at 80% 0%,
-              rgba(168, 85, 247, 0.16),
-              transparent 55%
-            );
-          pointer-events: none;
-        }
-
-        .cvant-left-panel {
-          position: relative;
-        }
-        .cvant-left-panel::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(
-            90deg,
-            rgba(15, 22, 35, 0.55) 0%,
-            rgba(15, 22, 35, 0.1) 70%,
-            transparent 100%
-          );
-          pointer-events: none;
-        }
-
-        /* ✅ MOBILE ONLY IMPROVEMENTS (DESKTOP TIDAK KEUBAH) */
+        /* ✅ MOBILE ONLY */
         @media (max-width: 991.98px) {
           .cvant-glass {
             padding: 22px !important;
@@ -405,12 +340,6 @@ const LoginLayer = () => {
             text-align: center !important;
           }
 
-          .cvant-mobile-center a,
-          .cvant-mobile-center img {
-            margin-left: auto !important;
-            margin-right: auto !important;
-          }
-
           .cvant-mobile-title {
             font-size: 20px !important;
             line-height: 1.25 !important;
@@ -418,21 +347,13 @@ const LoginLayer = () => {
           }
 
           .cvant-mobile-desc {
-            font-size: 15px !important;
+            font-size: 14px !important;
             line-height: 1.4 !important;
             margin-bottom: 18px !important;
           }
 
-          .icon-field .icon {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            height: 100% !important;
-          }
-
           .icon-field input {
             height: 52px !important;
-            border-radius: 12px !important;
           }
 
           .cvant-mobile-btn {
@@ -496,7 +417,7 @@ const LoginLayer = () => {
 
               <button
                 type="button"
-                className="btn p-0 cvant-btn-pop"
+                className="btn p-0"
                 aria-label="Close"
                 onClick={() => setPopup((p) => ({ ...p, show: false }))}
                 style={{
@@ -517,7 +438,7 @@ const LoginLayer = () => {
                 type="button"
                 className={`btn btn-${
                   popup.type === "success" ? "primary" : "danger"
-                } radius-12 px-16 cvant-btn-pop`}
+                } radius-12 px-16`}
                 onClick={() => setPopup((p) => ({ ...p, show: false }))}
                 style={{
                   border: `2px solid ${popupAccent}`,
@@ -539,7 +460,7 @@ const LoginLayer = () => {
         <div className="cvant-blob b2" />
         <div className="cvant-blob b3" />
 
-        {/* ✅ DESKTOP LEFT (TIDAK DIUBAH) */}
+        {/* DESKTOP LEFT */}
         <div
           className="auth-left d-lg-block d-none cvant-animate-left cvant-left-panel"
           style={{ height: "100%" }}
@@ -555,7 +476,7 @@ const LoginLayer = () => {
           </div>
         </div>
 
-        {/* ✅ RIGHT PANEL */}
+        {/* RIGHT */}
         <div
           className="auth-right py-32 px-24 d-flex flex-column justify-content-center cvant-animate-right"
           style={{ backgroundColor: "transparent", height: "100%" }}
@@ -564,12 +485,8 @@ const LoginLayer = () => {
             className="max-w-464-px mx-auto w-100 cvant-glass"
             style={{ padding: "28px" }}
           >
-            {/* ✅ MOBILE CENTER WRAPPER (DESKTOP AMAN) */}
             <div className="cvant-mobile-center">
-              <Link
-                href="/"
-                className="mb-24 max-w-290-px d-inline-block cvant-animate-in cvant-delay-1"
-              >
+              <Link href="/" className="mb-24 max-w-290-px d-inline-block">
                 <img
                   src="/assets/images/logo.webp"
                   alt=""
@@ -579,17 +496,17 @@ const LoginLayer = () => {
                 />
               </Link>
 
-              <h4 className="mb-10 text-white cvant-animate-in cvant-delay-2 cvant-mobile-title">
+              <h4 className="mb-10 text-white cvant-mobile-title">
                 Login to your Account
               </h4>
-              <p className="mb-26 text-neutral-500 text-lg cvant-animate-in cvant-delay-3 cvant-mobile-desc">
+              <p className="mb-26 text-neutral-500 text-lg cvant-mobile-desc">
                 Welcome back! please enter your username and password
               </p>
             </div>
 
             <form onSubmit={handleSubmit}>
-              <div className="icon-field mb-16 cvant-animate-in cvant-delay-4">
-                <span className="icon top-50 translate-middle-y">
+              <div className="icon-field mb-16">
+                <span className="icon">
                   <Icon icon="solar:user-linear" />
                 </span>
                 <input
@@ -602,9 +519,9 @@ const LoginLayer = () => {
                 />
               </div>
 
-              <div className="position-relative mb-18 cvant-animate-in cvant-delay-5">
+              <div className="position-relative mb-18">
                 <div className="icon-field">
-                  <span className="icon top-50 translate-middle-y">
+                  <span className="icon">
                     <Icon icon="solar:lock-password-outline" />
                   </span>
 
@@ -616,16 +533,16 @@ const LoginLayer = () => {
                     value={form.password}
                     onChange={onChange("password")}
                     autoComplete="current-password"
-                    style={{ paddingRight: "44px" }}
+                    style={{ paddingRight: "54px" }}
                   />
 
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
                     aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="btn p-0 position-absolute top-50 translate-middle-y cvant-btn-pop"
+                    className="btn p-0 position-absolute top-50 translate-middle-y cvant-eye-btn"
                     style={{
-                      right: "14px",
+                      right: "10px",
                       border: "none",
                       background: "transparent",
                       lineHeight: 1,
@@ -645,7 +562,7 @@ const LoginLayer = () => {
 
               <button
                 type="submit"
-                className="btn btn-primary text-sm btn-sm px-12 py-16 w-100 radius-12 mt-5 cvant-animate-in cvant-delay-6 cvant-btn-pop cvant-mobile-btn"
+                className="btn btn-primary text-sm btn-sm px-12 py-16 w-100 radius-12 mt-5 cvant-mobile-btn"
                 disabled={loading}
                 style={{
                   boxShadow:
@@ -655,8 +572,7 @@ const LoginLayer = () => {
                 {loading ? "Logging in..." : "Login"}
               </button>
 
-              {/* ✅ MOBILE CENTER TEXT */}
-              <div className="mt-3 text-center text-m cvant-animate-in cvant-delay-7 cvant-mobile-center">
+              <div className="mt-3 text-center text-m">
                 <p className="mb-0 text-neutral-400">
                   Forgot Password?{" "}
                   <Link
