@@ -88,6 +88,7 @@ const LoginLayer = () => {
     setLoading(true);
 
     try {
+      // ✅ LOGIN KE API
       const res = await api.post("/login", {
         username: u,
         password: p,
@@ -99,28 +100,37 @@ const LoginLayer = () => {
         throw new Error("Login failed. Please check your username and password!");
       }
 
+      // ✅ SIMPAN KE LOCALSTORAGE
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("role", user.role || "");
       localStorage.setItem("username", user.username || "");
 
+      /**
+       * ✅ SET COOKIE untuk Middleware Next.js
+       * - Pakai max-age supaya cookie tetap ada
+       * - Secure hanya untuk https
+       */
       const isHttps = window.location.protocol === "https:";
       document.cookie = [
         `token=${token}`,
         "path=/",
         "SameSite=Lax",
-        "max-age=86400",
+        "max-age=86400", // 1 hari
         isHttps ? "Secure" : "",
       ]
         .filter(Boolean)
         .join("; ");
 
+      // ✅ FEEDBACK CEPAT (tidak perlu 5 detik)
       showPopup("success", "Login successful! Redirecting to dashboard...", 3000);
 
+      // ✅ PENTING: router.replace + refresh supaya state langsung kebaca
       setTimeout(() => {
-        router.replace("/");
-        router.refresh();
+        router.replace("/"); // atau "/dashboard"
+        router.refresh();    // ✅ biar middleware + page reload state auth
       }, 1000);
+
     } catch (e2) {
       const msg = sanitizeLoginError(
         e2?.message || "Login failed. Please check your username and password!"
@@ -135,7 +145,7 @@ const LoginLayer = () => {
 
   return (
     <>
-      {/* ✅ FUTURISTIC UI + MOBILE FIX */}
+      {/* ✅ FUTURISTIC UI (GLOBAL) */}
       <style jsx global>{`
         :root {
           --cv-bg: #0f1623;
@@ -199,6 +209,9 @@ const LoginLayer = () => {
         .cvant-delay-7 {
           animation-delay: 0.42s;
         }
+        .cvant-delay-8 {
+          animation-delay: 0.48s;
+        }
 
         @keyframes cvantFadeUp {
           to {
@@ -233,7 +246,6 @@ const LoginLayer = () => {
             filter: blur(0px);
           }
         }
-
         .cvant-popup-panel {
           animation: cvantPopupIn 0.22s ease-out forwards;
         }
@@ -352,39 +364,94 @@ const LoginLayer = () => {
           overflow: hidden;
         }
 
-        /* ✅ MOBILE ONLY IMPROVEMENTS */
-        @media (max-width: 991.98px) {
+        .cvant-glass::before {
+          content: "";
+          position: absolute;
+          inset: -2px;
+          background: radial-gradient(
+              900px 120px at 20% 0%,
+              rgba(91, 140, 255, 0.18),
+              transparent 55%
+            ),
+            radial-gradient(
+              900px 120px at 80% 0%,
+              rgba(168, 85, 247, 0.16),
+              transparent 55%
+            );
+          pointer-events: none;
+        }
+
+        .cvant-left-panel {
+          position: relative;
+        }
+        .cvant-left-panel::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            90deg,
+            rgba(15, 22, 35, 0.55) 0%,
+            rgba(15, 22, 35, 0.1) 70%,
+            transparent 100%
+          );
+          pointer-events: none;
+        }
+
+        /* ✅ MOBILE REFINEMENT (DESKTOP TIDAK DIUBAH) */
+        @media (max-width: 991px) {
+          .auth.cvant-auth-bg {
+            padding: 18px 14px;
+            height: 100vh;
+          }
+
           .auth-right {
-            padding: 26px 18px !important;
+            padding: 0 !important;
+            height: 100% !important;
           }
 
           .cvant-glass {
-            padding: 22px !important;
-            border-radius: 16px !important;
+            border-radius: 16px;
+            padding: 22px 18px !important;
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto;
           }
 
-          .cvant-mobile-logo {
-            display: flex;
-            justify-content: center;
+          .cvant-glass h4 {
+            font-size: 20px;
+            margin-bottom: 6px !important;
           }
 
-          .cvant-mobile-logo img {
-            max-width: 210px;
+          .cvant-glass p {
+            font-size: 14px !important;
+            line-height: 1.35;
+            margin-bottom: 18px !important;
+          }
+
+          .cvant-glass img {
+            max-width: 150px;
             height: auto;
           }
 
-          .cvant-mobile-title {
-            font-size: 22px !important;
-            text-align: center;
-            line-height: 1.2;
-            margin-top: 6px;
+          .icon-field .icon {
+            font-size: 18px;
+            opacity: 0.9;
           }
 
-          .cvant-mobile-subtitle {
+          .form-control.h-56-px {
+            height: 50px !important;
             font-size: 14px !important;
-            text-align: center;
-            line-height: 1.3;
-            margin-bottom: 22px !important;
+            border-radius: 12px !important;
+          }
+
+          .btn.btn-primary {
+            padding: 14px 14px !important;
+            border-radius: 12px !important;
+            font-size: 14px !important;
+          }
+
+          .mt-3.text-center p {
+            font-size: 13px !important;
           }
         }
       `}</style>
@@ -404,7 +471,7 @@ const LoginLayer = () => {
             className="radius-12 shadow-sm p-24 cvant-popup-panel"
             style={{
               width: "100%",
-              maxWidth: "520px",
+              maxWidth: "600px",
               backgroundColor: "#1b2431",
               border: `2px solid ${popupAccent}`,
               boxShadow: "0 22px 55px rgba(0,0,0,0.55)",
@@ -433,7 +500,7 @@ const LoginLayer = () => {
                   </h5>
                   <p
                     className="mb-0"
-                    style={{ color: "#cbd5e1", fontSize: "14px" }}
+                    style={{ color: "#cbd5e1", fontSize: "15px" }}
                   >
                     {popup.message}
                   </p>
@@ -508,8 +575,11 @@ const LoginLayer = () => {
             className="max-w-464-px mx-auto w-100 cvant-glass"
             style={{ padding: "28px" }}
           >
-            <div className="cvant-mobile-logo">
-              <Link href="/" className="mb-24 max-w-290-px d-inline-block">
+            <div>
+              <Link
+                href="/"
+                className="mb-24 max-w-290-px d-inline-block cvant-animate-in cvant-delay-1"
+              >
                 <img
                   src="/assets/images/logo.webp"
                   alt=""
@@ -518,18 +588,17 @@ const LoginLayer = () => {
                   }}
                 />
               </Link>
+
+              <h4 className="mb-10 text-white cvant-animate-in cvant-delay-2">
+                Login to your Account
+              </h4>
+              <p className="mb-26 text-neutral-500 text-lg cvant-animate-in cvant-delay-3">
+                Welcome back! please enter your username and password
+              </p>
             </div>
 
-            <h4 className="mb-10 text-white cvant-mobile-title">
-              Login to your Account
-            </h4>
-
-            <p className="mb-26 text-neutral-500 text-lg cvant-mobile-subtitle">
-              Welcome back! please enter your username and password
-            </p>
-
             <form onSubmit={handleSubmit}>
-              <div className="icon-field mb-16">
+              <div className="icon-field mb-16 cvant-animate-in cvant-delay-4">
                 <span className="icon top-50 translate-middle-y">
                   <Icon icon="solar:user-linear" />
                 </span>
@@ -543,7 +612,7 @@ const LoginLayer = () => {
                 />
               </div>
 
-              <div className="position-relative mb-18">
+              <div className="position-relative mb-18 cvant-animate-in cvant-delay-5">
                 <div className="icon-field">
                   <span className="icon top-50 translate-middle-y">
                     <Icon icon="solar:lock-password-outline" />
@@ -586,7 +655,7 @@ const LoginLayer = () => {
 
               <button
                 type="submit"
-                className="btn btn-primary text-sm btn-sm px-12 py-16 w-100 radius-12 mt-5 cvant-btn-pop"
+                className="btn btn-primary text-sm btn-sm px-12 py-16 w-100 radius-12 mt-5 cvant-animate-in cvant-delay-6 cvant-btn-pop"
                 disabled={loading}
                 style={{
                   boxShadow:
@@ -596,7 +665,7 @@ const LoginLayer = () => {
                 {loading ? "Logging in..." : "Login"}
               </button>
 
-              <div className="mt-3 text-center text-m">
+              <div className="mt-3 text-center text-m cvant-animate-in cvant-delay-7">
                 <p className="mb-0 text-neutral-400">
                   Forgot Password?{" "}
                   <Link
