@@ -8,50 +8,38 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
-/**
- * ✅ PARSE tanggal:
- * - "2026-01-01 00:00:00" (DB format)
- * - "2026-01-01"
- * - ISO "2026-01-01T00:00:00Z"
- * - "01-01-2026"
- */
-const parseTanggal = (str) => {
-  if (!str) return null;
+/** ✅ PARSE tanggal: dd-mm-yyyy | yyyy-mm-dd | ISO | Date object */
+const parseTanggal = (value) => {
+  if (!value) return null;
 
-  const s = String(str).trim();
-
-  // ✅ ISO: 2026-01-01T00:00:00Z
-  if (s.includes("T")) {
-    const onlyDate = s.split("T")[0];
-    if (/^\d{4}-\d{2}-\d{2}$/.test(onlyDate)) {
-      return new Date(`${onlyDate}T00:00:00`);
-    }
+  // ✅ kalau sudah Date object
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return value;
   }
 
-  // ✅ DB format: 2026-01-01 00:00:00
-  if (/^\d{4}-\d{2}-\d{2}\s/.test(s)) {
-    const onlyDate = s.split(" ")[0];
-    if (/^\d{4}-\d{2}-\d{2}$/.test(onlyDate)) {
-      return new Date(`${onlyDate}T00:00:00`);
-    }
+  const str = String(value).trim();
+
+  // ISO / full datetime
+  if (str.includes("T")) {
+    const d = str.split("T")[0];
+    return new Date(`${d}T00:00:00`);
   }
 
-  // ✅ dd-mm-yyyy
-  if (/^\d{2}-\d{2}-\d{4}$/.test(s)) {
-    const [dd, mm, yyyy] = s.split("-");
+  // dd-mm-yyyy
+  if (/^\d{2}-\d{2}-\d{4}$/.test(str)) {
+    const [dd, mm, yyyy] = str.split("-");
     return new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
   }
 
-  // ✅ yyyy-mm-dd
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
-    return new Date(`${s}T00:00:00`);
+  // yyyy-mm-dd
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return new Date(`${str}T00:00:00`);
   }
 
   return null;
 };
 
 const IncomeVsExpense = () => {
-  // ✅ efek masuk
   const [pageIn, setPageIn] = useState(false);
   useEffect(() => {
     const t = requestAnimationFrame(() => setPageIn(true));
@@ -63,38 +51,49 @@ const IncomeVsExpense = () => {
     { name: "Expense", data: [] },
   ]);
 
-  const months = useMemo(
-    () => ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"],
+  const options = useMemo(
+    () => ({
+      chart: { type: "area", toolbar: { show: false }, height: 300 },
+      dataLabels: { enabled: false },
+      stroke: { curve: "smooth", width: 3 },
+      xaxis: {
+        categories: [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "Mei",
+          "Jun",
+          "Jul",
+          "Agu",
+          "Sep",
+          "Okt",
+          "Nov",
+          "Des",
+        ],
+        labels: { style: { colors: "#9AA4BF" } },
+      },
+      yaxis: {
+        labels: {
+          formatter: (val) => {
+            if (val >= 1_000_000) return `Rp ${(val / 1_000_000).toFixed(1)}jt`;
+            return `Rp ${val.toLocaleString("id-ID")}`;
+          },
+          style: { colors: "#9AA4BF" },
+        },
+      },
+      tooltip: {
+        y: { formatter: (val) => `Rp ${val.toLocaleString("id-ID")}` },
+      },
+      colors: ["#4E79FF", "#FFB300"],
+      fill: {
+        type: "gradient",
+        gradient: { opacityFrom: 0.4, opacityTo: 0 },
+      },
+      legend: { show: false },
+    }),
     []
   );
-
-  const [options, setOptions] = useState({
-    chart: { type: "area", toolbar: { show: false }, height: 300 },
-    dataLabels: { enabled: false },
-    stroke: { curve: "smooth", width: 3 },
-    xaxis: {
-      categories: months,
-      labels: { style: { colors: "#9AA4BF" } },
-    },
-    yaxis: {
-      labels: {
-        formatter: (val) => {
-          if (val >= 1_000_000) return `Rp ${(val / 1_000_000).toFixed(1)}jt`;
-          return `Rp ${val.toLocaleString("id-ID")}`;
-        },
-        style: { colors: "#9AA4BF" },
-      },
-    },
-    tooltip: {
-      y: { formatter: (val) => `Rp ${val.toLocaleString("id-ID")}` },
-    },
-    colors: ["#4E79FF", "#FFB300"],
-    fill: {
-      type: "gradient",
-      gradient: { opacityFrom: 0.4, opacityTo: 0 },
-    },
-    legend: { show: false },
-  });
 
   useEffect(() => {
     const load = async () => {
@@ -104,8 +103,22 @@ const IncomeVsExpense = () => {
           api.get("/expenses"),
         ]);
 
-        const invoicesRaw = Array.isArray(invRes) ? invRes : [];
-        const expensesRaw = Array.isArray(expRes) ? expRes : [];
+        // ✅ FIX: handle response axios
+        const invoicesRaw = Array.isArray(invRes?.data)
+          ? invRes.data
+          : Array.isArray(invRes)
+          ? invRes
+          : [];
+
+        const expensesRaw = Array.isArray(expRes?.data)
+          ? expRes.data
+          : Array.isArray(expRes)
+          ? expRes
+          : [];
+
+        // ✅ Debug optional (hapus kalau sudah aman)
+        console.log("Invoices Raw:", invoicesRaw);
+        console.log("Expenses Raw:", expensesRaw);
 
         const incomeList = invoicesRaw.map((i) => ({
           type: "Income",
@@ -121,22 +134,19 @@ const IncomeVsExpense = () => {
 
         const combined = [...incomeList, ...expenseList];
 
-        // ✅ ikuti tahun sekarang
-        const currentYear = new Date().getFullYear();
+        const currentYear = new Date().getFullYear(); // ✅ otomatis ikut tahun sekarang (2026)
 
         const incomeMonthly = Array(12).fill(0);
         const expenseMonthly = Array(12).fill(0);
 
         combined.forEach((item) => {
           const d = parseTanggal(item.tanggal);
+          if (!d) return;
 
-          if (!d || isNaN(d.getTime())) return;
-
-          // ✅ filter tahun sesuai tahun sekarang
           if (d.getFullYear() !== currentYear) return;
 
           const monthIndex = d.getMonth();
-          if (monthIndex < 0 || monthIndex > 11) return;
+          if (isNaN(monthIndex)) return;
 
           if (item.type === "Income") {
             incomeMonthly[monthIndex] += item.total;
