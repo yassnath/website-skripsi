@@ -77,7 +77,7 @@ export default function InvoiceEditLayer() {
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // ✅ NEW STATE (sama seperti InvoicePreviewLayer.jsx)
+  // ✅ sama seperti InvoicePreviewLayer.jsx
   const [sending, setSending] = useState(false);
 
   const [isLightMode, setIsLightMode] = useState(false);
@@ -232,8 +232,8 @@ export default function InvoiceEditLayer() {
         });
       })
       .catch(() => {
-        setErr("Gagal memuat data invoice");
-        showPopup("danger", "Gagal memuat data invoice.", 0);
+        setErr("Failed to load invoice data");
+        showPopup("danger", "Failed to load invoice data.", 0);
       });
   }, [id]);
 
@@ -306,7 +306,7 @@ export default function InvoiceEditLayer() {
   };
 
   const handleSave = async () => {
-    if (!id) return showPopup("danger", "ID invoice tidak ditemukan.", 0);
+    if (!id) return showPopup("danger", "Invoice ID not found.", 0);
     if (!validate()) return;
 
     setSaving(true);
@@ -347,9 +347,7 @@ export default function InvoiceEditLayer() {
       setTimeout(() => router.push("/invoice-list"), 3000);
     } catch (e) {
       const msg =
-        e?.response?.data?.message ||
-        e?.message ||
-        "Gagal mengupdate invoice";
+        e?.response?.data?.message || e?.message || "Failed to update invoice";
 
       showPopup("danger", msg, 0);
     } finally {
@@ -358,33 +356,35 @@ export default function InvoiceEditLayer() {
   };
 
   const handlePdf = () => {
-    if (!id) return showPopup("danger", "ID invoice tidak ditemukan.", 0);
+    if (!id) return showPopup("danger", "Invoice ID not found.", 0);
     router.push(`/invoice-preview?id=${id}`);
   };
 
-  // ✅ sesuai dengan InvoicePreviewLayer.jsx
+  // ✅ sama dengan InvoicePreviewLayer.jsx
   const getPublicInvoicePublicPageUrl = (invoiceId) => {
     return `${siteBase}/invoice/${invoiceId}`;
   };
 
-  // ✅ UPDATED: dibuat sama persis dengan InvoicePreviewLayer.jsx
+  // ✅ SAMAKAN STRUKTUR & LOGIC dengan InvoicePreviewLayer.jsx
+  // ✅ tapi output message dibuat English
   const handleSendToEmail = async () => {
-    if (!id) return showPopup("danger", "ID invoice tidak ditemukan.", 0);
+    if (!id) return showPopup("danger", "Invoice ID not found.", 0);
 
     if (!String(form.email || "").trim()) {
-      return showPopup("danger", "Email customer belum diisi.", 0);
+      return showPopup("danger", "Customer email is not filled yet.", 0);
     }
 
     setSending(true);
 
     try {
+      // ✅ Send LINK of public invoice page
       const publicUrl = getPublicInvoicePublicPageUrl(id);
 
       const subject = encodeURIComponent(`Invoice ${form.no_invoice || ""}`);
       const body = encodeURIComponent(
-        `Yth. ${form.nama_pelanggan},\n\n` +
-          `Silakan klik berikut untuk melihat invoice:\n${publicUrl}\n\n` +
-          `Terima kasih,\nCV AS Nusa Trans (CV ANT)`
+        `Dear ${form.nama_pelanggan},\n\n` +
+          `Please click the link below to view your invoice:\n${publicUrl}\n\n` +
+          `Thank you,\nCV AS Nusa Trans (CV ANT)`
       );
 
       const to = encodeURIComponent(form.email || "");
@@ -394,7 +394,7 @@ export default function InvoiceEditLayer() {
     } catch (e) {
       showPopup(
         "danger",
-        `Gagal membuat link PDF publik.\n\n${e?.message || "Unknown error"}`,
+        `Failed to generate public invoice link.\n\n${e?.message || "Unknown error"}`,
         0
       );
     } finally {
@@ -407,15 +407,16 @@ export default function InvoiceEditLayer() {
       <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
         <div className="container-fluid py-4">
           {!id ? (
-            <div className="alert alert-warning">ID invoice tidak ditemukan</div>
+            <div className="alert alert-warning">Invoice ID not found</div>
           ) : (
             <div className="row g-4">
               <div className="col-lg-12">
                 <div className="card shadow-sm border-0">
-                  <div className="card-header bg-transparent d-flex justify-content-end gap-2">
+                  {/* ✅ layout disamakan seperti InvoiceAddLayer.jsx */}
+                  <div className="card-header bg-transparent d-flex justify-content-end">
                     <button
                       onClick={handleSendToEmail}
-                      className="btn btn-sm btn-outline-secondary"
+                      className="btn btn-sm btn-outline-secondary me-2"
                       type="button"
                       disabled={sending}
                     >
@@ -424,7 +425,7 @@ export default function InvoiceEditLayer() {
 
                     <button
                       onClick={handlePdf}
-                      className="btn btn-sm btn-outline-warning"
+                      className="btn btn-sm btn-outline-warning me-2"
                       type="button"
                     >
                       Preview
@@ -440,8 +441,8 @@ export default function InvoiceEditLayer() {
                     </button>
                   </div>
 
-                  {/* ✅ BODY FORM (tidak aku ubah) */}
                   <div className="card-body">
+                    {/* ✅ bagian lain TIDAK DIUBAH */}
                     <div className="row g-3">
                       <div className="col-md-6">
                         <label className="form-label fw-semibold">
@@ -480,7 +481,7 @@ export default function InvoiceEditLayer() {
                         <hr className="my-2" />
                       </div>
 
-                      <div className="col-md-6">
+                      <div className="col-md-4">
                         <label className="form-label fw-semibold">
                           Nama Customer
                         </label>
@@ -492,7 +493,7 @@ export default function InvoiceEditLayer() {
                         />
                       </div>
 
-                      <div className="col-md-6">
+                      <div className="col-md-4">
                         <label className="form-label fw-semibold">
                           Email Customer
                         </label>
@@ -504,7 +505,7 @@ export default function InvoiceEditLayer() {
                         />
                       </div>
 
-                      <div className="col-md-6">
+                      <div className="col-md-4">
                         <label className="form-label fw-semibold">No. Telp</label>
                         <input
                           className="form-control"
@@ -582,8 +583,8 @@ export default function InvoiceEditLayer() {
                                   <option
                                     value=""
                                     style={{
-                                      backgroundColor: optionBg,
-                                      color: optionText,
+                                      backgroundColor: controlBg,
+                                      color: controlText,
                                     }}
                                   >
                                     -- Pilih Armada --
@@ -594,8 +595,8 @@ export default function InvoiceEditLayer() {
                                       key={a.id}
                                       value={a.id}
                                       style={{
-                                        backgroundColor: optionBg,
-                                        color: optionText,
+                                        backgroundColor: controlBg,
+                                        color: controlText,
                                       }}
                                     >
                                       {a.nama_truk} – {a.plat_nomor} ({a.status})
@@ -749,8 +750,8 @@ export default function InvoiceEditLayer() {
                               key={s}
                               value={s}
                               style={{
-                                backgroundColor: optionBg,
-                                color: optionText,
+                                backgroundColor: controlBg,
+                                color: controlText,
                               }}
                             >
                               {s}
@@ -778,8 +779,8 @@ export default function InvoiceEditLayer() {
                               key={role}
                               value={role}
                               style={{
-                                backgroundColor: optionBg,
-                                color: optionText,
+                                backgroundColor: controlBg,
+                                color: controlText,
                               }}
                             >
                               {role}
