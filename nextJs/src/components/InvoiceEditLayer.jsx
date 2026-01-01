@@ -76,10 +76,7 @@ export default function InvoiceEditLayer() {
 
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
-
-  // ✅ sama seperti PreviewLayer
   const [sending, setSending] = useState(false);
-
   const [isLightMode, setIsLightMode] = useState(false);
 
   const siteBase = useMemo(() => {
@@ -283,22 +280,40 @@ export default function InvoiceEditLayer() {
   const pph = useMemo(() => subtotal * 0.02, [subtotal]);
   const totalBayar = useMemo(() => subtotal - pph, [subtotal, pph]);
 
+  // ✅ VALIDASI PERSIS SEPERTI INVOICE ADD PAGE
   const validate = () => {
-    const required = ["no_invoice", "tanggal", "nama_pelanggan", "status"];
-    const empty = required.filter((f) => !String(form[f] || "").trim());
+    const msgGeneral = "Data is still incomplete, please complete it first!";
 
-    if (empty.length > 0) {
-      showPopup(
-        "danger",
-        `Please fill the required fields: ${empty.join(", ")}`,
-        0
-      );
-      return false;
+    const requiredTop = ["no_invoice", "nama_pelanggan", "tanggal", "status"];
+    for (const key of requiredTop) {
+      if (!String(form[key] || "").trim()) {
+        setErr("");
+        showPopup("danger", msgGeneral, 0);
+        return false;
+      }
     }
 
     if (!Array.isArray(form.rincian) || form.rincian.length === 0) {
-      showPopup("danger", "At least one invoice detail is required.", 0);
+      setErr("");
+      showPopup("danger", msgGeneral, 0);
       return false;
+    }
+
+    for (let i = 0; i < form.rincian.length; i++) {
+      const r = form.rincian[i] || {};
+      if (
+        !String(r.lokasi_muat || "").trim() ||
+        !String(r.lokasi_bongkar || "").trim() ||
+        !String(r.armada_id || "").trim() ||
+        !String(r.armada_start_date || "").trim() ||
+        !String(r.armada_end_date || "").trim() ||
+        !String(r.tonase || "").trim() ||
+        !String(r.harga || "").trim()
+      ) {
+        setErr("");
+        showPopup("danger", msgGeneral, 0);
+        return false;
+      }
     }
 
     return true;
@@ -402,6 +417,7 @@ export default function InvoiceEditLayer() {
   return (
     <>
       <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
+        {/* ✅ POPUP */}
         {popup.show && (
           <div
             className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
@@ -618,11 +634,7 @@ export default function InvoiceEditLayer() {
                                   placeholder="Lokasi Muat"
                                   value={r.lokasi_muat}
                                   onChange={(e) =>
-                                    updateRincian(
-                                      i,
-                                      "lokasi_muat",
-                                      e.target.value
-                                    )
+                                    updateRincian(i, "lokasi_muat", e.target.value)
                                   }
                                 />
                               </div>
