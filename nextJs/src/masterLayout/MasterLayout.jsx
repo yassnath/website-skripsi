@@ -113,203 +113,310 @@ const MasterLayout = ({ children }) => {
   const mobileMenuControl = () => setMobileMenu(!mobileMenu);
 
   return (
-    <section className={mobileMenu ? "overlay active" : "overlay "}>
-      <aside
-        className={
-          sidebarActive
-            ? "sidebar active "
-            : mobileMenu
-            ? "sidebar sidebar-open"
-            : "sidebar"
+    <>
+      {/* ✅ Tambahan CSS untuk spacing sidebar (GLOBAL, desktop & mobile) */}
+      <style jsx global>{`
+        /* ✅ GAP antar menu utama */
+        .sidebar-menu > li {
+          margin-bottom: 8px !important;
         }
-      >
-        <button
-          onClick={mobileMenuControl}
-          type="button"
-          className="sidebar-close-btn"
+
+        /* ✅ GAP untuk submenu items */
+        .sidebar-submenu > li {
+          margin-bottom: 6px !important;
+        }
+
+        /* ✅ memberikan jarak ekstra ketika menu aktif supaya tidak dempet */
+        .sidebar-menu > li > a.active-page,
+        .sidebar-submenu > li > a.active-page {
+          margin-bottom: 6px !important;
+          display: flex;
+        }
+
+        /* ✅ jika dropdown open, kasih padding bawah agar tidak dempet ke item selanjutnya */
+        .sidebar-menu .dropdown.open {
+          padding-bottom: 6px !important;
+        }
+
+        /* ✅ khusus item yang setelah dropdown agar tidak terlalu nempel */
+        .sidebar-menu .dropdown + li {
+          margin-top: 6px !important;
+        }
+
+        /* ✅ untuk mobile sidebar spacing juga lebih aman */
+        @media (max-width: 991px) {
+          .sidebar-menu > li {
+            margin-bottom: 10px !important;
+          }
+
+          .sidebar-submenu > li {
+            margin-bottom: 8px !important;
+          }
+
+          .sidebar-menu .dropdown.open {
+            padding-bottom: 10px !important;
+          }
+        }
+      `}</style>
+
+      <section className={mobileMenu ? "overlay active" : "overlay "}>
+        <aside
+          className={
+            sidebarActive
+              ? "sidebar active "
+              : mobileMenu
+              ? "sidebar sidebar-open"
+              : "sidebar"
+          }
         >
-          <Icon icon="radix-icons:cross-2" />
-        </button>
+          <button
+            onClick={mobileMenuControl}
+            type="button"
+            className="sidebar-close-btn"
+          >
+            <Icon icon="radix-icons:cross-2" />
+          </button>
 
-        <div>
-          <Link href="/" className="sidebar-logo" style={{display: "flex", alignItems: "center", justifyContent: "center",}}>
-            <img src="/assets/images/logo.webp" alt="site logo" className="light-logo" />
-            <img src="/assets/images/logo-light.webp" alt="site logo" className="dark-logo" />
-            <img src="/assets/images/logo-icon.webp" alt="site logo" className="logo-icon" />
-          </Link>
-        </div>
+          <div>
+            <Link
+              href="/"
+              className="sidebar-logo"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <img
+                src="/assets/images/logo.webp"
+                alt="site logo"
+                className="light-logo"
+              />
+              <img
+                src="/assets/images/logo-light.webp"
+                alt="site logo"
+                className="dark-logo"
+              />
+              <img
+                src="/assets/images/logo-icon.webp"
+                alt="site logo"
+                className="logo-icon"
+              />
+            </Link>
+          </div>
 
-        <div className="sidebar-menu-area">
-          <ul className="sidebar-menu" id="sidebar-menu">
-            <li>
-              <Link href="/" className={pathname === "/" ? "active-page" : ""}>
-                <Icon icon="solar:home-smile-angle-outline" className="menu-icon" />
-                <span>Dashboard</span>
-              </Link>
-            </li>
-
-            <li className="sidebar-menu-group-title">Application</li>
-
-            <li className="dropdown">
-              <Link href="#">
-                <Icon icon="hugeicons:invoice-03" className="menu-icon" />
-                <span>Invoice</span>
-              </Link>
-              <ul className="sidebar-submenu">
-                <li>
-                  <Link
-                    href="/invoice-list"
-                    className={pathname === "/invoice-list" ? "active-page" : ""}
-                  >
-                    <i className="ri-circle-fill circle-icon text-primary-600 w-auto" /> List
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/invoice-add"
-                    className={pathname === "/invoice-add" ? "active-page" : ""}
-                  >
-                    <i className="ri-circle-fill circle-icon text-info-main w-auto" /> Add Income
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/invoice-expense"
-                    className={pathname === "/invoice-expense" ? "active-page" : ""}
-                  >
-                    <i className="ri-circle-fill circle-icon text-warning-main w-auto" /> Add Expense
-                  </Link>
-                </li>
-              </ul>
-            </li>
-
-            <li style={{ marginTop: "-10px" }}>
-              <Link
-                href="/calendar"
-                className={pathname === "/calendar" ? "active-page" : ""}
-              >
-                <Icon icon="material-symbols:calendar-month-outline" className="menu-icon" />
-                <span>Calendar</span>
-              </Link>
-            </li>
-
-            <li className="dropdown">
-              <Link href="#">
-                <Icon icon="mdi:truck-outline" className="menu-icon" />
-                <span>Fleet</span>
-              </Link>
-              <ul className="sidebar-submenu">
-                <li>
-                  <Link
-                    href="/armada-list"
-                    className={pathname === "/armada-list" ? "active-page" : ""}
-                  >
-                    <i className="ri-circle-fill circle-icon text-primary-600 w-auto" /> List
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/armada-add"
-                    className={pathname === "/armada-add" ? "active-page" : ""}
-                  >
-                    <i className="ri-circle-fill circle-icon text-warning-main w-auto" /> Add New
-                  </Link>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </aside>
-
-      <main className={sidebarActive ? "dashboard-main active" : "dashboard-main"}>
-        <div className="navbar-header">
-          <div className="row align-items-center justify-content-between">
-            <div className="col-auto">
-              <div className="d-flex flex-wrap align-items-center gap-4">
-                <button type="button" className="sidebar-toggle" onClick={sidebarControl}>
-                  {sidebarActive ? (
-                    <Icon icon="iconoir:arrow-right" className="icon text-2xl non-active" />
-                  ) : (
-                    <Icon icon="heroicons:bars-3-solid" className="icon text-2xl non-active" />
-                  )}
-                </button>
-
-                <button
-                  onClick={mobileMenuControl}
-                  type="button"
-                  className="sidebar-mobile-toggle"
+          <div className="sidebar-menu-area">
+            <ul className="sidebar-menu" id="sidebar-menu">
+              <li>
+                <Link
+                  href="/"
+                  className={pathname === "/" ? "active-page" : ""}
                 >
-                  <Icon icon="heroicons:bars-3-solid" className="icon" />
-                </button>
+                  <Icon
+                    icon="solar:home-smile-angle-outline"
+                    className="menu-icon"
+                  />
+                  <span>Dashboard</span>
+                </Link>
+              </li>
 
-                <form className="navbar-search">
-                  <input type="text" placeholder="Search" />
-                  <Icon icon="ion:search-outline" className="icon" />
-                </form>
-              </div>
-            </div>
+              <li className="sidebar-menu-group-title">Application</li>
 
-            <div className="col-auto">
-              <div className="d-flex flex-wrap align-items-center gap-3">
-                <ThemeToggleButton />
+              <li className="dropdown">
+                <Link href="#">
+                  <Icon icon="hugeicons:invoice-03" className="menu-icon" />
+                  <span>Invoice</span>
+                </Link>
+                <ul className="sidebar-submenu">
+                  <li>
+                    <Link
+                      href="/invoice-list"
+                      className={
+                        pathname === "/invoice-list" ? "active-page" : ""
+                      }
+                    >
+                      <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />{" "}
+                      List
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/invoice-add"
+                      className={
+                        pathname === "/invoice-add" ? "active-page" : ""
+                      }
+                    >
+                      <i className="ri-circle-fill circle-icon text-info-main w-auto" />{" "}
+                      Add Income
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/invoice-expense"
+                      className={
+                        pathname === "/invoice-expense" ? "active-page" : ""
+                      }
+                    >
+                      <i className="ri-circle-fill circle-icon text-warning-main w-auto" />{" "}
+                      Add Expense
+                    </Link>
+                  </li>
+                </ul>
+              </li>
 
-                <div className="dropdown">
+              <li style={{ marginTop: "-10px" }}>
+                <Link
+                  href="/calendar"
+                  className={pathname === "/calendar" ? "active-page" : ""}
+                >
+                  <Icon
+                    icon="material-symbols:calendar-month-outline"
+                    className="menu-icon"
+                  />
+                  <span>Calendar</span>
+                </Link>
+              </li>
+
+              <li className="dropdown">
+                <Link href="#">
+                  <Icon icon="mdi:truck-outline" className="menu-icon" />
+                  <span>Fleet</span>
+                </Link>
+                <ul className="sidebar-submenu">
+                  <li>
+                    <Link
+                      href="/armada-list"
+                      className={
+                        pathname === "/armada-list" ? "active-page" : ""
+                      }
+                    >
+                      <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />{" "}
+                      List
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/armada-add"
+                      className={
+                        pathname === "/armada-add" ? "active-page" : ""
+                      }
+                    >
+                      <i className="ri-circle-fill circle-icon text-warning-main w-auto" />{" "}
+                      Add New
+                    </Link>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </aside>
+
+        <main
+          className={sidebarActive ? "dashboard-main active" : "dashboard-main"}
+        >
+          <div className="navbar-header">
+            <div className="row align-items-center justify-content-between">
+              <div className="col-auto">
+                <div className="d-flex flex-wrap align-items-center gap-4">
                   <button
-                    className="d-flex justify-content-center align-items-center rounded-circle"
                     type="button"
-                    data-bs-toggle="dropdown"
+                    className="sidebar-toggle"
+                    onClick={sidebarControl}
                   >
-                    <img
-                      src={profileImage}
-                      alt="image_user"
-                      className="w-40-px h-40-px object-fit-cover rounded-circle"
-                    />
+                    {sidebarActive ? (
+                      <Icon
+                        icon="iconoir:arrow-right"
+                        className="icon text-2xl non-active"
+                      />
+                    ) : (
+                      <Icon
+                        icon="heroicons:bars-3-solid"
+                        className="icon text-2xl non-active"
+                      />
+                    )}
                   </button>
 
-                  <div className="dropdown-menu to-top dropdown-menu-sm">
-                    <div className="py-12 px-16 radius-8 bg-primary-50 mb-16 d-flex align-items-center justify-content-between gap-2">
-                      <div>
-                        <h6 className="text-lg text-primary-light fw-semibold mb-2">
-                          {profileName}
-                        </h6>
-                        <span className="text-secondary-light fw-medium text-sm">
-                          {profileRole}
-                        </span>
+                  <button
+                    onClick={mobileMenuControl}
+                    type="button"
+                    className="sidebar-mobile-toggle"
+                  >
+                    <Icon icon="heroicons:bars-3-solid" className="icon" />
+                  </button>
+
+                  <form className="navbar-search">
+                    <input type="text" placeholder="Search" />
+                    <Icon icon="ion:search-outline" className="icon" />
+                  </form>
+                </div>
+              </div>
+
+              <div className="col-auto">
+                <div className="d-flex flex-wrap align-items-center gap-3">
+                  <ThemeToggleButton />
+
+                  <div className="dropdown">
+                    <button
+                      className="d-flex justify-content-center align-items-center rounded-circle"
+                      type="button"
+                      data-bs-toggle="dropdown"
+                    >
+                      <img
+                        src={profileImage}
+                        alt="image_user"
+                        className="w-40-px h-40-px object-fit-cover rounded-circle"
+                      />
+                    </button>
+
+                    <div className="dropdown-menu to-top dropdown-menu-sm">
+                      <div className="py-12 px-16 radius-8 bg-primary-50 mb-16 d-flex align-items-center justify-content-between gap-2">
+                        <div>
+                          <h6 className="text-lg text-primary-light fw-semibold mb-2">
+                            {profileName}
+                          </h6>
+                          <span className="text-secondary-light fw-medium text-sm">
+                            {profileRole}
+                          </span>
+                        </div>
+
+                        <button type="button" className="hover-text-danger">
+                          <Icon
+                            icon="radix-icons:cross-1"
+                            className="icon text-xl"
+                          />
+                        </button>
                       </div>
 
-                      <button type="button" className="hover-text-danger">
-                        <Icon icon="radix-icons:cross-1" className="icon text-xl" />
-                      </button>
+                      <ul className="to-top-list">
+                        <li>
+                          <button
+                            className="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-danger d-flex align-items-center gap-3"
+                            onClick={handleLogout}
+                          >
+                            <Icon icon="lucide:power" className="icon text-xl" />{" "}
+                            Log Out
+                          </button>
+                        </li>
+                      </ul>
                     </div>
-
-                    <ul className="to-top-list">
-                      <li>
-                        <button
-                          className="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-danger d-flex align-items-center gap-3"
-                          onClick={handleLogout}
-                        >
-                          <Icon icon="lucide:power" className="icon text-xl" /> Log Out
-                        </button>
-                      </li>
-                    </ul>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="dashboard-main-body">{children}</div>
+          <div className="dashboard-main-body">{children}</div>
 
-        <footer className="d-footer">
-          <div className="row align-items-center justify-content-between">
-            <div className="col-auto">
-              <p className="mb-0">© 2025 CV ANT. All Rights Reserved.</p>
+          <footer className="d-footer">
+            <div className="row align-items-center justify-content-between">
+              <div className="col-auto">
+                <p className="mb-0">© 2025 CV ANT. All Rights Reserved.</p>
+              </div>
             </div>
-          </div>
-        </footer>
-      </main>
-    </section>
+          </footer>
+        </main>
+      </section>
+    </>
   );
 };
 
