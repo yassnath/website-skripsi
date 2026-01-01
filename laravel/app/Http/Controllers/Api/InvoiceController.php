@@ -89,10 +89,10 @@ class InvoiceController extends Controller
         $validated = $request->validate([
             'no_invoice' => 'required|string|unique:invoices,no_invoice,' . $invoice->id,
             'nama_pelanggan' => 'required|string',
-            'email' => 'nullable|string',
-            'no_telp' => 'nullable|string',
+            'email' => 'required|string',
+            'no_telp' => 'required|string',
             'tanggal' => 'required|date',
-            'due_date' => 'nullable|date',
+            'due_date' => 'required|date',
 
             'status' => 'required|string',
             'diterima_oleh' => 'required|string',
