@@ -113,33 +113,102 @@ const LatestRegisteredOne = () => {
     fetchData();
   }, []);
 
+  const renderMobileCardList = (data, isLatestMode) => {
+    return (
+      <div className="d-flex flex-column gap-12 d-md-none">
+        {data.map((item) => {
+          const id = isLatestMode ? item.id : `${item.type}-${item.id}`;
+          const link = isLatestMode
+            ? `/invoice-preview?id=${item.id}`
+            : item.link;
+
+          const no = isLatestMode ? item.no_invoice : item.no;
+          const customer = isLatestMode ? item.nama_pelanggan : item.customer;
+          const tanggal = item.tanggal;
+          const total = isLatestMode ? item.total_bayar : item.total;
+          const status = item.status;
+
+          return (
+            <div
+              key={id}
+              className="p-16 radius-12 border bg-white"
+              style={{
+                border: "1px solid rgba(148,163,184,0.35)",
+                background: "rgba(255,255,255,0.02)",
+              }}
+            >
+              <div className="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <Link
+                    href={link}
+                    style={{
+                      color: item.type === "expense" ? "#dc3545" : "#2563eb",
+                      textDecoration: "none",
+                      fontWeight: 700,
+                      fontSize: "14px",
+                    }}
+                  >
+                    {no}
+                  </Link>
+
+                  <div style={{ fontSize: "13px", color: "#cbd5e1" }}>
+                    {customer}
+                  </div>
+                </div>
+
+                <span
+                  className={`${getStatusClass(
+                    status
+                  )} px-16 py-4 rounded-pill fw-medium text-sm`}
+                  style={{
+                    fontSize: "12px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {status}
+                </span>
+              </div>
+
+              <div className="mt-10 d-flex justify-content-between align-items-center">
+                <div style={{ fontSize: "13px", color: "#94a3b8" }}>
+                  {tanggal}
+                </div>
+                <div style={{ fontWeight: 700, fontSize: "14px" }}>
+                  Rp {Number(total).toLocaleString("id-ID")}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <>
       <div className={`col-xxl-8 col-xl-12 page-in ${pageIn ? "is-in" : ""}`}>
         <div className="card h-100">
           <div className="card-body p-24">
-            {/* ✅ HEADER TAB */}
-            <div className="d-flex flex-wrap align-items-center gap-2 justify-content-between mb-16">
-              <ul className="nav border-gradient-tab nav-pills mb-0 flex-wrap gap-2">
+            <div className="d-flex flex-wrap align-items-center gap-1 justify-content-between mb-16">
+              {/* ✅ FIX MOBILE TAB agar tidak kepanjangan */}
+              <ul className="nav border-gradient-tab nav-pills mb-0 flex-nowrap overflow-auto w-100 w-md-auto">
                 <li className="nav-item">
                   <button
-                    className={`nav-link d-flex align-items-center justify-content-between ${
+                    className={`nav-link d-flex align-items-center ${
                       activeTab === "latest" ? "active" : ""
                     }`}
                     onClick={() => setActiveTab("latest")}
                     style={{
-                      fontSize: "13px",
-                      padding: "8px 12px",
                       whiteSpace: "nowrap",
+                      flexShrink: 0,
                     }}
                   >
-                    Latest
+                    Latest Customers
                     <span
                       className="text-sm fw-semibold py-6 px-12 rounded-pill text-white ms-12"
                       style={{
                         backgroundColor:
                           activeTab === "latest" ? "#2563eb" : "#6b7280",
-                        fontSize: "12px",
                       }}
                     >
                       {latestInvoices.length}
@@ -149,23 +218,21 @@ const LatestRegisteredOne = () => {
 
                 <li className="nav-item">
                   <button
-                    className={`nav-link d-flex align-items-center justify-content-between ${
+                    className={`nav-link d-flex align-items-center ${
                       activeTab === "biggest" ? "active" : ""
                     }`}
                     onClick={() => setActiveTab("biggest")}
                     style={{
-                      fontSize: "13px",
-                      padding: "8px 12px",
                       whiteSpace: "nowrap",
+                      flexShrink: 0,
                     }}
                   >
-                    Biggest
+                    Biggest Transactions
                     <span
                       className="text-sm fw-semibold py-6 px-12 rounded-pill text-white ms-12"
                       style={{
                         backgroundColor:
                           activeTab === "biggest" ? "#2563eb" : "#6b7280",
-                        fontSize: "12px",
                       }}
                     >
                       {biggestData.length}
@@ -177,7 +244,7 @@ const LatestRegisteredOne = () => {
               <Link
                 href="/invoice-list"
                 style={{ color: "#2563eb", textDecoration: "none" }}
-                className="d-flex align-items-center gap-1"
+                className="d-flex align-items-center gap-1 mt-2 mt-md-0"
               >
                 View All{" "}
                 <Icon icon="solar:alt-arrow-right-linear" className="icon" />
@@ -186,20 +253,21 @@ const LatestRegisteredOne = () => {
 
             {/* ✅ TAB CONTENT */}
             <div className="tab-content">
-              {/* ✅ LATEST */}
+              {/* ✅ Latest Customers */}
               <div
                 className={`tab-pane fade ${
                   activeTab === "latest" ? "show active" : ""
                 }`}
               >
-                <div className="table-responsive scroll-sm">
-                  <table
-                    className="table bordered-table sm-table mb-0"
-                    style={{ minWidth: "650px" }} // ✅ bikin tetap rapi di mobile
-                  >
+                {/* ✅ MOBILE VIEW (CARD LIST) */}
+                {renderMobileCardList(latestInvoices, true)}
+
+                {/* ✅ DESKTOP VIEW (KEEP AS IS) */}
+                <div className="table-responsive scroll-sm d-none d-md-block">
+                  <table className="table bordered-table sm-table mb-0">
                     <thead>
                       <tr className="text-center">
-                        <th>No</th>
+                        <th>No Invoice</th>
                         <th>Customer</th>
                         <th>Tanggal</th>
                         <th>Total</th>
@@ -210,48 +278,28 @@ const LatestRegisteredOne = () => {
                     <tbody>
                       {latestInvoices.map((i) => (
                         <tr key={i.id} className="text-center">
-                          <td
-                            style={{
-                              maxWidth: "140px",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
+                          <td>
                             <Link
                               href={`/invoice-preview?id=${i.id}`}
-                              style={{ color: "#2563eb", textDecoration: "none" }}
+                              style={{
+                                color: "#2563eb",
+                                textDecoration: "none",
+                              }}
                             >
                               {i.no_invoice}
                             </Link>
                           </td>
-
-                          <td
-                            style={{
-                              maxWidth: "160px",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
-                            {i.nama_pelanggan}
+                          <td>{i.nama_pelanggan}</td>
+                          <td>{i.tanggal}</td>
+                          <td>
+                            Rp{" "}
+                            {Number(i.total_bayar).toLocaleString("id-ID")}
                           </td>
-
-                          <td style={{ whiteSpace: "nowrap" }}>{i.tanggal}</td>
-
-                          <td style={{ whiteSpace: "nowrap" }}>
-                            Rp {Number(i.total_bayar).toLocaleString("id-ID")}
-                          </td>
-
                           <td>
                             <span
                               className={`${getStatusClass(
                                 i.status
                               )} px-24 py-4 rounded-pill fw-medium text-sm`}
-                              style={{
-                                fontSize: "12px",
-                                padding: "4px 10px",
-                              }}
                             >
                               {i.status}
                             </span>
@@ -263,20 +311,21 @@ const LatestRegisteredOne = () => {
                 </div>
               </div>
 
-              {/* ✅ BIGGEST */}
+              {/* ✅ Biggest Transactions */}
               <div
                 className={`tab-pane fade ${
                   activeTab === "biggest" ? "show active" : ""
                 }`}
               >
-                <div className="table-responsive scroll-sm">
-                  <table
-                    className="table bordered-table sm-table mb-0"
-                    style={{ minWidth: "650px" }}
-                  >
+                {/* ✅ MOBILE VIEW (CARD LIST) */}
+                {renderMobileCardList(biggestData, false)}
+
+                {/* ✅ DESKTOP VIEW (KEEP AS IS) */}
+                <div className="table-responsive scroll-sm d-none d-md-block">
+                  <table className="table bordered-table sm-table mb-0">
                     <thead>
                       <tr className="text-center">
-                        <th>No</th>
+                        <th>No Invoice</th>
                         <th>Customer</th>
                         <th>Tanggal</th>
                         <th>Total</th>
@@ -287,14 +336,7 @@ const LatestRegisteredOne = () => {
                     <tbody>
                       {biggestData.map((d) => (
                         <tr key={`${d.type}-${d.id}`} className="text-center">
-                          <td
-                            style={{
-                              maxWidth: "140px",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
+                          <td>
                             <Link
                               href={d.link}
                               style={{
@@ -306,33 +348,14 @@ const LatestRegisteredOne = () => {
                               {d.no}
                             </Link>
                           </td>
-
-                          <td
-                            style={{
-                              maxWidth: "160px",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
-                            {d.customer}
-                          </td>
-
-                          <td style={{ whiteSpace: "nowrap" }}>{d.tanggal}</td>
-
-                          <td style={{ whiteSpace: "nowrap" }}>
-                            Rp {d.total.toLocaleString("id-ID")}
-                          </td>
-
+                          <td>{d.customer}</td>
+                          <td>{d.tanggal}</td>
+                          <td>Rp {d.total.toLocaleString("id-ID")}</td>
                           <td>
                             <span
                               className={`${getStatusClass(
                                 d.status
                               )} px-24 py-4 rounded-pill fw-medium text-sm`}
-                              style={{
-                                fontSize: "12px",
-                                padding: "4px 10px",
-                              }}
                             >
                               {d.status}
                             </span>
@@ -344,6 +367,7 @@ const LatestRegisteredOne = () => {
                 </div>
               </div>
             </div>
+            {/* END TAB */}
           </div>
         </div>
       </div>
