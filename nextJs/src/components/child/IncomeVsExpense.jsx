@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { api } from "@/lib/api";
 
@@ -8,25 +8,43 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
-/** PARSE tanggal dd-mm-yyyy | yyyy-mm-dd | ISO */
+/**
+ * ✅ PARSE tanggal:
+ * - "2026-01-01 00:00:00" (DB format)
+ * - "2026-01-01"
+ * - ISO "2026-01-01T00:00:00Z"
+ * - "01-01-2026"
+ */
 const parseTanggal = (str) => {
   if (!str) return null;
 
-  // ISO 2025-11-20T17:00:00Z
-  if (str.includes("T")) {
-    const d = str.split("T")[0];
-    return new Date(`${d}T00:00:00`);
+  const s = String(str).trim();
+
+  // ✅ ISO: 2026-01-01T00:00:00Z
+  if (s.includes("T")) {
+    const onlyDate = s.split("T")[0];
+    if (/^\d{4}-\d{2}-\d{2}$/.test(onlyDate)) {
+      return new Date(`${onlyDate}T00:00:00`);
+    }
   }
 
-  // dd-mm-yyyy
-  if (/^\d{2}-\d{2}-\d{4}$/.test(str)) {
-    const [dd, mm, yyyy] = str.split("-");
+  // ✅ DB format: 2026-01-01 00:00:00
+  if (/^\d{4}-\d{2}-\d{2}\s/.test(s)) {
+    const onlyDate = s.split(" ")[0];
+    if (/^\d{4}-\d{2}-\d{2}$/.test(onlyDate)) {
+      return new Date(`${onlyDate}T00:00:00`);
+    }
+  }
+
+  // ✅ dd-mm-yyyy
+  if (/^\d{2}-\d{2}-\d{4}$/.test(s)) {
+    const [dd, mm, yyyy] = s.split("-");
     return new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
   }
 
-  // yyyy-mm-dd
-  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
-    return new Date(`${str}T00:00:00`);
+  // ✅ yyyy-mm-dd
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    return new Date(`${s}T00:00:00`);
   }
 
   return null;
@@ -45,22 +63,24 @@ const IncomeVsExpense = () => {
     { name: "Expense", data: [] },
   ]);
 
+  const months = useMemo(
+    () => ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"],
+    []
+  );
+
   const [options, setOptions] = useState({
-    chart: { type: "area", toolbar: { show: false }, height: 300 }, // ✅ naikkan sedikit
+    chart: { type: "area", toolbar: { show: false }, height: 300 },
     dataLabels: { enabled: false },
     stroke: { curve: "smooth", width: 3 },
     xaxis: {
-      categories: [
-        "Jan","Feb","Mar","Apr","Mei","Jun",
-        "Jul","Agu","Sep","Okt","Nov","Des"
-      ],
+      categories: months,
       labels: { style: { colors: "#9AA4BF" } },
     },
     yaxis: {
       labels: {
         formatter: (val) => {
-          if (val >= 1_000_000) return `Rp ${(val / 1_000_000)}jt`;
-          return `Rp ${val}`;
+          if (val >= 1_000_000) return `Rp ${(val / 1_000_000).toFixed(1)}jt`;
+          return `Rp ${val.toLocaleString("id-ID")}`;
         },
         style: { colors: "#9AA4BF" },
       },
@@ -101,6 +121,7 @@ const IncomeVsExpense = () => {
 
         const combined = [...incomeList, ...expenseList];
 
+        // ✅ ikuti tahun sekarang
         const currentYear = new Date().getFullYear();
 
         const incomeMonthly = Array(12).fill(0);
@@ -108,11 +129,14 @@ const IncomeVsExpense = () => {
 
         combined.forEach((item) => {
           const d = parseTanggal(item.tanggal);
-          if (!d) return;
+
+          if (!d || isNaN(d.getTime())) return;
+
+          // ✅ filter tahun sesuai tahun sekarang
           if (d.getFullYear() !== currentYear) return;
 
           const monthIndex = d.getMonth();
-          if (isNaN(monthIndex)) return;
+          if (monthIndex < 0 || monthIndex > 11) return;
 
           if (item.type === "Income") {
             incomeMonthly[monthIndex] += item.total;
@@ -135,9 +159,7 @@ const IncomeVsExpense = () => {
 
   return (
     <>
-      <div
-        className={`col-xxl-7 col-xl-12 page-in ${pageIn ? "is-in" : ""}`}
-      >
+      <div className={`col-xxl-7 col-xl-12 page-in ${pageIn ? "is-in" : ""}`}>
         <div className="card h-100">
           <div className="card-body p-24 mb-8">
             <div className="d-flex align-items-center flex-wrap gap-2 justify-content-between">
@@ -176,7 +198,7 @@ const IncomeVsExpense = () => {
           </div>
         </div>
       </div>
-</>
+    </>
   );
 };
 
