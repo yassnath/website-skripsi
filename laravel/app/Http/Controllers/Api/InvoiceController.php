@@ -22,6 +22,8 @@ class InvoiceController extends Controller
      */
     public function store(Request $request)
     {
+        $msgGeneral = "Data is still incomplete, please complete it first!";
+
         $validated = $request->validate([
             'no_invoice' => 'required|string|unique:invoices,no_invoice',
             'nama_pelanggan' => 'required|string',
@@ -29,22 +31,65 @@ class InvoiceController extends Controller
             'no_telp' => 'nullable|string',
             'tanggal' => 'required|date',
             'due_date' => 'nullable|date',
-            'armada_id' => 'nullable|exists:armadas,id',
-            'armada_start_date' => 'nullable|date',
-            'armada_end_date' => 'nullable|date',
-            'lokasi_muat' => 'nullable|string',
-            'lokasi_bongkar' => 'nullable|string',
-            'tonase' => 'nullable|numeric',
-            'harga' => 'nullable|numeric',
+
             'total_biaya' => 'nullable|numeric',
             'pph' => 'nullable|numeric',
             'total_bayar' => 'nullable|numeric',
-            'status' => 'nullable|string',
+
+            'status' => 'required|string',
             'diterima_oleh' => 'nullable|string',
-            'rincian' => 'nullable',
+
+            // ✅ rincian WAJIB ada & minimal 1
+            'rincian' => 'required|array|min:1',
+
+            // ✅ wajib lengkap per rincian
+            'rincian.*.lokasi_muat' => 'required|string',
+            'rincian.*.lokasi_bongkar' => 'required|string',
+            'rincian.*.armada_id' => 'required|exists:armadas,id',
+            'rincian.*.armada_start_date' => 'required|date',
+            'rincian.*.armada_end_date' => 'required|date',
+            'rincian.*.tonase' => 'required|numeric|min:1',
+            'rincian.*.harga' => 'required|numeric|min:1',
+        ], [
+            // ✅ override message agar selalu sesuai request kamu
+            'required' => $msgGeneral,
+            'rincian.required' => $msgGeneral,
+            'rincian.array' => $msgGeneral,
+            'rincian.min' => $msgGeneral,
         ]);
 
-        $invoice = Invoice::create($validated);
+        // ✅ inject rincian pertama ke top-level field agar tetap kompatibel
+        $first = $validated['rincian'][0];
+
+        $payload = [
+            'no_invoice' => $validated['no_invoice'],
+            'nama_pelanggan' => $validated['nama_pelanggan'],
+            'email' => $validated['email'] ?? null,
+            'no_telp' => $validated['no_telp'] ?? null,
+            'tanggal' => $validated['tanggal'],
+            'due_date' => $validated['due_date'] ?? null,
+
+            'armada_id' => $first['armada_id'],
+            'armada_start_date' => $first['armada_start_date'],
+            'armada_end_date' => $first['armada_end_date'],
+            'lokasi_muat' => $first['lokasi_muat'],
+            'lokasi_bongkar' => $first['lokasi_bongkar'],
+            'tonase' => $first['tonase'],
+            'harga' => $first['harga'],
+
+            'total_biaya' => $validated['total_biaya'] ?? 0,
+            'pph' => $validated['pph'] ?? 0,
+            'total_bayar' => $validated['total_bayar'] ?? 0,
+
+            'status' => $validated['status'],
+            'diterima_oleh' => $validated['diterima_oleh'] ?? null,
+
+            // ✅ simpan JSON rincian
+            'rincian' => json_encode($validated['rincian']),
+        ];
+
+        $invoice = Invoice::create($payload);
+
         return $invoice->load('armada');
     }
 
@@ -70,6 +115,8 @@ class InvoiceController extends Controller
     {
         $invoice = Invoice::findOrFail($id);
 
+        $msgGeneral = "Data is still incomplete, please complete it first!";
+
         $validated = $request->validate([
             'no_invoice' => 'required|string|unique:invoices,no_invoice,' . $invoice->id,
             'nama_pelanggan' => 'required|string',
@@ -77,22 +124,64 @@ class InvoiceController extends Controller
             'no_telp' => 'nullable|string',
             'tanggal' => 'required|date',
             'due_date' => 'nullable|date',
-            'armada_id' => 'nullable|exists:armadas,id',
-            'armada_start_date' => 'nullable|date',
-            'armada_end_date' => 'nullable|date',
-            'lokasi_muat' => 'nullable|string',
-            'lokasi_bongkar' => 'nullable|string',
-            'tonase' => 'nullable|numeric',
-            'harga' => 'nullable|numeric',
+
             'total_biaya' => 'nullable|numeric',
             'pph' => 'nullable|numeric',
             'total_bayar' => 'nullable|numeric',
-            'status' => 'nullable|string',
+
+            'status' => 'required|string',
             'diterima_oleh' => 'nullable|string',
-            'rincian' => 'nullable',
+
+            // ✅ rincian WAJIB ada & minimal 1
+            'rincian' => 'required|array|min:1',
+
+            // ✅ wajib lengkap per rincian
+            'rincian.*.lokasi_muat' => 'required|string',
+            'rincian.*.lokasi_bongkar' => 'required|string',
+            'rincian.*.armada_id' => 'required|exists:armadas,id',
+            'rincian.*.armada_start_date' => 'required|date',
+            'rincian.*.armada_end_date' => 'required|date',
+            'rincian.*.tonase' => 'required|numeric|min:1',
+            'rincian.*.harga' => 'required|numeric|min:1',
+        ], [
+            'required' => $msgGeneral,
+            'rincian.required' => $msgGeneral,
+            'rincian.array' => $msgGeneral,
+            'rincian.min' => $msgGeneral,
         ]);
 
-        $invoice->update($validated);
+        $first = $validated['rincian'][0];
+
+        $payload = [
+            'no_invoice' => $validated['no_invoice'],
+            'nama_pelanggan' => $validated['nama_pelanggan'],
+            'email' => $validated['email'] ?? null,
+            'no_telp' => $validated['no_telp'] ?? null,
+            'tanggal' => $validated['tanggal'],
+            'due_date' => $validated['due_date'] ?? null,
+
+            // ✅ update top-level sesuai rincian pertama (kompatibel)
+            'armada_id' => $first['armada_id'],
+            'armada_start_date' => $first['armada_start_date'],
+            'armada_end_date' => $first['armada_end_date'],
+            'lokasi_muat' => $first['lokasi_muat'],
+            'lokasi_bongkar' => $first['lokasi_bongkar'],
+            'tonase' => $first['tonase'],
+            'harga' => $first['harga'],
+
+            'total_biaya' => $validated['total_biaya'] ?? 0,
+            'pph' => $validated['pph'] ?? 0,
+            'total_bayar' => $validated['total_bayar'] ?? 0,
+
+            'status' => $validated['status'],
+            'diterima_oleh' => $validated['diterima_oleh'] ?? null,
+
+            // ✅ simpan rincian JSON
+            'rincian' => json_encode($validated['rincian']),
+        ];
+
+        $invoice->update($payload);
+
         return $invoice->load('armada');
     }
 
@@ -119,7 +208,6 @@ class InvoiceController extends Controller
             $invoice->rincian = $invoice->rincian ? json_decode($invoice->rincian, true) : [];
         }
 
-        // ✅ view yang benar adalah: resources/views/invoices/invoice.blade.php
         if (!view()->exists('invoices.invoice')) {
             return response()->json([
                 'message' => 'Template PDF tidak ditemukan: resources/views/invoices/invoice.blade.php'
@@ -152,7 +240,6 @@ class InvoiceController extends Controller
             if (!is_array($rin)) $rin = [];
         }
 
-        // ✅ inject armada_plat untuk public preview
         if (is_array($rin) && count($rin) > 0) {
             foreach ($rin as $idx => $r) {
                 if (!is_array($r)) continue;
@@ -196,14 +283,12 @@ class InvoiceController extends Controller
 
             $invoice->rincian = $rin;
 
-            // ✅ view yang benar adalah: resources/views/invoices/invoice.blade.php
             if (!view()->exists('invoices.invoice')) {
                 return response()->json([
                     'message' => 'Template PDF tidak ditemukan: resources/views/invoices/invoice.blade.php'
                 ], 500);
             }
 
-            // ✅ Pastikan folder exist & writable (Railway)
             @mkdir(storage_path('app/dompdf'), 0777, true);
             @mkdir(storage_path('app/dompdf/fonts'), 0777, true);
 
@@ -211,7 +296,6 @@ class InvoiceController extends Controller
                 'invoice' => $invoice,
             ]);
 
-            // ✅ KUNCI STABIL DI RAILWAY:
             $pdf->setOption('isRemoteEnabled', true);
             $pdf->setOption('tempDir', sys_get_temp_dir());
             $pdf->setOption('fontDir', storage_path('app/dompdf/fonts'));
@@ -232,13 +316,11 @@ class InvoiceController extends Controller
     /**
      * ✅ ✅ ✅ PUBLIC PDF LINK (TANPA LOGIN)
      * URL: /api/public/invoices/{id}/pdf-link
-     * Ini opsional (front-end kamu sebenarnya sudah bisa build link sendiri)
      */
     public function publicPdfLink($id)
     {
         $invoice = Invoice::findOrFail($id);
 
-        // ✅ base domain publik (APP_URL)
         $base = rtrim(config('app.url'), '/');
 
         return response()->json([
