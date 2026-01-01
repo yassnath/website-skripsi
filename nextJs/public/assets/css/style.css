@@ -12542,21 +12542,6 @@ select option {
   max-width: unset;
 }
 
-/*#imagePreview {
-  background-image: url("../images/user-grid/user-grid-img13.png");
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-#previewImage1,
-#previewImage2 {
-  background-image: url("../images/payment/upload-image.png");
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
-}*/
-
 .avatar-upload .avatar-preview {
   width: 150px;
   height: 150px;
