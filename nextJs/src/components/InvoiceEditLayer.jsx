@@ -78,7 +78,6 @@ export default function InvoiceEditLayer() {
   const [saving, setSaving] = useState(false);
   const [isLightMode, setIsLightMode] = useState(false);
 
-  // ✅ base API & base SITE (untuk email link publik)
   const apiBase = useMemo(() => {
     let base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
     return String(base).replace(/\/+$/, "");
@@ -286,7 +285,6 @@ export default function InvoiceEditLayer() {
     const empty = required.filter((f) => !String(form[f] || "").trim());
 
     if (empty.length > 0) {
-      setErr("");
       showPopup(
         "danger",
         `Please fill the required fields: ${empty.join(", ")}`,
@@ -296,32 +294,15 @@ export default function InvoiceEditLayer() {
     }
 
     if (!Array.isArray(form.rincian) || form.rincian.length === 0) {
-      setErr("");
       showPopup("danger", "At least one invoice detail is required.", 0);
       return false;
-    }
-
-    for (let i = 0; i < form.rincian.length; i++) {
-      const r = form.rincian[i] || {};
-      if (r.armada_id && (!r.armada_start_date || !r.armada_end_date)) {
-        setErr("");
-        showPopup(
-          "danger",
-          `Detail #${i + 1}: If an armada is selected, 'Departure Date' and 'Arrival Date' are required.`,
-          0
-        );
-        return false;
-      }
     }
 
     return true;
   };
 
   const handleSave = async () => {
-    if (!id) {
-      showPopup("danger", "ID invoice tidak ditemukan.", 0);
-      return;
-    }
+    if (!id) return showPopup("danger", "ID invoice tidak ditemukan.", 0);
     if (!validate()) return;
 
     setSaving(true);
@@ -361,19 +342,11 @@ export default function InvoiceEditLayer() {
       );
       setTimeout(() => router.push("/invoice-list"), 3000);
     } catch (e) {
-      const serverMsg =
+      const msg =
         e?.response?.data?.message ||
         e?.message ||
         "Gagal mengupdate invoice";
 
-      const fieldErrors = e?.response?.data?.errors;
-      const firstFieldError = fieldErrors
-        ? Object.values(fieldErrors).flat()?.[0]
-        : "";
-
-      const msg = firstFieldError || serverMsg;
-
-      setErr(msg);
       showPopup("danger", msg, 0);
     } finally {
       setSaving(false);
@@ -385,25 +358,18 @@ export default function InvoiceEditLayer() {
     router.push(`/invoice-preview?id=${id}`);
   };
 
-  /**
-   * ✅ SEND TO EMAIL: DISAMAKAN PERSIS dengan InvoicePreviewLayer.jsx
-   * - pakai link public page (bukan link api)
-   * - format gmail compose: view=cm&fs=1&to=...&su=...&body=...
-   */
   const getPublicInvoiceViewerUrl = (invoiceId) => {
     return `${siteBase}/invoice/${invoiceId}`;
   };
 
   const handleEmail = async () => {
     if (!id) return showPopup("danger", "ID invoice tidak ditemukan.", 0);
-
     if (!String(form.email || "").trim()) {
       return showPopup("danger", "Email customer belum diisi.", 0);
     }
 
     try {
       const publicUrl = getPublicInvoiceViewerUrl(id);
-
       const subject = encodeURIComponent(`Invoice ${form.no_invoice || ""}`);
       const body = encodeURIComponent(
         `Yth. ${form.nama_pelanggan},\n\n` +
@@ -428,86 +394,6 @@ export default function InvoiceEditLayer() {
     <>
       <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
         <div className="container-fluid py-4">
-          {popup.show && (
-            <div
-              className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-              style={{
-                zIndex: 9999,
-                background: "rgba(0,0,0,0.55)",
-                padding: "16px",
-              }}
-              onClick={closePopup}
-            >
-              <div
-                className="radius-12 shadow-sm p-24"
-                style={{
-                  width: "100%",
-                  maxWidth: "600px",
-                  backgroundColor: "#1b2431",
-                  border: `2px solid ${popupAccent}`,
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="d-flex align-items-start justify-content-between gap-2">
-                  <div className="d-flex align-items-start gap-12">
-                    <span style={{ marginTop: "2px" }}>
-                      <Icon
-                        icon={
-                          popup.type === "success"
-                            ? "solar:check-circle-linear"
-                            : "solar:danger-triangle-linear"
-                        }
-                        style={{ fontSize: "28px", color: popupAccent }}
-                      />
-                    </span>
-
-                    <div>
-                      <h5 className="mb-8 fw-bold" style={{ color: "#ffffff" }}>
-                        {popup.type === "success" ? "Success" : "Error"}
-                      </h5>
-                      <p
-                        className="mb-0"
-                        style={{ color: "#cbd5e1", fontSize: "15px" }}
-                      >
-                        {popup.message}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="btn p-0"
-                    aria-label="Close"
-                    onClick={closePopup}
-                    style={{
-                      border: "none",
-                      background: "transparent",
-                      lineHeight: 1,
-                    }}
-                  >
-                    <Icon
-                      icon="solar:close-circle-linear"
-                      style={{ fontSize: 24, color: "#94a3b8" }}
-                    />
-                  </button>
-                </div>
-
-                <div className="d-flex justify-content-end mt-20">
-                  <button
-                    type="button"
-                    className={`btn btn-${
-                      popup.type === "success" ? "primary" : "danger"
-                    } radius-12 px-16`}
-                    onClick={closePopup}
-                    style={{ border: `2px solid ${popupAccent}` }}
-                  >
-                    OK
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {!id ? (
             <div className="alert alert-warning">ID invoice tidak ditemukan</div>
           ) : (
@@ -520,7 +406,7 @@ export default function InvoiceEditLayer() {
                       className="btn btn-sm btn-outline-secondary"
                       type="button"
                     >
-                      Kirim Email
+                      Send to Email
                     </button>
 
                     <button
