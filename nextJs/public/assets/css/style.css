@@ -13964,7 +13964,7 @@ table tbody tr td {
 
 #previewImage1,
 #previewImage2 {
-  background-image: url("../images/payment/upload-image.png");
+  background-image: none;
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -15182,7 +15182,7 @@ td.fc-header-center {
 /* === NFT end === */
 /* === trail card start === */
 .trail-bg {
-  background-image: url("../images/home-nine/trail-bg.png");
+  background-image: none;
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center center;
