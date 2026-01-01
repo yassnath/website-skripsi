@@ -263,7 +263,7 @@ const LoginLayer = () => {
             0 0 16px rgba(91, 140, 255, 0.2) !important;
         }
 
-        /* ✅ LEFT BIG ICON - Cinematic Orbit + Smaller Orbit */
+        /* ✅ LEFT BIG ICON - Cinematic Orbit + Pulse */
         .cvant-big-icon-wrap {
           position: relative;
           display: inline-block;
@@ -306,15 +306,14 @@ const LoginLayer = () => {
           pointer-events: none;
         }
 
-        /* ✅ ORBIT 1 (Oval + Spin) */
         .cvant-big-icon-wrap .cvant-orbit {
           position: absolute;
-          inset: 10px; /* ✅ lebih kecil lagi */
+          inset: 10px;
           border-radius: 999px;
           border: 1px dashed rgba(255, 255, 255, 0.045);
           pointer-events: none;
           animation: cvantOrbitSpin 14s linear infinite;
-          transform: scaleX(1.12); /* ✅ oval */
+          transform: scaleX(1.12);
           transform-origin: center;
         }
 
@@ -336,12 +335,12 @@ const LoginLayer = () => {
           filter: blur(0.25px);
           opacity: 0.68;
           transform: translateY(-50%);
+          animation: cvantDotPulse 2.7s ease-in-out infinite;
         }
 
-        /* ✅ ORBIT 2 (Smaller + Different speed) */
         .cvant-big-icon-wrap .cvant-orbit2 {
           position: absolute;
-          inset: 16px; /* ✅ lebih kecil */
+          inset: 16px;
           border-radius: 999px;
           border: 1px dashed rgba(255, 255, 255, 0.035);
           pointer-events: none;
@@ -368,6 +367,7 @@ const LoginLayer = () => {
           filter: blur(0.3px);
           opacity: 0.6;
           transform: translateY(-50%);
+          animation: cvantDotPulse2 3.15s ease-in-out infinite;
         }
 
         @keyframes cvantOrbitSpin {
@@ -388,49 +388,46 @@ const LoginLayer = () => {
           }
         }
 
+        /* ✅ Pulse halus (soft + cinematic) */
+        @keyframes cvantDotPulse {
+          0% {
+            opacity: 0.45;
+            transform: translateY(-50%) scale(0.92);
+            filter: blur(0.35px);
+          }
+          50% {
+            opacity: 0.85;
+            transform: translateY(-50%) scale(1.08);
+            filter: blur(0px);
+          }
+          100% {
+            opacity: 0.45;
+            transform: translateY(-50%) scale(0.92);
+            filter: blur(0.35px);
+          }
+        }
+
+        @keyframes cvantDotPulse2 {
+          0% {
+            opacity: 0.38;
+            transform: translateY(-50%) scale(0.9);
+          }
+          50% {
+            opacity: 0.75;
+            transform: translateY(-50%) scale(1.1);
+          }
+          100% {
+            opacity: 0.38;
+            transform: translateY(-50%) scale(0.9);
+          }
+        }
+
         .cvant-big-icon {
           position: relative;
           z-index: 2;
           filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.35))
             drop-shadow(0 0 14px rgba(34, 211, 238, 0.1))
             drop-shadow(0 0 16px rgba(91, 140, 255, 0.12));
-        }
-
-        .cvant-big-icon-wrap::after {
-          content: "";
-          position: absolute;
-          inset: -3%;
-          background: linear-gradient(
-            120deg,
-            transparent 22%,
-            rgba(91, 140, 255, 0.1) 45%,
-            rgba(34, 211, 238, 0.08) 55%,
-            transparent 78%
-          );
-          transform: translateX(-130%);
-          animation: cvantShimmer 7s ease-in-out infinite;
-          pointer-events: none;
-          mix-blend-mode: screen;
-          border-radius: 18px;
-          z-index: 1;
-          opacity: 0.8;
-        }
-
-        @keyframes cvantShimmer {
-          0% {
-            transform: translateX(-130%);
-            opacity: 0.3;
-          }
-          35% {
-            opacity: 0.55;
-          }
-          60% {
-            opacity: 0.45;
-          }
-          100% {
-            transform: translateX(130%);
-            opacity: 0.3;
-          }
         }
 
         @media (max-width: 991.98px) {

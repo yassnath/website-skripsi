@@ -18,6 +18,7 @@ export default function CalendarMainLayer() {
   const [expenses, setExpenses] = useState([]);
 
   const calendarRef = useRef(null);
+  const calendarApiRef = useRef(null); // ✅ store api once
   const [calendarHeight, setCalendarHeight] = useState(null);
 
   const [currentRange, setCurrentRange] = useState({ start: "", end: "" });
@@ -30,6 +31,10 @@ export default function CalendarMainLayer() {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
+
+  /** ✅ Month picker ref (dipakai mobile & desktop) */
+  const monthPickerRef = useRef(null);
+  const [pickerMode, setPickerMode] = useState("mobile"); // "mobile" | "desktop"
 
   const getCssVar = (name, fallback) => {
     if (typeof window === "undefined") return fallback;
@@ -323,7 +328,6 @@ export default function CalendarMainLayer() {
     const success600 = getCssVar("--success-600", "#16a34a");
     const warning600 = getCssVar("--warning-600", "#f59e0b");
 
-    // income + expense by date
     invoices.forEach((inv) => {
       const dateISO = normalizeDate(inv.tanggal);
       if (!dateISO) return;
@@ -352,7 +356,6 @@ export default function CalendarMainLayer() {
       map.set(dateISO, list);
     });
 
-    // armada events spread across date range
     invoices
       .filter(
         (inv) =>
@@ -366,10 +369,6 @@ export default function CalendarMainLayer() {
         const endISO = normalizeDate(inv.armada_end_date);
         if (!startISO || !endISO) return;
 
-        // ✅ Sama logic desktop:
-        // - ongoing => text kuning
-        // - finished => text hijau
-        // - not started => text default armada
         let textColor = getArmadaColor(inv.armada_id);
         if (today >= startISO && today <= endISO) textColor = warning600;
         else if (today > endISO) textColor = success600;
@@ -389,13 +388,8 @@ export default function CalendarMainLayer() {
             type: "armada",
             title: `${inv.armada.nama_truk} – ${inv.armada.plat_nomor}`,
             id: inv.id,
-
-            // dot tetap base armada (biar khas)
             dotColor: getArmadaColor(inv.armada_id),
-
-            // ✅ text sesuai desktop
             color: textColor,
-
             startOriginal: startISO,
             endOriginal: endISO,
           });
@@ -404,7 +398,6 @@ export default function CalendarMainLayer() {
         }
       });
 
-    // sort: armada first, income, expense
     for (const [key, arr] of map.entries()) {
       arr.sort((a, b) => {
         const order = { armada: 0, income: 1, expense: 2 };
@@ -491,8 +484,66 @@ export default function CalendarMainLayer() {
     setMobileMonth(new Date(y, m + 1, 1));
   };
 
+  /** ✅ open month picker */
+  const openMonthPicker = (mode) => {
+    setPickerMode(mode);
+    const el = monthPickerRef.current;
+    if (!el) return;
+
+    // set value sesuai mode
+    if (mode === "mobile") {
+      const y = mobileMonth.getFullYear();
+      const m = String(mobileMonth.getMonth() + 1).padStart(2, "0");
+      el.value = `${y}-${m}`;
+    } else {
+      const api = calendarApiRef.current;
+      const d = api?.getDate ? api.getDate() : new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      el.value = `${y}-${m}`;
+    }
+
+    // trigger open
+    if (typeof el.showPicker === "function") el.showPicker();
+    else el.click();
+  };
+
+  /** ✅ handle picker change */
+  const onMonthPicked = (e) => {
+    const v = e.target.value; // yyyy-mm
+    if (!v) return;
+    const [yy, mm] = v.split("-");
+    const year = Number(yy);
+    const monthIndex = Number(mm) - 1;
+
+    if (!Number.isFinite(year) || !Number.isFinite(monthIndex)) return;
+
+    if (pickerMode === "mobile") {
+      setMobileMonth(new Date(year, monthIndex, 1));
+    } else {
+      const api = calendarApiRef.current;
+      if (api?.gotoDate) api.gotoDate(new Date(year, monthIndex, 1));
+    }
+  };
+
   return (
     <>
+      {/* ✅ hidden month picker */}
+      <input
+        ref={monthPickerRef}
+        type="month"
+        style={{
+          position: "fixed",
+          opacity: 0,
+          pointerEvents: "none",
+          width: 1,
+          height: 1,
+          left: -9999,
+          top: -9999,
+        }}
+        onChange={onMonthPicked}
+      />
+
       {/* ✅ efek-in ditempel ke wrapper root */}
       <div className={`row gy-4 page-in ${pageIn ? "is-in" : ""}`}>
         {/* ✅ LEFT SIDE */}
@@ -588,34 +639,51 @@ export default function CalendarMainLayer() {
               {/* ✅ MOBILE LIST CALENDAR */}
               <div className="d-lg-none">
                 <div className="d-flex align-items-center justify-content-between mb-12">
+                  {/* ✅ tombol center vertikal */}
                   <button
-                    className="btn btn-sm"
+                    className="btn btn-sm cvant-month-btn"
                     style={{
                       border: "1px solid rgba(255,255,255,0.14)",
                       color: btnTextColor,
                     }}
                     onClick={goPrevMonth}
+                    type="button"
                   >
                     <Icon icon="solar:alt-arrow-left-linear" />
                   </button>
 
-                  <div
+                  {/* ✅ title clickable untuk month picker */}
+                  <button
+                    type="button"
+                    className="btn p-0 border-0 bg-transparent"
+                    onClick={() => openMonthPicker("mobile")}
                     style={{
-                      fontWeight: 700,
+                      fontWeight: 800,
                       fontSize: "16px",
                       color: btnTextColor,
+                      cursor: "pointer",
                     }}
                   >
-                    {monthTitle}
-                  </div>
+                    {monthTitle}{" "}
+                    <Icon
+                      icon="solar:calendar-linear"
+                      style={{
+                        fontSize: "18px",
+                        marginLeft: 6,
+                        opacity: 0.75,
+                      }}
+                    />
+                  </button>
 
+                  {/* ✅ tombol center vertikal */}
                   <button
-                    className="btn btn-sm"
+                    className="btn btn-sm cvant-month-btn"
                     style={{
                       border: "1px solid rgba(255,255,255,0.14)",
                       color: btnTextColor,
                     }}
                     onClick={goNextMonth}
+                    type="button"
                   >
                     <Icon icon="solar:alt-arrow-right-linear" />
                   </button>
@@ -679,6 +747,7 @@ export default function CalendarMainLayer() {
                                       : `/invoice-preview?id=${ev.id}`)
                                 }
                                 style={{ cursor: "pointer" }}
+                                type="button"
                               >
                                 <div className="d-flex align-items-center justify-content-between gap-2">
                                   <div className="d-flex align-items-center gap-10">
@@ -736,7 +805,7 @@ export default function CalendarMainLayer() {
                 </div>
               </div>
 
-              {/* ✅ DESKTOP FULLCALENDAR (TIDAK DIUBAH) */}
+              {/* ✅ DESKTOP FULLCALENDAR (TIDAK UBAH STYLE NAMA HARI) */}
               <div
                 className="apexcharts-tooltip-style-1 d-none d-lg-block"
                 style={{ height: "100%" }}
@@ -760,6 +829,22 @@ export default function CalendarMainLayer() {
                       start: arg.startStr,
                       end: arg.endStr,
                     });
+                  }}
+                  ref={(el) => {
+                    if (!el) return;
+                    // store calendar api
+                    try {
+                      calendarApiRef.current = el.getApi();
+                    } catch {}
+                  }}
+                  viewDidMount={() => {
+                    // ✅ make title clickable (desktop)
+                    const titleEl = document.querySelector(".fc-toolbar-title");
+                    if (titleEl) {
+                      titleEl.style.cursor = "pointer";
+                      titleEl.title = "Klik untuk pilih bulan & tahun";
+                      titleEl.onclick = () => openMonthPicker("desktop");
+                    }
                   }}
                   eventDidMount={(info) => {
                     info.el.removeAttribute("title");
@@ -862,6 +947,17 @@ export default function CalendarMainLayer() {
           color: var(--primary-600, #487fff) !important;
         }
 
+        /* ✅ tombol prev/next mobile center vertikal */
+        .cvant-month-btn {
+          width: 38px !important;
+          height: 34px !important;
+          padding: 0 !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          line-height: 1 !important;
+        }
+
         .cvant-fc-native-tooltip {
           white-space: nowrap;
           max-width: 320px;
@@ -931,6 +1027,7 @@ export default function CalendarMainLayer() {
           height: auto !important;
         }
 
+        /* ✅ HATI-HATI: jangan ubah style warna hari */
         html[data-bs-theme="light"] .fc .fc-col-header-cell,
         html[data-theme="light"] .fc .fc-col-header-cell {
           background: #ffffff !important;
@@ -949,13 +1046,25 @@ export default function CalendarMainLayer() {
           color: #ffffff !important;
         }
 
-        /* ✅ jangan ubah styling nama hari */
-        html[data-bs-theme="light"] .fc .fc-col-header-cell .fc-scrollgrid-sync-inner,
-        html[data-theme="light"] .fc .fc-col-header-cell .fc-scrollgrid-sync-inner {
+        /* ✅ pastikan wrapper header ikut bg juga */
+        html[data-bs-theme="light"]
+          .fc
+          .fc-col-header-cell
+          .fc-scrollgrid-sync-inner,
+        html[data-theme="light"]
+          .fc
+          .fc-col-header-cell
+          .fc-scrollgrid-sync-inner {
           background: #ffffff !important;
         }
-        html[data-bs-theme="dark"] .fc .fc-col-header-cell .fc-scrollgrid-sync-inner,
-        html[data-theme="dark"] .fc .fc-col-header-cell .fc-scrollgrid-sync-inner {
+        html[data-bs-theme="dark"]
+          .fc
+          .fc-col-header-cell
+          .fc-scrollgrid-sync-inner,
+        html[data-theme="dark"]
+          .fc
+          .fc-col-header-cell
+          .fc-scrollgrid-sync-inner {
           background: #273142 !important;
         }
       `}</style>
