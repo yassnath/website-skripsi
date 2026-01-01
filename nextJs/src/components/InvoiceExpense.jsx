@@ -159,7 +159,7 @@ export default function InvoiceExpensePage() {
     }));
   };
 
-  // ✅ VALIDATE POPUP GENERAL (SAMA PERSIS DENGAN INVOICE ADD)
+  // ✅ VALIDATE POPUP GENERAL
   const validate = () => {
     const msgGeneral = "Data is still incomplete, please complete it first!";
 
@@ -506,38 +506,28 @@ export default function InvoiceExpensePage() {
         <style jsx global>{`
           @media (max-width: 576px) {
             .breadcrumb,
-            .breadcrumb ol,
-            nav[aria-label="breadcrumb"] {
-              margin-bottom: 8px !important;
-              padding-bottom: 0 !important;
-            }
-
-            .breadcrumb-item,
-            .breadcrumb-item a,
-            .breadcrumb a {
+            .breadcrumb * {
               font-size: 11px !important;
               line-height: 1.2 !important;
               white-space: nowrap !important;
             }
 
-            h1,
-            h2,
-            h3,
             .page-title,
-            .dashboard-title,
-            .breadcrumb-title,
-            .content-title,
-            .card-title {
-              font-size: 14px !important;
-              line-height: 1.25 !important;
-              margin-bottom: 0 !important;
+            .page-title * {
+              font-size: 12px !important;
+              line-height: 1.2 !important;
               white-space: nowrap !important;
             }
 
-            .d-flex.align-items-center.justify-content-between,
-            .d-flex.align-items-center.flex-wrap.justify-content-between {
+            h5,
+            h6,
+            .text-lg {
+              font-size: 12px !important;
+              line-height: 1.2 !important;
+            }
+
+            .d-flex.align-items-center.flex-wrap {
               flex-wrap: nowrap !important;
-              gap: 8px !important;
             }
           }
         `}</style>

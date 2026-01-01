@@ -429,7 +429,7 @@ const LatestRegisteredOne = () => {
 
           /* ✅ Tab font sama seperti ViewAll */
           .cvant-latest-tabs .nav-link {
-            font-size: 13px !important;
+            font-size: 14px !important;
             padding: 7px 10px !important;
             border-radius: 10px !important;
             white-space: nowrap !important;
@@ -444,7 +444,7 @@ const LatestRegisteredOne = () => {
 
           /* ✅ ViewAll font sama dengan tab */
           .cvant-view-all {
-            font-size: 13px !important;
+            font-size: 14px !important;
             font-weight: 600;
             white-space: nowrap !important;
           }

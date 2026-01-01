@@ -583,7 +583,6 @@ export default function InvoiceAddPage() {
           </div>
         )}
 
-        {/* FORM */}
         <div className="container-fluid py-4">
           <div className="row g-4">
             <div className="col-lg-12">
@@ -942,43 +941,32 @@ export default function InvoiceAddPage() {
         {/* ✅ MOBILE FIX: Breadcrumb & Dashboard Title supaya sejajar (TIDAK UBAH DESKTOP) */}
         <style jsx global>{`
           @media (max-width: 576px) {
-            /* Breadcrumb wrapper */
+            /* breadcrumb container */
             .breadcrumb,
-            .breadcrumb ol,
-            nav[aria-label="breadcrumb"] {
-              margin-bottom: 8px !important;
-              padding-bottom: 0 !important;
-            }
-
-            /* Breadcrumb item text */
-            .breadcrumb-item,
-            .breadcrumb-item a,
-            .breadcrumb a {
+            .breadcrumb * {
               font-size: 11px !important;
               line-height: 1.2 !important;
               white-space: nowrap !important;
             }
 
-            /* Title / dashboard heading */
-            h1,
-            h2,
-            h3,
+            /* title/dashboard text biasanya pakai .text-lg atau h6 */
             .page-title,
-            .dashboard-title,
-            .breadcrumb-title,
-            .content-title,
-            .card-title {
-              font-size: 14px !important;
-              line-height: 1.25 !important;
-              margin-bottom: 0 !important;
+            .page-title * {
+              font-size: 12px !important;
+              line-height: 1.2 !important;
               white-space: nowrap !important;
             }
 
-            /* Agar title + breadcrumb bisa 1 baris (kalau parent flex) */
-            .d-flex.align-items-center.justify-content-between,
-            .d-flex.align-items-center.flex-wrap.justify-content-between {
+            h5,
+            h6,
+            .text-lg {
+              font-size: 12px !important;
+              line-height: 1.2 !important;
+            }
+
+            /* biar breadcrumb & dashboard bisa sejajar */
+            .d-flex.align-items-center.flex-wrap {
               flex-wrap: nowrap !important;
-              gap: 8px !important;
             }
           }
         `}</style>
