@@ -4,6 +4,32 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
+/* ✅ cek mode light/dark sama seperti sistem kamu */
+function isLightModeNow() {
+  if (typeof window === "undefined") return false;
+
+  const html = document.documentElement;
+  const body = document.body;
+
+  const bs =
+    (html.getAttribute("data-bs-theme") ||
+      body?.getAttribute("data-bs-theme") ||
+      "").toLowerCase();
+  if (bs === "light") return true;
+  if (bs === "dark") return false;
+
+  const dt =
+    (html.getAttribute("data-theme") || body?.getAttribute("data-theme") || "").toLowerCase();
+  if (dt === "light") return true;
+  if (dt === "dark") return false;
+
+  const cls = `${html.className || ""} ${body?.className || ""}`.toLowerCase();
+  if (cls.includes("light") || cls.includes("theme-light")) return true;
+  if (cls.includes("dark") || cls.includes("theme-dark")) return false;
+
+  return false;
+}
+
 const LatestRegisteredOne = () => {
   // ✅ efek masuk
   const [pageIn, setPageIn] = useState(false);
@@ -15,6 +41,26 @@ const LatestRegisteredOne = () => {
   const [latestInvoices, setLatestInvoices] = useState([]);
   const [biggestData, setBiggestData] = useState([]);
   const [activeTab, setActiveTab] = useState("latest");
+
+  const [isLightMode, setIsLightMode] = useState(false);
+
+  useEffect(() => {
+    const update = () => setIsLightMode(isLightModeNow());
+    update();
+
+    const obs = new MutationObserver(update);
+    obs.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-bs-theme", "data-theme", "class", "style"],
+    });
+    if (document.body) {
+      obs.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["data-bs-theme", "data-theme", "class", "style"],
+      });
+    }
+    return () => obs.disconnect();
+  }, []);
 
   const getStatusClass = (status) => {
     switch (status) {
@@ -113,14 +159,18 @@ const LatestRegisteredOne = () => {
     fetchData();
   }, []);
 
+  /* ✅ card style adapt light/dark */
+  const cardBg = isLightMode ? "#ffffff" : "#1b2431";
+  const cardBorder = isLightMode ? "rgba(148,163,184,0.35)" : "#273142";
+  const cardTextMain = isLightMode ? "#0b1220" : "#ffffff";
+  const cardTextSub = isLightMode ? "#64748b" : "#94a3b8";
+
   const renderMobileCardList = (data, isLatestMode) => {
     return (
       <div className="d-flex flex-column gap-12 d-md-none">
         {data.map((item) => {
           const id = isLatestMode ? item.id : `${item.type}-${item.id}`;
-          const link = isLatestMode
-            ? `/invoice-preview?id=${item.id}`
-            : item.link;
+          const link = isLatestMode ? `/invoice-preview?id=${item.id}` : item.link;
 
           const no = isLatestMode ? item.no_invoice : item.no;
           const customer = isLatestMode ? item.nama_pelanggan : item.customer;
@@ -131,10 +181,10 @@ const LatestRegisteredOne = () => {
           return (
             <div
               key={id}
-              className="p-16 radius-12 border bg-white"
+              className="p-16 radius-12"
               style={{
-                border: "1px solid rgba(148,163,184,0.35)",
-                background: "rgba(255,255,255,0.02)",
+                border: `1px solid ${cardBorder}`,
+                backgroundColor: cardBg,
               }}
             >
               <div className="d-flex justify-content-between align-items-start gap-2">
@@ -151,15 +201,13 @@ const LatestRegisteredOne = () => {
                     {no}
                   </Link>
 
-                  <div style={{ fontSize: "13px", color: "#cbd5e1" }}>
+                  <div style={{ fontSize: "13px", color: cardTextSub }}>
                     {customer}
                   </div>
                 </div>
 
                 <span
-                  className={`${getStatusClass(
-                    status
-                  )} px-16 py-4 rounded-pill fw-medium text-sm`}
+                  className={`${getStatusClass(status)} px-16 py-4 rounded-pill fw-medium`}
                   style={{
                     fontSize: "12px",
                     whiteSpace: "nowrap",
@@ -170,10 +218,11 @@ const LatestRegisteredOne = () => {
               </div>
 
               <div className="mt-10 d-flex justify-content-between align-items-center">
-                <div style={{ fontSize: "13px", color: "#94a3b8" }}>
+                <div style={{ fontSize: "13px", color: cardTextSub }}>
                   {tanggal}
                 </div>
-                <div style={{ fontWeight: 700, fontSize: "14px" }}>
+
+                <div style={{ fontWeight: 700, fontSize: "14px", color: cardTextMain }}>
                   Rp {Number(total).toLocaleString("id-ID")}
                 </div>
               </div>
@@ -189,21 +238,23 @@ const LatestRegisteredOne = () => {
       <div className={`col-xxl-8 col-xl-12 page-in ${pageIn ? "is-in" : ""}`}>
         <div className="card h-100">
           <div className="card-body p-24">
-            <div className="d-flex flex-wrap align-items-center gap-1 justify-content-between mb-16">
-              {/* ✅ FIX MOBILE TAB agar tidak kepanjangan */}
-              <ul className="nav border-gradient-tab nav-pills mb-0 flex-nowrap overflow-auto w-100 w-md-auto">
+            {/* ✅ HEADER: Tabs + ViewAll sejajar (desktop & mobile) */}
+            <div className="d-flex align-items-center justify-content-between gap-2 mb-16 flex-wrap flex-md-nowrap">
+              
+              {/* ✅ Tabs */}
+              <ul className="nav border-gradient-tab nav-pills mb-0 d-flex flex-row gap-2">
+                
+                {/* ✅ Mobile text jadi "Latest", Desktop tetap full */}
                 <li className="nav-item">
                   <button
                     className={`nav-link d-flex align-items-center ${
                       activeTab === "latest" ? "active" : ""
                     }`}
                     onClick={() => setActiveTab("latest")}
-                    style={{
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                    }}
                   >
-                    Latest Customers
+                    <span className="d-none d-md-inline">Latest Customers</span>
+                    <span className="d-inline d-md-none">Latest</span>
+
                     <span
                       className="text-sm fw-semibold py-6 px-12 rounded-pill text-white ms-12"
                       style={{
@@ -216,18 +267,17 @@ const LatestRegisteredOne = () => {
                   </button>
                 </li>
 
+                {/* ✅ Mobile text jadi "Biggest", Desktop tetap full */}
                 <li className="nav-item">
                   <button
                     className={`nav-link d-flex align-items-center ${
                       activeTab === "biggest" ? "active" : ""
                     }`}
                     onClick={() => setActiveTab("biggest")}
-                    style={{
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                    }}
                   >
-                    Biggest Transactions
+                    <span className="d-none d-md-inline">Biggest Transactions</span>
+                    <span className="d-inline d-md-none">Biggest</span>
+
                     <span
                       className="text-sm fw-semibold py-6 px-12 rounded-pill text-white ms-12"
                       style={{
@@ -241,10 +291,15 @@ const LatestRegisteredOne = () => {
                 </li>
               </ul>
 
+              {/* ✅ View All selalu sejajar */}
               <Link
                 href="/invoice-list"
-                style={{ color: "#2563eb", textDecoration: "none" }}
-                className="d-flex align-items-center gap-1 mt-2 mt-md-0"
+                style={{
+                  color: "#2563eb",
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                }}
+                className="d-flex align-items-center gap-1"
               >
                 View All{" "}
                 <Icon icon="solar:alt-arrow-right-linear" className="icon" />
@@ -253,16 +308,15 @@ const LatestRegisteredOne = () => {
 
             {/* ✅ TAB CONTENT */}
             <div className="tab-content">
-              {/* ✅ Latest Customers */}
+              {/* Latest */}
               <div
                 className={`tab-pane fade ${
                   activeTab === "latest" ? "show active" : ""
                 }`}
               >
-                {/* ✅ MOBILE VIEW (CARD LIST) */}
                 {renderMobileCardList(latestInvoices, true)}
 
-                {/* ✅ DESKTOP VIEW (KEEP AS IS) */}
+                {/* ✅ DESKTOP TABLE tetap */}
                 <div className="table-responsive scroll-sm d-none d-md-block">
                   <table className="table bordered-table sm-table mb-0">
                     <thead>
@@ -281,10 +335,7 @@ const LatestRegisteredOne = () => {
                           <td>
                             <Link
                               href={`/invoice-preview?id=${i.id}`}
-                              style={{
-                                color: "#2563eb",
-                                textDecoration: "none",
-                              }}
+                              style={{ color: "#2563eb", textDecoration: "none" }}
                             >
                               {i.no_invoice}
                             </Link>
@@ -292,8 +343,7 @@ const LatestRegisteredOne = () => {
                           <td>{i.nama_pelanggan}</td>
                           <td>{i.tanggal}</td>
                           <td>
-                            Rp{" "}
-                            {Number(i.total_bayar).toLocaleString("id-ID")}
+                            Rp {Number(i.total_bayar).toLocaleString("id-ID")}
                           </td>
                           <td>
                             <span
@@ -311,16 +361,15 @@ const LatestRegisteredOne = () => {
                 </div>
               </div>
 
-              {/* ✅ Biggest Transactions */}
+              {/* Biggest */}
               <div
                 className={`tab-pane fade ${
                   activeTab === "biggest" ? "show active" : ""
                 }`}
               >
-                {/* ✅ MOBILE VIEW (CARD LIST) */}
                 {renderMobileCardList(biggestData, false)}
 
-                {/* ✅ DESKTOP VIEW (KEEP AS IS) */}
+                {/* ✅ DESKTOP TABLE tetap */}
                 <div className="table-responsive scroll-sm d-none d-md-block">
                   <table className="table bordered-table sm-table mb-0">
                     <thead>
@@ -340,8 +389,7 @@ const LatestRegisteredOne = () => {
                             <Link
                               href={d.link}
                               style={{
-                                color:
-                                  d.type === "expense" ? "#dc3545" : "#2563eb",
+                                color: d.type === "expense" ? "#dc3545" : "#2563eb",
                                 textDecoration: "none",
                               }}
                             >
