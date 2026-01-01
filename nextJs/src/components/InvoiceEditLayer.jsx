@@ -77,15 +77,10 @@ export default function InvoiceEditLayer() {
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // ✅ sama seperti InvoicePreviewLayer.jsx
+  // ✅ sama seperti PreviewLayer
   const [sending, setSending] = useState(false);
 
   const [isLightMode, setIsLightMode] = useState(false);
-
-  const apiBase = useMemo(() => {
-    let base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-    return String(base).replace(/\/+$/, "");
-  }, []);
 
   const siteBase = useMemo(() => {
     if (typeof window !== "undefined") {
@@ -135,6 +130,8 @@ export default function InvoiceEditLayer() {
   };
 
   const closePopup = () => setPopup((p) => ({ ...p, show: false }));
+
+  // ✅ ini sesuai style popup edit kamu
   const popupAccent = popup.type === "success" ? "#22c55e" : "#ef4444";
 
   const controlBg = isLightMode ? "#ffffff" : "#273142";
@@ -232,8 +229,8 @@ export default function InvoiceEditLayer() {
         });
       })
       .catch(() => {
-        setErr("Failed to load invoice data");
-        showPopup("danger", "Failed to load invoice data.", 0);
+        setErr("Gagal memuat data invoice");
+        showPopup("danger", "Gagal memuat data invoice.", 0);
       });
   }, [id]);
 
@@ -306,7 +303,7 @@ export default function InvoiceEditLayer() {
   };
 
   const handleSave = async () => {
-    if (!id) return showPopup("danger", "Invoice ID not found.", 0);
+    if (!id) return showPopup("danger", "ID invoice tidak ditemukan.", 0);
     if (!validate()) return;
 
     setSaving(true);
@@ -347,7 +344,9 @@ export default function InvoiceEditLayer() {
       setTimeout(() => router.push("/invoice-list"), 3000);
     } catch (e) {
       const msg =
-        e?.response?.data?.message || e?.message || "Failed to update invoice";
+        e?.response?.data?.message ||
+        e?.message ||
+        "Gagal mengupdate invoice";
 
       showPopup("danger", msg, 0);
     } finally {
@@ -356,35 +355,33 @@ export default function InvoiceEditLayer() {
   };
 
   const handlePdf = () => {
-    if (!id) return showPopup("danger", "Invoice ID not found.", 0);
+    if (!id) return showPopup("danger", "ID invoice tidak ditemukan.", 0);
     router.push(`/invoice-preview?id=${id}`);
   };
 
-  // ✅ sama dengan InvoicePreviewLayer.jsx
+  // ✅ sama seperti PreviewLayer
   const getPublicInvoicePublicPageUrl = (invoiceId) => {
     return `${siteBase}/invoice/${invoiceId}`;
   };
 
-  // ✅ SAMAKAN STRUKTUR & LOGIC dengan InvoicePreviewLayer.jsx
-  // ✅ tapi output message dibuat English
+  // ✅ dibuat sama persis seperti PreviewLayer (ISI EMAIL INDONESIA)
   const handleSendToEmail = async () => {
-    if (!id) return showPopup("danger", "Invoice ID not found.", 0);
+    if (!id) return showPopup("danger", "ID invoice tidak ditemukan.", 0);
 
     if (!String(form.email || "").trim()) {
-      return showPopup("danger", "Customer email is not filled yet.", 0);
+      return showPopup("danger", "Email customer belum diisi.", 0);
     }
 
     setSending(true);
 
     try {
-      // ✅ Send LINK of public invoice page
       const publicUrl = getPublicInvoicePublicPageUrl(id);
 
       const subject = encodeURIComponent(`Invoice ${form.no_invoice || ""}`);
       const body = encodeURIComponent(
-        `Dear ${form.nama_pelanggan},\n\n` +
-          `Please click the link below to view your invoice:\n${publicUrl}\n\n` +
-          `Thank you,\nCV AS Nusa Trans (CV ANT)`
+        `Yth. ${form.nama_pelanggan},\n\n` +
+          `Silakan klik berikut untuk melihat invoice:\n${publicUrl}\n\n` +
+          `Terima kasih,\nCV AS Nusa Trans (CV ANT)`
       );
 
       const to = encodeURIComponent(form.email || "");
@@ -394,7 +391,7 @@ export default function InvoiceEditLayer() {
     } catch (e) {
       showPopup(
         "danger",
-        `Failed to generate public invoice link.\n\n${e?.message || "Unknown error"}`,
+        `Gagal membuat link invoice publik.\n\n${e?.message || "Unknown error"}`,
         0
       );
     } finally {
@@ -407,12 +404,12 @@ export default function InvoiceEditLayer() {
       <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
         <div className="container-fluid py-4">
           {!id ? (
-            <div className="alert alert-warning">Invoice ID not found</div>
+            <div className="alert alert-warning">ID invoice tidak ditemukan</div>
           ) : (
             <div className="row g-4">
               <div className="col-lg-12">
                 <div className="card shadow-sm border-0">
-                  {/* ✅ layout disamakan seperti InvoiceAddLayer.jsx */}
+                  {/* ✅ DISAMAKAN SEPERTI INVOICE ADD LAYER */}
                   <div className="card-header bg-transparent d-flex justify-content-end">
                     <button
                       onClick={handleSendToEmail}
@@ -442,7 +439,6 @@ export default function InvoiceEditLayer() {
                   </div>
 
                   <div className="card-body">
-                    {/* ✅ bagian lain TIDAK DIUBAH */}
                     <div className="row g-3">
                       <div className="col-md-6">
                         <label className="form-label fw-semibold">
@@ -481,6 +477,7 @@ export default function InvoiceEditLayer() {
                         <hr className="my-2" />
                       </div>
 
+                      {/* ✅ DISAMAKAN DENGAN INVOICE ADD LAYER (3 kolom sejajar) */}
                       <div className="col-md-4">
                         <label className="form-label fw-semibold">
                           Nama Customer
@@ -515,6 +512,7 @@ export default function InvoiceEditLayer() {
                         />
                       </div>
 
+                      {/* ✅ setelah ini TIDAK aku ubah sama sekali */}
                       <div className="col-12">
                         <label className="form-label fw-semibold">
                           Rincian Muat / Bongkar & Armada
@@ -583,8 +581,8 @@ export default function InvoiceEditLayer() {
                                   <option
                                     value=""
                                     style={{
-                                      backgroundColor: controlBg,
-                                      color: controlText,
+                                      backgroundColor: optionBg,
+                                      color: optionText,
                                     }}
                                   >
                                     -- Pilih Armada --
@@ -595,8 +593,8 @@ export default function InvoiceEditLayer() {
                                       key={a.id}
                                       value={a.id}
                                       style={{
-                                        backgroundColor: controlBg,
-                                        color: controlText,
+                                        backgroundColor: optionBg,
+                                        color: optionText,
                                       }}
                                     >
                                       {a.nama_truk} – {a.plat_nomor} ({a.status})
@@ -750,8 +748,8 @@ export default function InvoiceEditLayer() {
                               key={s}
                               value={s}
                               style={{
-                                backgroundColor: controlBg,
-                                color: controlText,
+                                backgroundColor: optionBg,
+                                color: optionText,
                               }}
                             >
                               {s}
@@ -779,8 +777,8 @@ export default function InvoiceEditLayer() {
                               key={role}
                               value={role}
                               style={{
-                                backgroundColor: controlBg,
-                                color: controlText,
+                                backgroundColor: optionBg,
+                                color: optionText,
                               }}
                             >
                               {role}
