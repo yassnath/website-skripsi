@@ -95,8 +95,6 @@ export default function InvoiceExpensePage() {
   const controlBg = isLightMode ? "#ffffff" : "#273142";
   const controlText = isLightMode ? "#0b1220" : "#ffffff";
   const controlBorder = isLightMode ? "#c7c8ca" : "#6c757d";
-  const optionBg = controlBg;
-  const optionText = controlText;
 
   const [form, setForm] = useState({
     no_expense: "",
@@ -159,7 +157,6 @@ export default function InvoiceExpensePage() {
     }));
   };
 
-  // ✅ VALIDATE POPUP GENERAL
   const validate = () => {
     const msgGeneral = "Data is still incomplete, please complete it first!";
 
@@ -331,6 +328,7 @@ export default function InvoiceExpensePage() {
           </div>
         )}
 
+        {/* ✅ FORM */}
         <div className="container-fluid py-4">
           <div className="row g-4">
             <div className="col-lg-12">
@@ -346,6 +344,9 @@ export default function InvoiceExpensePage() {
                 </div>
 
                 <div className="card-body">
+                  {err && <div className="alert alert-danger">{err}</div>}
+
+                  {/* ... isi form expense kamu tetap ... */}
                   <div className="row g-3">
                     <div className="col-md-6">
                       <label className="form-label fw-semibold">
@@ -379,15 +380,15 @@ export default function InvoiceExpensePage() {
 
                       {(form.rincian || []).map((r, i) => (
                         <div
-                          className="row g-2 align-items-center mb-2"
                           key={i}
-                          style={{ paddingBottom: "6px" }}
+                          className={`row g-2 align-items-center mb-2 ${
+                            i > 0 ? "mt-3" : ""
+                          }`}
                         >
                           <div className="col-md-6">
                             <input
-                              type="text"
                               className="form-control"
-                              placeholder="Nama pengeluaran (misal: BBM, Tol, Uang Jalan...)"
+                              placeholder="Nama Pengeluaran"
                               value={r.nama}
                               onChange={(e) =>
                                 updateRincian(i, "nama", e.target.value)
@@ -398,8 +399,8 @@ export default function InvoiceExpensePage() {
                           <div className="col-md-4">
                             <input
                               type="number"
-                              className="form-control text-end"
-                              placeholder="Jumlah (Rp)"
+                              className="form-control"
+                              placeholder="Jumlah"
                               value={r.jumlah}
                               onChange={(e) =>
                                 updateRincian(i, "jumlah", e.target.value)
@@ -411,6 +412,7 @@ export default function InvoiceExpensePage() {
                             {form.rincian.length > 1 && (
                               <button
                                 className="btn btn-sm btn-outline-danger"
+                                type="button"
                                 onClick={() => removeRincian(i)}
                               >
                                 Hapus
@@ -421,79 +423,28 @@ export default function InvoiceExpensePage() {
                       ))}
 
                       <button
-                        className="btn btn-sm btn-outline-primary mt-4"
+                        className="btn btn-sm btn-outline-primary mt-3"
+                        type="button"
                         onClick={addRincian}
                       >
-                        + Tambah Pengeluaran
+                        + Tambah Rincian
                       </button>
                     </div>
 
-                    <div className="col-md-6 mt-5">
+                    <div className="col-md-6 mt-4">
                       <label className="form-label fw-semibold">
                         Total Pengeluaran
                       </label>
                       <input
-                        type="text"
                         className="form-control fw-bold"
                         value={formatRupiah(totalExpense)}
                         readOnly
+                        style={{
+                          backgroundColor: "#f8f9fa",
+                          color: "black",
+                          WebkitTextFillColor: "black",
+                        }}
                       />
-                    </div>
-
-                    <div className="col-md-3 mt-5">
-                      <label className="form-label fw-semibold">Status</label>
-                      <select
-                        className="form-select"
-                        value={form.status}
-                        onChange={onChange("status")}
-                        style={{
-                          backgroundColor: controlBg,
-                          color: controlText,
-                          borderColor: controlBorder,
-                        }}
-                      >
-                        {["Approved", "Paid"].map((status) => (
-                          <option
-                            key={status}
-                            value={status}
-                            style={{
-                              backgroundColor: optionBg,
-                              color: optionText,
-                            }}
-                          >
-                            {status}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="col-md-3 mt-5">
-                      <label className="form-label fw-semibold">
-                        Dicatat Oleh
-                      </label>
-                      <select
-                        className="form-select"
-                        value={form.dicatat_oleh}
-                        onChange={onChange("dicatat_oleh")}
-                        style={{
-                          backgroundColor: controlBg,
-                          color: controlText,
-                          borderColor: controlBorder,
-                        }}
-                      >
-                        {["Admin", "Owner"].map((role) => (
-                          <option
-                            key={role}
-                            value={role}
-                            style={{
-                              backgroundColor: optionBg,
-                              color: optionText,
-                            }}
-                          >
-                            {role}
-                          </option>
-                        ))}
-                      </select>
                     </div>
                   </div>
                 </div>
@@ -502,32 +453,43 @@ export default function InvoiceExpensePage() {
           </div>
         </div>
 
-        {/* ✅ MOBILE FIX: Breadcrumb & Dashboard Title supaya sejajar (TIDAK UBAH DESKTOP) */}
+        {/* ✅ FIX BREADCRUMB + DASHBOARD TEXT (EXTRA SMALL MOBILE) */}
         <style jsx global>{`
           @media (max-width: 576px) {
+            /* breadcrumb jadi super kecil */
             .breadcrumb,
             .breadcrumb * {
-              font-size: 11px !important;
-              line-height: 1.2 !important;
+              font-size: 9.5px !important;
+              line-height: 1.1 !important;
               white-space: nowrap !important;
+              overflow: hidden !important;
+              text-overflow: ellipsis !important;
+              max-width: 100% !important;
             }
 
-            .page-title,
-            .page-title * {
-              font-size: 12px !important;
-              line-height: 1.2 !important;
-              white-space: nowrap !important;
-            }
-
+            /* biasanya text dashboard / title */
             h5,
             h6,
-            .text-lg {
-              font-size: 12px !important;
-              line-height: 1.2 !important;
+            .text-lg,
+            .page-title,
+            .page-title * {
+              font-size: 11px !important;
+              line-height: 1.1 !important;
+              white-space: nowrap !important;
+              overflow: hidden !important;
+              text-overflow: ellipsis !important;
             }
 
+            /* paksa flex 1 baris */
             .d-flex.align-items-center.flex-wrap {
               flex-wrap: nowrap !important;
+              gap: 6px !important;
+            }
+
+            /* kurangi padding & spacing */
+            .breadcrumb {
+              margin-bottom: 0 !important;
+              padding: 0 !important;
             }
           }
         `}</style>
