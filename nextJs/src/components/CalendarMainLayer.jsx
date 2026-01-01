@@ -318,6 +318,11 @@ export default function CalendarMainLayer() {
   const mobileEventsByDate = useMemo(() => {
     const map = new Map();
 
+    const today = normalizeDate(new Date().toISOString());
+
+    const success600 = getCssVar("--success-600", "#16a34a");
+    const warning600 = getCssVar("--warning-600", "#f59e0b");
+
     // income + expense by date
     invoices.forEach((inv) => {
       const dateISO = normalizeDate(inv.tanggal);
@@ -361,6 +366,14 @@ export default function CalendarMainLayer() {
         const endISO = normalizeDate(inv.armada_end_date);
         if (!startISO || !endISO) return;
 
+        // ✅ Sama logic desktop:
+        // - ongoing => text kuning
+        // - finished => text hijau
+        // - not started => text default armada
+        let textColor = getArmadaColor(inv.armada_id);
+        if (today >= startISO && today <= endISO) textColor = warning600;
+        else if (today > endISO) textColor = success600;
+
         const start = new Date(`${startISO}T00:00:00`);
         const end = new Date(`${endISO}T00:00:00`);
 
@@ -371,14 +384,22 @@ export default function CalendarMainLayer() {
         ) {
           const iso = normalizeDate(d.toISOString());
           const list = map.get(iso) || [];
+
           list.push({
             type: "armada",
             title: `${inv.armada.nama_truk} – ${inv.armada.plat_nomor}`,
             id: inv.id,
-            color: getArmadaColor(inv.armada_id),
+
+            // dot tetap base armada (biar khas)
+            dotColor: getArmadaColor(inv.armada_id),
+
+            // ✅ text sesuai desktop
+            color: textColor,
+
             startOriginal: startISO,
             endOriginal: endISO,
           });
+
           map.set(iso, list);
         }
       });
@@ -664,10 +685,14 @@ export default function CalendarMainLayer() {
                                     <span
                                       className="w-10-px h-10-px rounded-circle"
                                       style={{
-                                        background: ev.color,
+                                        background:
+                                          ev.type === "armada"
+                                            ? ev.dotColor
+                                            : ev.color,
                                         display: "inline-block",
                                       }}
                                     />
+
                                     <span
                                       style={{
                                         fontWeight: 700,
@@ -684,7 +709,10 @@ export default function CalendarMainLayer() {
                                       className="text-secondary-light"
                                       style={{ fontSize: "12px" }}
                                     >
-                                      Rp {Number(ev.total || 0).toLocaleString("id-ID")}
+                                      Rp{" "}
+                                      {Number(ev.total || 0).toLocaleString(
+                                        "id-ID"
+                                      )}
                                     </span>
                                   )}
                                 </div>
@@ -921,7 +949,7 @@ export default function CalendarMainLayer() {
           color: #ffffff !important;
         }
 
-        /* ✅ jangan ubah styling nama hari (tetap ada seperti permintaanmu) */
+        /* ✅ jangan ubah styling nama hari */
         html[data-bs-theme="light"] .fc .fc-col-header-cell .fc-scrollgrid-sync-inner,
         html[data-theme="light"] .fc .fc-col-header-cell .fc-scrollgrid-sync-inner {
           background: #ffffff !important;
