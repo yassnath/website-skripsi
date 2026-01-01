@@ -263,24 +263,21 @@ const LoginLayer = () => {
             0 0 16px rgba(91, 140, 255, 0.2) !important;
         }
 
-        /* ==============================
-           ✅ LEFT BIG ICON AURA (SMALLER AGAIN -15%)
-           ============================== */
-
+        /* ✅ LEFT BIG ICON AURA (SMALLER AGAIN -25%) */
         .cvant-big-icon-wrap {
           position: relative;
           display: inline-block;
 
-          /* ✅ 20px → 17px */
-          padding: 17px;
+          /* ✅ 17px → 13px */
+          padding: 13px;
         }
 
         .cvant-big-icon-wrap::before {
           content: "";
           position: absolute;
 
-          /* ✅ -6% → -5% */
-          inset: -5%;
+          /* ✅ -5% → -4% */
+          inset: -4%;
 
           border-radius: 999px;
           background: radial-gradient(
@@ -298,7 +295,7 @@ const LoginLayer = () => {
               rgba(34, 211, 238, 0.12),
               transparent 65%
             );
-          filter: blur(9px); /* ✅ 10px → 9px */
+          filter: blur(7px); /* ✅ 9px → 7px */
           opacity: 1;
           pointer-events: none;
         }
@@ -306,22 +303,22 @@ const LoginLayer = () => {
         .cvant-big-icon-wrap .cvant-icon-ring {
           position: absolute;
 
-          /* ✅ 10px → 8px */
-          inset: 8px;
+          /* ✅ 8px → 6px */
+          inset: 6px;
 
           border-radius: 999px;
           border: 1px solid rgba(255, 255, 255, 0.08);
           box-shadow: 0 0 0 1px rgba(91, 140, 255, 0.18),
-            0 0 18px rgba(91, 140, 255, 0.12),
-            0 0 14px rgba(34, 211, 238, 0.1);
+            0 0 16px rgba(91, 140, 255, 0.1),
+            0 0 12px rgba(34, 211, 238, 0.08);
           pointer-events: none;
         }
 
         .cvant-big-icon-wrap .cvant-orbit {
           position: absolute;
 
-          /* ✅ -2px → -1px */
-          inset: -1px;
+          /* ✅ -1px → 0px */
+          inset: 0px;
 
           border-radius: 999px;
           border: 1px dashed rgba(255, 255, 255, 0.06);
@@ -333,10 +330,10 @@ const LoginLayer = () => {
           content: "";
           position: absolute;
           top: 50%;
-          left: -5px; /* ✅ -6px → -5px */
+          left: -4px; /* ✅ -5px → -4px */
 
-          width: 10px; /* ✅ 12px → 10px */
-          height: 10px;
+          width: 8px; /* ✅ 10px → 8px */
+          height: 8px;
 
           border-radius: 999px;
           background: radial-gradient(
@@ -344,8 +341,8 @@ const LoginLayer = () => {
             rgba(34, 211, 238, 0.9),
             rgba(34, 211, 238, 0)
           );
-          box-shadow: 0 0 18px rgba(34, 211, 238, 0.55),
-            0 0 12px rgba(91, 140, 255, 0.35);
+          box-shadow: 0 0 16px rgba(34, 211, 238, 0.5),
+            0 0 10px rgba(91, 140, 255, 0.3);
           transform: translateY(-50%);
         }
 
@@ -362,16 +359,16 @@ const LoginLayer = () => {
           position: relative;
           z-index: 2;
           filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.35))
-            drop-shadow(0 0 18px rgba(34, 211, 238, 0.14))
-            drop-shadow(0 0 22px rgba(91, 140, 255, 0.18));
+            drop-shadow(0 0 16px rgba(34, 211, 238, 0.12))
+            drop-shadow(0 0 18px rgba(91, 140, 255, 0.16));
         }
 
         .cvant-big-icon-wrap::after {
           content: "";
           position: absolute;
 
-          /* ✅ -6% → -5% */
-          inset: -5%;
+          /* ✅ -5% → -4% */
+          inset: -4%;
 
           background: linear-gradient(
             120deg,
