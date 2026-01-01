@@ -278,7 +278,7 @@ export default function InvoiceEditLayer() {
   const pph = useMemo(() => subtotal * 0.02, [subtotal]);
   const totalBayar = useMemo(() => subtotal - pph, [subtotal, pph]);
 
-  // ✅ VALIDASI PERSIS SEPERTI INVOICE ADD LAYER
+  // ✅ VALIDASI STRICT (field kosong atau angka <= 0)
   const validate = () => {
     const msgGeneral = "Data is still incomplete, please complete it first!";
 
@@ -297,14 +297,20 @@ export default function InvoiceEditLayer() {
 
     for (let i = 0; i < form.rincian.length; i++) {
       const r = form.rincian[i] || {};
+
+      const tonase = parseFloat(r.tonase);
+      const harga = parseFloat(r.harga);
+
       if (
         !String(r.lokasi_muat || "").trim() ||
         !String(r.lokasi_bongkar || "").trim() ||
         !String(r.armada_id || "").trim() ||
         !String(r.armada_start_date || "").trim() ||
         !String(r.armada_end_date || "").trim() ||
-        !String(r.tonase || "").trim() ||
-        !String(r.harga || "").trim()
+        isNaN(tonase) ||
+        tonase <= 0 ||
+        isNaN(harga) ||
+        harga <= 0
       ) {
         showPopup("danger", msgGeneral, 0);
         return false;
@@ -354,11 +360,20 @@ export default function InvoiceEditLayer() {
 
       setTimeout(() => router.push("/invoice-list"), 3000);
     } catch (e) {
-      const msg =
-        e?.response?.data?.message ||
-        e?.message ||
-        "Gagal mengupdate invoice";
-      showPopup("danger", msg, 0);
+      // ✅ FIX: kalau backend validasi gagal (422), tampilkan pesan general sesuai requirement
+      if (e?.response?.status === 422) {
+        showPopup(
+          "danger",
+          "Data is still incomplete, please complete it first!",
+          0
+        );
+      } else {
+        const msg =
+          e?.response?.data?.message ||
+          e?.message ||
+          "Gagal mengupdate invoice";
+        showPopup("danger", msg, 0);
+      }
     } finally {
       setSaving(false);
     }
@@ -502,7 +517,8 @@ export default function InvoiceEditLayer() {
             <div className="row g-4">
               <div className="col-lg-12">
                 <div className="card shadow-sm border-0">
-                  <div className="card-header bg-transparent d-flex justify-content-end gap-2">
+                  {/* ✅ tombol diberi jarak gap-3 biar ga mepet */}
+                  <div className="card-header bg-transparent d-flex justify-content-end gap-3">
                     <button
                       onClick={handleSendToEmail}
                       className="btn btn-sm btn-outline-secondary"
