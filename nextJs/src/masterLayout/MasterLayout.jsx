@@ -365,27 +365,24 @@ const MasterLayout = ({ children }) => {
         </main>
       </section>
 
-      {/* ✅ FIX: SPACING SIDEBAR MENU supaya hover/active tidak nempel */}
+      {/* ✅ SIDEBAR SPACING + NEON ACTIVE/HOVER */}
       <style jsx global>{`
-        /* ===== SIDEBAR MENU SPACING FIX ===== */
-
-        /* Semua item menu utama dikasih jarak bawah */
+        /* ==============================
+           ✅ SPACING MENU (SAMA SEPERTI PUNYAMU)
+           ============================== */
         .sidebar-menu > li:not(.sidebar-menu-group-title) {
           margin-bottom: 8px !important;
         }
 
-        /* Group title jangan ikut jarak besar */
         .sidebar-menu-group-title {
           margin: 14px 0 10px !important;
           padding-top: 6px;
         }
 
-        /* Dropdown wrapper juga dikasih jarak agar tidak nempel */
         .sidebar-menu > li.dropdown {
           margin-bottom: 10px !important;
         }
 
-        /* Submenu spacing agar setiap submenu rapih */
         .sidebar-submenu > li {
           margin-bottom: 6px !important;
         }
@@ -394,37 +391,161 @@ const MasterLayout = ({ children }) => {
           margin-bottom: 0 !important;
         }
 
-        /* Pastikan hover/active punya sedikit padding visual supaya lebih lega */
         .sidebar-menu a,
         .sidebar-submenu a {
           display: flex;
           align-items: center;
           padding-top: 10px !important;
           padding-bottom: 10px !important;
+          border-radius: 12px !important;
+          position: relative;
+          overflow: hidden;
+          transition: all 0.2s ease !important;
         }
 
-        /* Khusus calendar yg sebelumnya pakai margin-top negatif,
-           tetep dijaga tapi diberi jarak bawah agar tidak mepet */
         .sidebar-menu > li[style*="marginTop: -10px"],
         .sidebar-menu > li[style*="margin-top: -10px"] {
           margin-bottom: 10px !important;
         }
 
-        /* Jika active-page menempel, kasih extra breathing space */
         .sidebar-menu a.active-page,
         .sidebar-submenu a.active-page {
           margin-bottom: 2px !important;
         }
 
-        /* Mobile sidebar juga ikut */
         @media (max-width: 991px) {
           .sidebar-menu > li:not(.sidebar-menu-group-title) {
             margin-bottom: 10px !important;
           }
-
           .sidebar-submenu > li {
             margin-bottom: 8px !important;
           }
+        }
+
+        /* ==============================
+           ✅ NEON GRADIENT + GLOW MENU UTAMA
+           ============================== */
+        .sidebar-menu > li > a::before {
+          content: "";
+          position: absolute;
+          inset: -2px;
+          background: linear-gradient(
+            90deg,
+            rgba(91, 140, 255, 1),
+            rgba(168, 85, 247, 1)
+          );
+          opacity: 0;
+          transition: opacity 0.25s ease;
+          border-radius: 14px;
+          z-index: 0;
+        }
+
+        .sidebar-menu > li > a::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(
+              500px 120px at 20% 30%,
+              rgba(255, 255, 255, 0.18),
+              transparent 60%
+            ),
+            radial-gradient(
+              600px 160px at 80% 70%,
+              rgba(34, 211, 238, 0.16),
+              transparent 62%
+            );
+          opacity: 0;
+          transition: opacity 0.25s ease;
+          z-index: 0;
+          border-radius: 14px;
+        }
+
+        .sidebar-menu > li > a:hover::before,
+        .sidebar-menu > li > a.active-page::before {
+          opacity: 1;
+        }
+
+        .sidebar-menu > li > a:hover::after,
+        .sidebar-menu > li > a.active-page::after {
+          opacity: 1;
+        }
+
+        .sidebar-menu > li > a:hover,
+        .sidebar-menu > li > a.active-page {
+          color: #ffffff !important;
+          box-shadow: 0 0 0 1px rgba(91, 140, 255, 0.35),
+            0 14px 30px rgba(0, 0, 0, 0.35),
+            0 0 18px rgba(91, 140, 255, 0.18),
+            0 0 14px rgba(168, 85, 247, 0.14) !important;
+          transform: translateY(-1px);
+        }
+
+        .sidebar-menu > li > a:hover .menu-icon,
+        .sidebar-menu > li > a.active-page .menu-icon {
+          color: #ffffff !important;
+          filter: drop-shadow(0 0 10px rgba(91, 140, 255, 0.35));
+        }
+
+        .sidebar-menu > li > a > * {
+          position: relative;
+          z-index: 2;
+        }
+
+        /* ==============================
+           ✅ SUBMENU HOVER ACTIVE (LEBIH SOFT + BEDA WARNA)
+           ============================== */
+
+        .sidebar-submenu > li > a::before {
+          content: "";
+          position: absolute;
+          inset: -2px;
+          background: linear-gradient(
+            90deg,
+            rgba(34, 211, 238, 0.85),
+            rgba(91, 140, 255, 0.85)
+          );
+          opacity: 0;
+          transition: opacity 0.25s ease;
+          border-radius: 12px;
+          z-index: 0;
+        }
+
+        .sidebar-submenu > li > a::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(
+            450px 100px at 20% 40%,
+            rgba(255, 255, 255, 0.12),
+            transparent 60%
+          );
+          opacity: 0;
+          transition: opacity 0.25s ease;
+          z-index: 0;
+          border-radius: 12px;
+        }
+
+        .sidebar-submenu > li > a:hover::before,
+        .sidebar-submenu > li > a.active-page::before {
+          opacity: 1;
+        }
+
+        .sidebar-submenu > li > a:hover::after,
+        .sidebar-submenu > li > a.active-page::after {
+          opacity: 1;
+        }
+
+        .sidebar-submenu > li > a:hover,
+        .sidebar-submenu > li > a.active-page {
+          color: #ffffff !important;
+          box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.22),
+            0 10px 18px rgba(0, 0, 0, 0.22),
+            0 0 14px rgba(34, 211, 238, 0.14) !important;
+        }
+
+        .sidebar-submenu > li > a > * {
+          position: relative;
+          z-index: 2;
         }
       `}</style>
     </>
