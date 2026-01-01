@@ -418,7 +418,7 @@ const LoginLayer = () => {
           }
 
           .cvant-mobile-desc {
-            font-size: 14px !important;
+            font-size: 15px !important;
             line-height: 1.4 !important;
             margin-bottom: 18px !important;
           }
