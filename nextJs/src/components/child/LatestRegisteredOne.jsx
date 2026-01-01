@@ -426,7 +426,7 @@ const LatestRegisteredOne = () => {
           }
 
           .cvant-latest-tabs .nav-link {
-            font-size: 12px !important;
+            font-size: 15px !important;
             padding: 6px 10px !important;
             border-radius: 10px !important;
           }

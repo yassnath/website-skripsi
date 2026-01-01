@@ -16,7 +16,6 @@ function useCvAntPageIn() {
   return pageIn;
 }
 
-
 function isLightModeNow() {
   if (typeof window === "undefined") return false;
 
@@ -85,7 +84,6 @@ export default function ArmadaListLayer() {
 
   const showPopup = (type, message, autoCloseMs = 0) => {
     setPopup({ show: true, type, message });
-
     window.clearTimeout(showPopup._t);
 
     if (autoCloseMs > 0) {
@@ -157,7 +155,7 @@ export default function ArmadaListLayer() {
   }, []);
 
   const usageCountById = useMemo(() => {
-    const map = new Map(); // armadaId(string) -> count
+    const map = new Map();
 
     (Array.isArray(invoices) ? invoices : []).forEach((inv) => {
       const rincian = Array.isArray(inv?.rincian) ? inv.rincian : [];
@@ -202,7 +200,7 @@ export default function ArmadaListLayer() {
         (r) =>
           (r.nama_truk || "").toLowerCase().includes(s) ||
           (r.plat_nomor || "").toLowerCase().includes(s) ||
-          (r.kapasitas || "").toLowerCase().includes(s) ||
+          (String(r.kapasitas || "")).toLowerCase().includes(s) ||
           (r.status || "").toLowerCase().includes(s)
       );
     }
@@ -235,6 +233,7 @@ export default function ArmadaListLayer() {
     }
   };
 
+  // ✅ Desktop action btn (tetap seperti sebelumnya)
   const actionBtnStyle = {
     width: 50,
     height: 40,
@@ -242,6 +241,18 @@ export default function ArmadaListLayer() {
     alignItems: "center",
     justifyContent: "center",
     padding: 0,
+    lineHeight: 1,
+  };
+
+  // ✅ Mobile action btn (lebih compact)
+  const mobileActionBtnStyle = {
+    width: 44,
+    height: 38,
+    padding: 0,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    lineHeight: 1,
   };
 
   const searchBg = isLightMode ? "#f5f6fa" : "#1b2431";
@@ -249,314 +260,419 @@ export default function ArmadaListLayer() {
   const searchBorder = isLightMode ? "#c7c8ca" : "#6c757d";
   const searchIcon = isLightMode ? "#0b1220" : "#ffffff";
 
+  // ✅ Card theme
+  const cardBg = isLightMode ? "#ffffff" : "#1b2431";
+  const cardBorder = isLightMode ? "rgba(148,163,184,0.35)" : "#273142";
+  const textMain = isLightMode ? "#0b1220" : "#ffffff";
+  const textSub = isLightMode ? "#64748b" : "#94a3b8";
+
   return (
     <>
       <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
-      {popup.show && (
-        <div
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-          style={{
-            zIndex: 9999,
-            background: "rgba(0,0,0,0.55)",
-            padding: "16px",
-          }}
-          onClick={closePopup}
-        >
+        {/* POPUP */}
+        {popup.show && (
           <div
-            className="radius-12 shadow-sm p-24"
+            className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
             style={{
-              width: "100%",
-              maxWidth: "600px",
-              backgroundColor: "#1b2431",
-              border: `2px solid ${popupAccent}`,
+              zIndex: 9999,
+              background: "rgba(0,0,0,0.55)",
+              padding: "16px",
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={closePopup}
           >
-            <div className="d-flex align-items-start justify-content-between gap-2">
-              <div className="d-flex align-items-start gap-12">
-                <span style={{ marginTop: "2px" }}>
-                  <Icon
-                    icon={
-                      popup.type === "success"
-                        ? "solar:check-circle-linear"
-                        : "solar:danger-triangle-linear"
-                    }
-                    style={{
-                      fontSize: "28px",
-                      color: popupAccent,
-                    }}
-                  />
-                </span>
-
-                <div>
-                  <h5 className="mb-8 fw-bold" style={{ color: "#ffffff" }}>
-                    {popup.type === "success" ? "Success" : "Error"}
-                  </h5>
-                  <p
-                    className="mb-0"
-                    style={{ color: "#cbd5e1", fontSize: "15px" }}
-                  >
-                    {popup.message}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                className="btn p-0"
-                aria-label="Close"
-                onClick={closePopup}
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  lineHeight: 1,
-                }}
-              >
-                <Icon
-                  icon="solar:close-circle-linear"
-                  style={{ fontSize: 24, color: "#94a3b8" }}
-                />
-              </button>
-            </div>
-
-            <div className="d-flex justify-content-end mt-20">
-              <button
-                type="button"
-                className={`btn btn-${
-                  popup.type === "success" ? "primary" : "danger"
-                } radius-12 px-16`}
-                onClick={closePopup}
-                style={{
-                  border: `2px solid ${popupAccent}`,
-                }}
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {deleteConfirm.show && (
-        <div
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-          style={{
-            zIndex: 9999,
-            background: "rgba(0,0,0,0.55)",
-            padding: "16px",
-          }}
-          onClick={() => {
-            if (!deleteConfirm.deleting) closeDeleteConfirm();
-          }}
-        >
-          <div
-            className="radius-12 shadow-sm p-24"
-            style={{
-              width: "100%",
-              maxWidth: "600px",
-              backgroundColor: "#1b2431",
-              border: `2px solid #ef4444`,
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="d-flex align-items-start justify-content-between gap-2">
-              <div className="d-flex align-items-start gap-12">
-                <span style={{ marginTop: "2px" }}>
-                  <Icon
-                    icon="solar:danger-triangle-linear"
-                    style={{
-                      fontSize: "28px",
-                      color: "#ef4444",
-                    }}
-                  />
-                </span>
-
-                <div>
-                  <h5 className="mb-8 fw-bold" style={{ color: "#ffffff" }}>
-                    Confirm Delete
-                  </h5>
-                  <p
-                    className="mb-0"
-                    style={{ color: "#cbd5e1", fontSize: "15px" }}
-                  >
-                    Are you sure you want to delete the fleet{" "}
-                    <span style={{ color: "#ffffff", fontWeight: 700 }}>
-                      {deleteConfirm.label || "ini"}
-                    </span>
-                    ?
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                className="btn p-0"
-                aria-label="Close"
-                onClick={() => {
-                  if (!deleteConfirm.deleting) closeDeleteConfirm();
-                }}
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  lineHeight: 1,
-                }}
-                disabled={deleteConfirm.deleting}
-              >
-                <Icon
-                  icon="solar:close-circle-linear"
-                  style={{ fontSize: 24, color: "#94a3b8" }}
-                />
-              </button>
-            </div>
-
-            <div className="d-flex justify-content-end mt-20 gap-2">
-              <button
-                type="button"
-                className="btn btn-outline-secondary radius-12 px-16"
-                onClick={closeDeleteConfirm}
-                disabled={deleteConfirm.deleting}
-                style={{ border: "2px solid #64748b", color: "#e2e8f0" }}
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-danger radius-12 px-16"
-                onClick={handleDeleteConfirmed}
-                disabled={deleteConfirm.deleting}
-                style={{ border: "2px solid #ef4444" }}
-              >
-                {deleteConfirm.deleting ? "Deleting..." : "Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="card armada-card">
-        <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
-          <div className="d-flex flex-wrap align-items-center gap-3">
-            <div className="d-flex align-items-center gap-2">
-              <span>Show</span>
-              <select
-                className="form-select form-select-sm w-auto"
-                value={limit}
-                onChange={(e) => setLimit(parseInt(e.target.value || "10", 10))}
-              >
-                <option value="10">10</option>
-                <option value="15">15</option>
-                <option value="20">20</option>
-              </select>
-            </div>
-
-            <div className="search-input style-two">
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                type="text"
-                placeholder="Search fleet..."
-                style={{
-                  backgroundColor: searchBg,
-                  color: searchText,
-                  borderColor: searchBorder,
-                }}
-              />
-              <span className="icon" style={{ color: searchIcon }}>
-                <Icon icon="ion:search-outline" />
-              </span>
-            </div>
-          </div>
-
-          <div className="d-flex flex-wrap align-items-center gap-2">
-            <Link
-              href="/armada-add"
-              className="btn btn-sm btn-outline-primary-600 d-inline-flex align-items-center gap-1"
+            <div
+              className="radius-12 shadow-sm p-24"
+              style={{
+                width: "100%",
+                maxWidth: "600px",
+                backgroundColor: "#1b2431",
+                border: `2px solid ${popupAccent}`,
+              }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <Icon icon="material-symbols:add-rounded" className="text-xl" />
-              Add New
-            </Link>
+              <div className="d-flex align-items-start justify-content-between gap-2">
+                <div className="d-flex align-items-start gap-12">
+                  <span style={{ marginTop: "2px" }}>
+                    <Icon
+                      icon={
+                        popup.type === "success"
+                          ? "solar:check-circle-linear"
+                          : "solar:danger-triangle-linear"
+                      }
+                      style={{
+                        fontSize: "28px",
+                        color: popupAccent,
+                      }}
+                    />
+                  </span>
+
+                  <div>
+                    <h5 className="mb-8 fw-bold" style={{ color: "#ffffff" }}>
+                      {popup.type === "success" ? "Success" : "Error"}
+                    </h5>
+                    <p
+                      className="mb-0"
+                      style={{ color: "#cbd5e1", fontSize: "15px" }}
+                    >
+                      {popup.message}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn p-0"
+                  aria-label="Close"
+                  onClick={closePopup}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    lineHeight: 1,
+                  }}
+                >
+                  <Icon
+                    icon="solar:close-circle-linear"
+                    style={{ fontSize: 24, color: "#94a3b8" }}
+                  />
+                </button>
+              </div>
+
+              <div className="d-flex justify-content-end mt-20">
+                <button
+                  type="button"
+                  className={`btn btn-${
+                    popup.type === "success" ? "primary" : "danger"
+                  } radius-12 px-16`}
+                  onClick={closePopup}
+                  style={{
+                    border: `2px solid ${popupAccent}`,
+                  }}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="card-body p-0">
-          {loading ? (
-            <div className="p-4">Loading...</div>
-          ) : (
-            <div className="card-body table-responsive d-flex">
-              <table className="table bordered-table text-center align-middle armada-table">
-                <thead className="table-dark">
-                  <tr>
-                    <th>No</th>
-                    <th>Nama Truk</th>
-                    <th>Plat Nomor</th>
-                    <th>Kapasitas (Tonase)</th>
-                    <th>Status</th>
-                    <th>Penggunaan</th>
-                    <th>Aksi</th>
-                  </tr>
-                </thead>
+        {/* DELETE CONFIRM */}
+        {deleteConfirm.show && (
+          <div
+            className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+            style={{
+              zIndex: 9999,
+              background: "rgba(0,0,0,0.55)",
+              padding: "16px",
+            }}
+            onClick={() => {
+              if (!deleteConfirm.deleting) closeDeleteConfirm();
+            }}
+          >
+            <div
+              className="radius-12 shadow-sm p-24"
+              style={{
+                width: "100%",
+                maxWidth: "600px",
+                backgroundColor: "#1b2431",
+                border: `2px solid #ef4444`,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="d-flex align-items-start justify-content-between gap-2">
+                <div className="d-flex align-items-start gap-12">
+                  <span style={{ marginTop: "2px" }}>
+                    <Icon
+                      icon="solar:danger-triangle-linear"
+                      style={{
+                        fontSize: "28px",
+                        color: "#ef4444",
+                      }}
+                    />
+                  </span>
 
-                <tbody>
+                  <div>
+                    <h5 className="mb-8 fw-bold" style={{ color: "#ffffff" }}>
+                      Confirm Delete
+                    </h5>
+                    <p
+                      className="mb-0"
+                      style={{ color: "#cbd5e1", fontSize: "15px" }}
+                    >
+                      Are you sure you want to delete{" "}
+                      <span style={{ color: "#ffffff", fontWeight: 700 }}>
+                        {deleteConfirm.label || "this"}
+                      </span>
+                      ?
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn p-0"
+                  aria-label="Close"
+                  onClick={() => {
+                    if (!deleteConfirm.deleting) closeDeleteConfirm();
+                  }}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    lineHeight: 1,
+                  }}
+                  disabled={deleteConfirm.deleting}
+                >
+                  <Icon
+                    icon="solar:close-circle-linear"
+                    style={{ fontSize: 24, color: "#94a3b8" }}
+                  />
+                </button>
+              </div>
+
+              <div className="d-flex justify-content-end mt-20 gap-2">
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary radius-12 px-16"
+                  onClick={closeDeleteConfirm}
+                  disabled={deleteConfirm.deleting}
+                  style={{ border: "2px solid #64748b", color: "#e2e8f0" }}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-danger radius-12 px-16"
+                  onClick={handleDeleteConfirmed}
+                  disabled={deleteConfirm.deleting}
+                  style={{ border: "2px solid #ef4444" }}
+                >
+                  {deleteConfirm.deleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="card armada-card">
+          <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div className="d-flex flex-wrap align-items-center gap-3">
+              <div className="d-flex align-items-center gap-2">
+                <span>Show</span>
+                <select
+                  className="form-select form-select-sm w-auto"
+                  value={limit}
+                  onChange={(e) => setLimit(parseInt(e.target.value || "10", 10))}
+                >
+                  <option value="10">10</option>
+                  <option value="15">15</option>
+                  <option value="20">20</option>
+                </select>
+              </div>
+
+              <div className="search-input style-two">
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  type="text"
+                  placeholder="Search fleet..."
+                  style={{
+                    backgroundColor: searchBg,
+                    color: searchText,
+                    borderColor: searchBorder,
+                  }}
+                />
+                <span className="icon" style={{ color: searchIcon }}>
+                  <Icon icon="ion:search-outline" />
+                </span>
+              </div>
+            </div>
+
+            <div className="d-flex flex-wrap align-items-center gap-2">
+              <Link
+                href="/armada-add"
+                className="btn btn-sm btn-outline-primary-600 d-inline-flex align-items-center gap-1"
+              >
+                <Icon icon="material-symbols:add-rounded" className="text-xl" />
+                Add New
+              </Link>
+            </div>
+          </div>
+
+          <div className="card-body p-0">
+            {loading ? (
+              <div className="p-4">Loading...</div>
+            ) : (
+              <>
+                {/* ✅ MOBILE CARD VIEW */}
+                <div className="d-md-none p-3 d-flex flex-column gap-12">
                   {filtered.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="text-center">
-                        Tidak ada data
-                      </td>
-                    </tr>
+                    <div className="text-center py-4" style={{ color: textSub }}>
+                      Tidak ada data
+                    </div>
                   ) : (
                     filtered.map((r, idx) => (
-                      <tr key={r.id ?? idx}>
-                        <td>{idx + 1}</td>
-                        <td>{r.nama_truk}</td>
-                        <td>{r.plat_nomor}</td>
-                        <td>{r.kapasitas}</td>
-                        <td>
+                      <div
+                        key={r.id ?? idx}
+                        className="p-16 radius-12"
+                        style={{
+                          backgroundColor: cardBg,
+                          border: `1px solid ${cardBorder}`,
+                        }}
+                      >
+                        <div className="d-flex justify-content-between align-items-start gap-2">
+                          <div>
+                            <div
+                              style={{
+                                fontWeight: 800,
+                                fontSize: "14px",
+                                color: textMain,
+                              }}
+                            >
+                              {r.nama_truk || "-"}
+                            </div>
+
+                            <div style={{ fontSize: "13px", color: textSub }}>
+                              Plat:{" "}
+                              <span style={{ fontWeight: 700, color: textMain }}>
+                                {r.plat_nomor || "-"}
+                              </span>
+                            </div>
+                          </div>
+
                           <span
                             className={`badge ${
                               r.status === "Ready"
                                 ? "bg-success"
                                 : "bg-warning text-dark"
                             }`}
+                            style={{ fontSize: "12px", whiteSpace: "nowrap" }}
                           >
-                            {r.status}
+                            {r.status || "-"}
                           </span>
-                        </td>
+                        </div>
 
-                        <td>{(r.__usedCount || 0) + "x"}</td>
+                        <div className="mt-10">
+                          <div style={{ fontSize: "13px", color: textSub }}>
+                            Kapasitas:{" "}
+                            <span style={{ fontWeight: 700, color: textMain }}>
+                              {r.kapasitas || 0}
+                            </span>
+                          </div>
 
-                        <td className="d-flex justify-content-center gap-3">
+                          <div style={{ fontSize: "13px", color: textSub }}>
+                            Penggunaan:{" "}
+                            <span style={{ fontWeight: 700, color: textMain }}>
+                              {(r.__usedCount || 0) + "x"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* ✅ ACTION BUTTONS (VERTICAL CENTER FIX) */}
+                        <div className="d-flex justify-content-end gap-2 mt-12">
                           <Link
                             href={`/armada-edit/${r.id}`}
-                            className="btn btn-xs btn-outline-primary"
-                            style={actionBtnStyle}
+                            className="btn btn-sm btn-outline-primary"
+                            style={mobileActionBtnStyle}
                             title="Edit"
                             aria-label="Edit"
                           >
-                            <Icon icon="mdi:pencil" />
+                            <Icon icon="mdi:pencil" width={18} height={18} />
                           </Link>
 
                           <button
                             onClick={() => openDeleteConfirm(r)}
-                            className="btn btn-xs btn-outline-danger"
-                            style={actionBtnStyle}
+                            className="btn btn-sm btn-outline-danger"
+                            style={mobileActionBtnStyle}
                             title="Delete"
                             aria-label="Delete"
                           >
-                            <Icon icon="mdi:trash-can-outline" />
+                            <Icon
+                              icon="mdi:trash-can-outline"
+                              width={18}
+                              height={18}
+                            />
                           </button>
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     ))
                   )}
-                </tbody>
-              </table>
-            </div>
-          )}
+                </div>
+
+                {/* ✅ DESKTOP TABLE VIEW (TIDAK DIUBAH) */}
+                <div className="d-none d-md-block card-body table-responsive d-flex">
+                  <table className="table bordered-table text-center align-middle armada-table">
+                    <thead className="table-dark">
+                      <tr>
+                        <th>No</th>
+                        <th>Nama Truk</th>
+                        <th>Plat Nomor</th>
+                        <th>Kapasitas (Tonase)</th>
+                        <th>Status</th>
+                        <th>Penggunaan</th>
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {filtered.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="text-center">
+                            Tidak ada data
+                          </td>
+                        </tr>
+                      ) : (
+                        filtered.map((r, idx) => (
+                          <tr key={r.id ?? idx}>
+                            <td>{idx + 1}</td>
+                            <td>{r.nama_truk}</td>
+                            <td>{r.plat_nomor}</td>
+                            <td>{r.kapasitas}</td>
+                            <td>
+                              <span
+                                className={`badge ${
+                                  r.status === "Ready"
+                                    ? "bg-success"
+                                    : "bg-warning text-dark"
+                                }`}
+                              >
+                                {r.status}
+                              </span>
+                            </td>
+
+                            <td>{(r.__usedCount || 0) + "x"}</td>
+
+                            <td className="d-flex justify-content-center gap-3">
+                              <Link
+                                href={`/armada-edit/${r.id}`}
+                                className="btn btn-xs btn-outline-primary"
+                                style={actionBtnStyle}
+                                title="Edit"
+                                aria-label="Edit"
+                              >
+                                <Icon icon="mdi:pencil" />
+                              </Link>
+
+                              <button
+                                onClick={() => openDeleteConfirm(r)}
+                                className="btn btn-xs btn-outline-danger"
+                                style={actionBtnStyle}
+                                title="Delete"
+                                aria-label="Delete"
+                              >
+                                <Icon icon="mdi:trash-can-outline" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
-
-      </div>
-</>
+    </>
   );
 }

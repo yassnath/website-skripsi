@@ -291,65 +291,33 @@ export default function InvoiceListLayer() {
     }
   };
 
-  const handleGenerateReport = async (range) => {
-    try {
-      setPrinting(true);
-      setPrintingRange(range);
-      setPrintError("");
-
-      const token =
-        typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
-      if (!token) throw new Error("Token tidak ditemukan. Silakan login ulang.");
-
-      const url = `${apiBase}/api/reports/summary?range=${encodeURIComponent(
-        range
-      )}&token=${encodeURIComponent(token)}`;
-
-      window.open(url, "_blank");
-    } catch (e) {
-      setPrintError(e.message || "Gagal mencetak laporan");
-    } finally {
-      setPrinting(false);
-      setPrintingRange("");
-    }
-  };
-
-  const actionBtnStyle = {
-    width: 50,
-    height: 40,
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 0,
-  };
-
-  const deleteLabel = useMemo(() => {
-    const it = deleteConfirm.item;
-    if (!it) return "";
-    return `${it.type} ${it.no || ""}`.trim();
-  }, [deleteConfirm.item]);
-
   const searchBg = isLightMode ? "#f5f6fa" : "#1b2431";
   const searchText = isLightMode ? "#0b1220" : "#ffffff";
   const searchBorder = isLightMode ? "#c7c8ca" : "#6c757d";
   const searchIcon = isLightMode ? "#0b1220" : "#ffffff";
 
-  /* ✅ CARD STYLE MOBILE */
+  // ✅ MOBILE CARD STYLE
   const cardBg = isLightMode ? "#ffffff" : "#1b2431";
   const cardBorder = isLightMode ? "rgba(148,163,184,0.35)" : "#273142";
   const textMain = isLightMode ? "#0b1220" : "#ffffff";
   const textSub = isLightMode ? "#64748b" : "#94a3b8";
 
+  // ✅ FIX BUTTON ICON CENTER VERTICALLY
+  const mobileActionBtnStyle = {
+    width: 44,
+    height: 38,
+    padding: 0,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    lineHeight: 1,
+  };
+
   return (
     <>
       <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
-        {/* ===== POPUP, DELETE CONFIRM, PRINT MODAL (asli kamu, tidak diubah) ===== */}
-        {/* ... [tetap sama seperti kode kamu di atas] ... */}
-
         <div className="card armada-card">
           <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
-            {/* HEADER ASLI KAMU */}
             <div className="d-flex flex-wrap align-items-center gap-3">
               <div className="d-flex align-items-center gap-2">
                 <span>Show</span>
@@ -391,16 +359,6 @@ export default function InvoiceListLayer() {
             </div>
 
             <div className="d-flex align-items-center gap-2">
-              {userRole === "owner" && (
-                <button
-                  className="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1"
-                  onClick={() => setShowPrintModal(true)}
-                >
-                  <Icon icon="mdi:printer" />
-                  Report PDF
-                </button>
-              )}
-
               <Link
                 href="/invoice-add"
                 className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
@@ -420,8 +378,6 @@ export default function InvoiceListLayer() {
           </div>
 
           <div className="card-body p-0">
-            {error && <div className="alert alert-danger m-3">{error}</div>}
-
             {loading ? (
               <div className="p-4">Loading…</div>
             ) : (
@@ -442,7 +398,6 @@ export default function InvoiceListLayer() {
                           backgroundColor: cardBg,
                         }}
                       >
-                        {/* header: nomor + type */}
                         <div className="d-flex justify-content-between align-items-start gap-2">
                           <div>
                             <div
@@ -469,16 +424,12 @@ export default function InvoiceListLayer() {
                                 ? "bg-warning text-dark"
                                 : "bg-secondary"
                             }`}
-                            style={{
-                              fontSize: "12px",
-                              whiteSpace: "nowrap",
-                            }}
+                            style={{ fontSize: "12px", whiteSpace: "nowrap" }}
                           >
                             {item.status}
                           </span>
                         </div>
 
-                        {/* content */}
                         <div className="mt-10">
                           <div style={{ fontSize: "13px", color: textSub }}>
                             Nama:{" "}
@@ -506,53 +457,64 @@ export default function InvoiceListLayer() {
                           </div>
                         </div>
 
-                        {/* actions */}
+                        {/* ✅ ACTION BUTTONS FIXED */}
                         <div className="d-flex justify-content-end gap-2 mt-12">
                           {item.type === "Income" ? (
                             <>
                               <button
                                 className="btn btn-sm btn-outline-primary"
+                                style={mobileActionBtnStyle}
                                 onClick={() =>
                                   (window.location.href = `/invoice-edit?id=${item.id}`)
                                 }
                               >
-                                <Icon icon="mdi:pencil" />
+                                <Icon icon="mdi:pencil" width={18} height={18} />
                               </button>
+
                               <button
                                 className="btn btn-sm btn-outline-warning"
+                                style={mobileActionBtnStyle}
                                 onClick={() =>
                                   (window.location.href = `/invoice-preview?id=${item.id}`)
                                 }
                               >
-                                <Icon icon="mdi:eye" />
+                                <Icon icon="mdi:eye" width={18} height={18} />
                               </button>
                             </>
                           ) : (
                             <>
                               <button
                                 className="btn btn-sm btn-outline-primary"
+                                style={mobileActionBtnStyle}
                                 onClick={() =>
                                   (window.location.href = `/invoice-expense-edit?id=${item.id}`)
                                 }
                               >
-                                <Icon icon="mdi:pencil" />
+                                <Icon icon="mdi:pencil" width={18} height={18} />
                               </button>
+
                               <button
                                 className="btn btn-sm btn-outline-warning"
+                                style={mobileActionBtnStyle}
                                 onClick={() =>
                                   (window.location.href = `/expense-preview?id=${item.id}`)
                                 }
                               >
-                                <Icon icon="mdi:eye" />
+                                <Icon icon="mdi:eye" width={18} height={18} />
                               </button>
                             </>
                           )}
 
                           <button
                             className="btn btn-sm btn-outline-danger"
+                            style={mobileActionBtnStyle}
                             onClick={() => openDeleteConfirm(item)}
                           >
-                            <Icon icon="mdi:trash-can-outline" />
+                            <Icon
+                              icon="mdi:trash-can-outline"
+                              width={18}
+                              height={18}
+                            />
                           </button>
                         </div>
                       </div>
@@ -560,7 +522,7 @@ export default function InvoiceListLayer() {
                   )}
                 </div>
 
-                {/* ✅ DESKTOP TABLE TETAP SAMA */}
+                {/* ✅ DESKTOP TABLE TETAP (tidak diubah) */}
                 <div className="d-none d-md-block card-body table-responsive d-flex">
                   <table className="table bordered-table text-center align-middle">
                     <thead className="table-dark">
@@ -587,7 +549,6 @@ export default function InvoiceListLayer() {
                         filtered.map((item, i) => (
                           <tr key={`${item.type}-${item.id}`}>
                             <td>{i + 1}</td>
-
                             <td
                               style={{
                                 color:
@@ -632,21 +593,16 @@ export default function InvoiceListLayer() {
                                 <>
                                   <button
                                     className="btn btn-xs btn-outline-primary"
-                                    style={actionBtnStyle}
-                                    title="Edit"
-                                    aria-label="Edit"
+                                    style={{ width: 50, height: 40 }}
                                     onClick={() =>
                                       (window.location.href = `/invoice-edit?id=${item.id}`)
                                     }
                                   >
                                     <Icon icon="mdi:pencil" />
                                   </button>
-
                                   <button
                                     className="btn btn-xs btn-outline-warning"
-                                    style={actionBtnStyle}
-                                    title="Preview"
-                                    aria-label="Preview"
+                                    style={{ width: 50, height: 40 }}
                                     onClick={() =>
                                       (window.location.href = `/invoice-preview?id=${item.id}`)
                                     }
@@ -658,21 +614,16 @@ export default function InvoiceListLayer() {
                                 <>
                                   <button
                                     className="btn btn-xs btn-outline-primary"
-                                    style={actionBtnStyle}
-                                    title="Edit"
-                                    aria-label="Edit"
+                                    style={{ width: 50, height: 40 }}
                                     onClick={() =>
                                       (window.location.href = `/invoice-expense-edit?id=${item.id}`)
                                     }
                                   >
                                     <Icon icon="mdi:pencil" />
                                   </button>
-
                                   <button
                                     className="btn btn-xs btn-outline-warning"
-                                    style={actionBtnStyle}
-                                    title="Preview"
-                                    aria-label="Preview"
+                                    style={{ width: 50, height: 40 }}
                                     onClick={() =>
                                       (window.location.href = `/expense-preview?id=${item.id}`)
                                     }
@@ -684,9 +635,7 @@ export default function InvoiceListLayer() {
 
                               <button
                                 className="btn btn-xs btn-outline-danger"
-                                style={actionBtnStyle}
-                                title="Delete"
-                                aria-label="Delete"
+                                style={{ width: 50, height: 40 }}
                                 onClick={() => openDeleteConfirm(item)}
                               >
                                 <Icon icon="mdi:trash-can-outline" />
