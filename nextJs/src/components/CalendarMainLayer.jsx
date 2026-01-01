@@ -334,10 +334,11 @@ export default function CalendarMainLayer() {
     <>
       {/* ✅ efek-in ditempel ke wrapper root */}
       <div className={`row gy-4 page-in ${pageIn ? "is-in" : ""}`}>
+        {/* ✅ LEFT SIDE */}
         <div className="col-xxl-3 col-lg-4">
           <div className="card h-100 p-0">
             <div
-              className="card-body p-24"
+              className="card-body p-24 cvant-left-transaction"
               style={{
                 maxHeight: calendarHeight ? `${calendarHeight}px` : "650px",
                 overflowY: "auto",
@@ -412,6 +413,7 @@ export default function CalendarMainLayer() {
           </div>
         </div>
 
+        {/* ✅ RIGHT SIDE */}
         <div className="col-xxl-9 col-lg-8">
           <div className="card h-100 p-0">
             <div
@@ -543,16 +545,16 @@ export default function CalendarMainLayer() {
         </div>
       </div>
 
-      {/* ✅ CSS animasi scoped (bukan global.css) */}
-<style jsx global>{`
+      {/* ✅ CSS animasi scoped + MOBILE FIX */}
+      <style jsx global>{`
         .cvant-eye-btn:hover .cvant-eye-icon {
           color: var(--primary-600, #487fff) !important;
         }
 
+        /* ✅ Tooltip */
         .cvant-fc-native-tooltip {
           white-space: nowrap;
           max-width: 320px;
-
           border: 1px solid
             var(--neutral-300, rgba(255, 255, 255, 0.18)) !important;
           box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18) !important;
@@ -575,9 +577,10 @@ export default function CalendarMainLayer() {
         html[data-theme="dark"] .cvant-fc-native-tooltip {
           background: #0b1220 !important;
           color: #ffffff !important;
-          border-color: rgba(255, 255, 255, 0.14) !important;
+          border-color: rgba(255, 255,  255, 0.14) !important;
         }
 
+        /* ✅ FullCalendar button theme */
         .fc .fc-button {
           background: transparent !important;
           background-color: transparent !important;
@@ -604,6 +607,7 @@ export default function CalendarMainLayer() {
           color: ${btnTextColor} !important;
         }
 
+        /* ✅ Disable auto fixed height scroll */
         .fc .fc-scroller {
           overflow: visible !important;
           height: auto !important;
@@ -611,17 +615,13 @@ export default function CalendarMainLayer() {
         .fc .fc-view-harness {
           height: auto !important;
         }
-        .fc .fc-daygrid-body {
-          height: auto !important;
-        }
-        .fc .fc-scrollgrid-section-body > td {
-          height: auto !important;
-        }
 
+        /* ✅ Header background */
         html[data-bs-theme="light"] .fc .fc-col-header-cell,
         html[data-theme="light"] .fc .fc-col-header-cell {
           background: #ffffff !important;
         }
+
         html[data-bs-theme="light"] .fc .fc-col-header-cell a,
         html[data-theme="light"] .fc .fc-col-header-cell a {
           color: #111827 !important;
@@ -631,19 +631,59 @@ export default function CalendarMainLayer() {
         html[data-theme="dark"] .fc .fc-col-header-cell {
           background: #000000 !important;
         }
+
         html[data-bs-theme="dark"] .fc .fc-col-header-cell a,
         html[data-theme="dark"] .fc .fc-col-header-cell a {
           color: #ffffff !important;
         }
 
-        /* pastikan wrapper header ikut bg juga */
-        html[data-bs-theme="light"] .fc .fc-col-header-cell .fc-scrollgrid-sync-inner,
-        html[data-theme="light"] .fc .fc-col-header-cell .fc-scrollgrid-sync-inner {
-          background: #ffffff !important;
-        }
-        html[data-bs-theme="dark"] .fc .fc-col-header-cell .fc-scrollgrid-sync-inner,
-        html[data-theme="dark"] .fc .fc-col-header-cell .fc-scrollgrid-sync-inner {
+        html[data-bs-theme="dark"]
+          .fc
+          .fc-col-header-cell
+          .fc-scrollgrid-sync-inner,
+        html[data-theme="dark"]
+          .fc
+          .fc-col-header-cell
+          .fc-scrollgrid-sync-inner {
           background: #273142 !important;
+        }
+
+        /* ✅✅✅ MOBILE FIX */
+        @media (max-width: 767px) {
+          /* kiri transaksi lebih rapih & tidak kepanjangan */
+          .cvant-left-transaction {
+            max-height: 360px !important;
+            padding: 16px !important;
+          }
+
+          /* kurangi jarak item */
+          .cvant-left-transaction .event-item {
+            padding-bottom: 12px !important;
+            margin-bottom: 12px !important;
+          }
+
+          /* calendar toolbar rapih */
+          .fc .fc-toolbar {
+            flex-wrap: nowrap !important;
+            gap: 10px !important;
+          }
+
+          .fc .fc-toolbar-title {
+            font-size: 14px !important;
+            font-weight: 700 !important;
+            text-align: center !important;
+          }
+
+          .fc .fc-button {
+            padding: 6px 10px !important;
+            font-size: 12px !important;
+          }
+
+          /* event text lebih kecil biar muat */
+          .fc .fc-daygrid-event {
+            font-size: 11px !important;
+            padding: 2px 4px !important;
+          }
         }
       `}</style>
     </>
