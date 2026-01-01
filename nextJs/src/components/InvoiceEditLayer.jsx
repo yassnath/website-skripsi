@@ -408,12 +408,12 @@ export default function InvoiceEditLayer() {
           ) : (
             <div className="row g-4">
               <div className="col-lg-12">
-                <div className="card shadow-sm border-0 gap-3">
+                <div className="card shadow-sm border-0">
                   {/* ✅ DISAMAKAN SEPERTI INVOICE ADD LAYER */}
-                  <div className="card-header bg-transparent d-flex justify-content-end">
+                  <div className="card-header bg-transparent d-flex justify-content-end gap-2">
                     <button
                       onClick={handleSendToEmail}
-                      className="btn btn-sm btn-outline-secondary me-2"
+                      className="btn btn-sm btn-outline-secondary"
                       type="button"
                       disabled={sending}
                     >
@@ -422,7 +422,7 @@ export default function InvoiceEditLayer() {
 
                     <button
                       onClick={handlePdf}
-                      className="btn btn-sm btn-outline-warning me-2"
+                      className="btn btn-sm btn-outline-warning"
                       type="button"
                     >
                       Preview
