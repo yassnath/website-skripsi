@@ -12542,7 +12542,7 @@ select option {
   max-width: unset;
 }
 
-#imagePreview {
+/*#imagePreview {
   background-image: url("../images/user-grid/user-grid-img13.png");
   background-size: cover;
   background-repeat: no-repeat;
@@ -12555,7 +12555,7 @@ select option {
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
-}
+}*/
 
 .avatar-upload .avatar-preview {
   width: 150px;
