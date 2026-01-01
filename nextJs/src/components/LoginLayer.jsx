@@ -206,11 +206,6 @@ const LoginLayer = () => {
           padding-left: 52px !important;
         }
 
-        .cvant-input::placeholder {
-          color: rgba(100, 116, 139, 0.95) !important;
-          opacity: 1 !important;
-        }
-
         .cvant-eye-btn {
           position: absolute !important;
           right: 10px !important;
@@ -227,8 +222,7 @@ const LoginLayer = () => {
         }
 
         /* ==============================
-           ✅ FUTURISTIC BG + GLASS PANEL
-           + PARTICLE STARFIELD
+           ✅ FUTURISTIC BG + STARFIELD
            ============================== */
 
         .cvant-auth-bg {
@@ -252,7 +246,6 @@ const LoginLayer = () => {
             linear-gradient(180deg, #0f1623 0%, #0b1220 100%);
         }
 
-        /* ⭐ STARFIELD LAYER */
         .cvant-auth-bg::before {
           content: "";
           position: absolute;
@@ -275,7 +268,6 @@ const LoginLayer = () => {
           animation: cvantTwinkle 6.5s ease-in-out infinite;
         }
 
-        /* ✨ TWINKLE */
         @keyframes cvantTwinkle {
           0%, 100% { opacity: 0.65; filter: blur(0px); }
           50% { opacity: 0.95; filter: blur(0.2px); }
@@ -297,12 +289,10 @@ const LoginLayer = () => {
         }
 
         /* ==============================
-           ✅ LOGIN BUTTON NEON GLOW
+           ✅ LOGIN BUTTON
            ============================== */
 
         .cvant-login-btn {
-          position: relative !important;
-          overflow: hidden !important;
           border: none !important;
           background: linear-gradient(
             90deg,
@@ -316,57 +306,26 @@ const LoginLayer = () => {
             0 0 16px rgba(91, 140, 255, 0.2) !important;
         }
 
-        .cvant-login-btn::before {
-          content: "";
-          position: absolute;
-          inset: -2px;
-          background: radial-gradient(
-              400px 140px at 20% 30%,
-              rgba(255, 255, 255, 0.22),
-              transparent 60%
-            ),
-            radial-gradient(
-              500px 160px at 80% 60%,
-              rgba(34, 211, 238, 0.18),
-              transparent 62%
-            );
-          opacity: 0.7;
-          transition: opacity 0.25s ease;
-          pointer-events: none;
-        }
-
-        .cvant-login-btn:hover {
-          filter: brightness(1.04);
-          box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.45),
-            0 20px 46px rgba(0, 0, 0, 0.46),
-            0 0 22px rgba(91, 140, 255, 0.26),
-            0 0 16px rgba(168, 85, 247, 0.18) !important;
-          transform: translateY(-1px);
-        }
-
-        .cvant-login-btn:hover::before {
-          opacity: 1;
-        }
-
-        .cvant-login-btn:active {
-          transform: translateY(0px) scale(0.99);
-        }
-
         /* ==============================
-           ✅ LEFT BIG ICON (DESKTOP) AURA BOOST
+           ✅ LEFT BIG ICON AURA (✅ SMALLER RING NOW!)
            ============================== */
 
         .cvant-big-icon-wrap {
           position: relative;
           display: inline-block;
-          padding: 34px;
+
+          /* ✅ sebelumnya 34px (kebesaran) */
+          padding: 20px;
         }
 
-        /* OUTER AURA BLOOM */
+        /* ✅ aura bloom diperkecil */
         .cvant-big-icon-wrap::before {
           content: "";
           position: absolute;
-          inset: -12%;
+
+          /* ✅ sebelumnya -12% */
+          inset: -6%;
+
           border-radius: 999px;
           background: radial-gradient(
               circle at 30% 30%,
@@ -388,22 +347,28 @@ const LoginLayer = () => {
           pointer-events: none;
         }
 
-        /* RING OUTLINE */
+        /* ✅ ring outline lebih kecil */
         .cvant-big-icon-wrap .cvant-icon-ring {
           position: absolute;
-          inset: 6px;
+
+          /* ✅ sebelumnya inset 6px */
+          inset: 10px;
+
           border-radius: 999px;
           border: 1px solid rgba(255, 255, 255, 0.08);
           box-shadow: 0 0 0 1px rgba(91, 140, 255, 0.18),
             0 0 18px rgba(91, 140, 255, 0.12),
-            0 0 14px rgba(34, 211, 238, 0.10);
+            0 0 14px rgba(34, 211, 238, 0.1);
           pointer-events: none;
         }
 
-        /* ORBIT GLOW */
+        /* ✅ orbit lebih kecil */
         .cvant-big-icon-wrap .cvant-orbit {
           position: absolute;
-          inset: -10px;
+
+          /* ✅ sebelumnya -10px */
+          inset: -2px;
+
           border-radius: 999px;
           border: 1px dashed rgba(255, 255, 255, 0.06);
           pointer-events: none;
@@ -437,11 +402,14 @@ const LoginLayer = () => {
             drop-shadow(0 0 22px rgba(91, 140, 255, 0.18));
         }
 
-        /* shimmer overlay */
+        /* ✅ shimmer ikut diperkecil */
         .cvant-big-icon-wrap::after {
           content: "";
           position: absolute;
-          inset: -10%;
+
+          /* ✅ sebelumnya -10% */
+          inset: -6%;
+
           background: linear-gradient(
             120deg,
             transparent 20%,
@@ -474,7 +442,7 @@ const LoginLayer = () => {
           }
         }
 
-        /* ✅ MOBILE ONLY */
+        /* ✅ MOBILE */
         @media (max-width: 991.98px) {
           .cvant-glass {
             padding: 22px !important;
@@ -605,7 +573,6 @@ const LoginLayer = () => {
             <div className="cvant-big-icon-wrap">
               <div className="cvant-orbit" />
               <div className="cvant-icon-ring" />
-
               <img
                 src="/assets/images/big-icon.webp"
                 alt=""
@@ -624,7 +591,6 @@ const LoginLayer = () => {
             className="max-w-464-px mx-auto w-100 cvant-glass"
             style={{ padding: "28px" }}
           >
-            {/* ✅ HEADER MUST CENTER */}
             <div className="cvant-header-center">
               <div className="cvant-logo-wrap mb-24">
                 <Link href="/" className="d-inline-flex">
@@ -647,7 +613,6 @@ const LoginLayer = () => {
             </div>
 
             <form onSubmit={handleSubmit}>
-              {/* USERNAME */}
               <div className="cvant-field mb-16">
                 <span className="cvant-icon-wrap">
                   <Icon icon="solar:user-linear" fontSize={20} />
@@ -662,7 +627,6 @@ const LoginLayer = () => {
                 />
               </div>
 
-              {/* PASSWORD */}
               <div className="cvant-field mb-18">
                 <span className="cvant-icon-wrap">
                   <Icon icon="solar:lock-password-outline" fontSize={20} />
@@ -696,7 +660,6 @@ const LoginLayer = () => {
                 </button>
               </div>
 
-              {/* ✅ LOGIN BUTTON */}
               <button
                 type="submit"
                 className="btn text-sm btn-sm px-12 py-16 w-100 radius-12 mt-5 cvant-login-btn"

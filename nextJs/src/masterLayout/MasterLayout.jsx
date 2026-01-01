@@ -191,15 +191,19 @@ const MasterLayout = ({ children }) => {
                       List
                     </Link>
                   </li>
+
+                  {/* ✅ DOT ADD INCOME HIJAU */}
                   <li>
                     <Link
                       href="/invoice-add"
                       className={pathname === "/invoice-add" ? "active-page" : ""}
                     >
-                      <i className="ri-circle-fill circle-icon text-info-main w-auto" />{" "}
+                      <i className="ri-circle-fill circle-icon cvant-dot-income w-auto" />{" "}
                       Add Income
                     </Link>
                   </li>
+
+                  {/* ✅ DOT ADD EXPENSE MERAH */}
                   <li>
                     <Link
                       href="/invoice-expense"
@@ -207,7 +211,7 @@ const MasterLayout = ({ children }) => {
                         pathname === "/invoice-expense" ? "active-page" : ""
                       }
                     >
-                      <i className="ri-circle-fill circle-icon text-warning-main w-auto" />{" "}
+                      <i className="ri-circle-fill circle-icon cvant-dot-expense w-auto" />{" "}
                       Add Expense
                     </Link>
                   </li>
@@ -365,11 +369,9 @@ const MasterLayout = ({ children }) => {
         </main>
       </section>
 
-      {/* ✅ SIDEBAR SPACING + NEON ACTIVE/HOVER */}
+      {/* ✅ FIX + NEON GRADIENT + GLOW SIDEBAR */}
       <style jsx global>{`
-        /* ==============================
-           ✅ SPACING MENU (SAMA SEPERTI PUNYAMU)
-           ============================== */
+        /* ===== SPACING SIDEBAR MENU ===== */
         .sidebar-menu > li:not(.sidebar-menu-group-title) {
           margin-bottom: 8px !important;
         }
@@ -397,155 +399,81 @@ const MasterLayout = ({ children }) => {
           align-items: center;
           padding-top: 10px !important;
           padding-bottom: 10px !important;
-          border-radius: 12px !important;
+          border-radius: 10px !important;
           position: relative;
-          overflow: hidden;
           transition: all 0.2s ease !important;
         }
 
-        .sidebar-menu > li[style*="marginTop: -10px"],
-        .sidebar-menu > li[style*="margin-top: -10px"] {
-          margin-bottom: 10px !important;
+        /* ✅ Neon gradient background for main menu hover/active */
+        .sidebar-menu > li > a:hover,
+        .sidebar-menu > li > a.active-page {
+          background: linear-gradient(
+            90deg,
+            rgba(91, 140, 255, 0.94),
+            rgba(168, 85, 247, 0.92)
+          ) !important;
+          color: #fff !important;
+          box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25),
+            0 0 14px rgba(91, 140, 255, 0.18),
+            0 0 16px rgba(168, 85, 247, 0.14) !important;
+          transform: translateY(-1px);
         }
 
-        .sidebar-menu a.active-page,
+        /* ✅ icon ikut putih pas hover/active */
+        .sidebar-menu > li > a:hover .menu-icon,
+        .sidebar-menu > li > a.active-page .menu-icon {
+          color: #ffffff !important;
+          filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.18));
+        }
+
+        /* ✅ teks ikut putih */
+        .sidebar-menu > li > a:hover span,
+        .sidebar-menu > li > a.active-page span {
+          color: #ffffff !important;
+        }
+
+        /* ======================================
+           ✅ SUBMENU HOVER SOFT (TIPIS, GA NABRAK)
+           ====================================== */
+
+        .sidebar-submenu a {
+          padding-top: 9px !important;
+          padding-bottom: 9px !important;
+          border-radius: 8px !important;
+          transition: background 0.18s ease, color 0.18s ease !important;
+        }
+
+        .sidebar-submenu a:hover,
         .sidebar-submenu a.active-page {
-          margin-bottom: 2px !important;
+          background: rgba(91, 140, 255, 0.12) !important;
+          color: #ffffff !important;
         }
 
+        /* circle dot tetap keliatan */
+        .sidebar-submenu a:hover .circle-icon,
+        .sidebar-submenu a.active-page .circle-icon {
+          opacity: 0.9;
+        }
+
+        /* ======================================
+           ✅ DOT COLOR FIX (Income = HIJAU, Expense = MERAH)
+           ====================================== */
+        .cvant-dot-income {
+          color: #22c55e !important;
+        }
+        .cvant-dot-expense {
+          color: #ef4444 !important;
+        }
+
+        /* Mobile spacing */
         @media (max-width: 991px) {
           .sidebar-menu > li:not(.sidebar-menu-group-title) {
             margin-bottom: 10px !important;
           }
+
           .sidebar-submenu > li {
             margin-bottom: 8px !important;
           }
-        }
-
-        /* ==============================
-           ✅ NEON GRADIENT + GLOW MENU UTAMA
-           ============================== */
-        .sidebar-menu > li > a::before {
-          content: "";
-          position: absolute;
-          inset: -2px;
-          background: linear-gradient(
-            90deg,
-            rgba(91, 140, 255, 1),
-            rgba(168, 85, 247, 1)
-          );
-          opacity: 0;
-          transition: opacity 0.25s ease;
-          border-radius: 14px;
-          z-index: 0;
-        }
-
-        .sidebar-menu > li > a::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(
-              500px 120px at 20% 30%,
-              rgba(255, 255, 255, 0.18),
-              transparent 60%
-            ),
-            radial-gradient(
-              600px 160px at 80% 70%,
-              rgba(34, 211, 238, 0.16),
-              transparent 62%
-            );
-          opacity: 0;
-          transition: opacity 0.25s ease;
-          z-index: 0;
-          border-radius: 14px;
-        }
-
-        .sidebar-menu > li > a:hover::before,
-        .sidebar-menu > li > a.active-page::before {
-          opacity: 1;
-        }
-
-        .sidebar-menu > li > a:hover::after,
-        .sidebar-menu > li > a.active-page::after {
-          opacity: 1;
-        }
-
-        .sidebar-menu > li > a:hover,
-        .sidebar-menu > li > a.active-page {
-          color: #ffffff !important;
-          box-shadow: 0 0 0 1px rgba(91, 140, 255, 0.35),
-            0 14px 30px rgba(0, 0, 0, 0.35),
-            0 0 18px rgba(91, 140, 255, 0.18),
-            0 0 14px rgba(168, 85, 247, 0.14) !important;
-          transform: translateY(-1px);
-        }
-
-        .sidebar-menu > li > a:hover .menu-icon,
-        .sidebar-menu > li > a.active-page .menu-icon {
-          color: #ffffff !important;
-          filter: drop-shadow(0 0 10px rgba(91, 140, 255, 0.35));
-        }
-
-        .sidebar-menu > li > a > * {
-          position: relative;
-          z-index: 2;
-        }
-
-        /* ==============================
-           ✅ SUBMENU HOVER ACTIVE (LEBIH SOFT + BEDA WARNA)
-           ============================== */
-
-        .sidebar-submenu > li > a::before {
-          content: "";
-          position: absolute;
-          inset: -2px;
-          background: linear-gradient(
-            90deg,
-            rgba(34, 211, 238, 0.85),
-            rgba(91, 140, 255, 0.85)
-          );
-          opacity: 0;
-          transition: opacity 0.25s ease;
-          border-radius: 12px;
-          z-index: 0;
-        }
-
-        .sidebar-submenu > li > a::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(
-            450px 100px at 20% 40%,
-            rgba(255, 255, 255, 0.12),
-            transparent 60%
-          );
-          opacity: 0;
-          transition: opacity 0.25s ease;
-          z-index: 0;
-          border-radius: 12px;
-        }
-
-        .sidebar-submenu > li > a:hover::before,
-        .sidebar-submenu > li > a.active-page::before {
-          opacity: 1;
-        }
-
-        .sidebar-submenu > li > a:hover::after,
-        .sidebar-submenu > li > a.active-page::after {
-          opacity: 1;
-        }
-
-        .sidebar-submenu > li > a:hover,
-        .sidebar-submenu > li > a.active-page {
-          color: #ffffff !important;
-          box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.22),
-            0 10px 18px rgba(0, 0, 0, 0.22),
-            0 0 14px rgba(34, 211, 238, 0.14) !important;
-        }
-
-        .sidebar-submenu > li > a > * {
-          position: relative;
-          z-index: 2;
         }
       `}</style>
     </>
