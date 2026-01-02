@@ -490,7 +490,7 @@ export default function ArmadaListLayer() {
             <div className="cvant-action-wrap d-flex flex-wrap align-items-center gap-2">
               <Link
                 href="/armada-add"
-                className="btn btn-sm btn-outline-primary-600 d-inline-flex align-items-center gap-1"
+                className="btn btn-sm btn-outline-primary-600 d-inline-flex align-items-center gap-1 cvant-mobile-btn"
               >
                 <Icon icon="material-symbols:add-rounded" className="text-xl" />
                 Add New
@@ -719,9 +719,19 @@ export default function ArmadaListLayer() {
             .cvant-action-wrap {
               width: 100%;
               display: flex !important;
-              justify-content: flex-end !important;
+              justify-content: center !important;
               flex-wrap: nowrap !important;
               margin-top: 8px !important;
+            }
+
+            .cvant-mobile-btn {
+              display: inline-flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              font-size: 12px !important;
+              padding: 8px 12px !important;
+              line-height: 1 !important;
+              white-space: nowrap !important;
             }
 
             .cvant-action-wrap a {

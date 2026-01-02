@@ -595,7 +595,13 @@ export default function InvoiceListLayer() {
                                 <>
                                   <button
                                     className="btn btn-xs btn-outline-primary"
-                                    style={{ width: 50, height: 40 }}
+                                    style={{
+                                      width: 50,
+                                      height: 40,
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                    }}
                                     onClick={() =>
                                       (window.location.href = `/invoice-edit?id=${item.id}`)
                                     }
@@ -605,7 +611,13 @@ export default function InvoiceListLayer() {
 
                                   <button
                                     className="btn btn-xs btn-outline-warning"
-                                    style={{ width: 50, height: 40 }}
+                                    style={{
+                                      width: 50,
+                                      height: 40,
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                    }}
                                     onClick={() =>
                                       (window.location.href = `/invoice-preview?id=${item.id}`)
                                     }
@@ -617,7 +629,13 @@ export default function InvoiceListLayer() {
                                 <>
                                   <button
                                     className="btn btn-xs btn-outline-primary"
-                                    style={{ width: 50, height: 40 }}
+                                    style={{
+                                      width: 50,
+                                      height: 40,
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                    }}
                                     onClick={() =>
                                       (window.location.href = `/invoice-expense-edit?id=${item.id}`)
                                     }
@@ -627,7 +645,13 @@ export default function InvoiceListLayer() {
 
                                   <button
                                     className="btn btn-xs btn-outline-warning"
-                                    style={{ width: 50, height: 40 }}
+                                    style={{
+                                      width: 50,
+                                      height: 40,
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                    }}
                                     onClick={() =>
                                       (window.location.href = `/expense-preview?id=${item.id}`)
                                     }
@@ -639,7 +663,13 @@ export default function InvoiceListLayer() {
 
                               <button
                                 className="btn btn-xs btn-outline-danger"
-                                style={{ width: 50, height: 40 }}
+                                style={{
+                                  width: 50,
+                                  height: 40,
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
                                 onClick={() => openDeleteConfirm(item)}
                               >
                                 <Icon icon="mdi:trash-can-outline" />
