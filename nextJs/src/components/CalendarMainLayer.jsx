@@ -162,6 +162,12 @@ export default function CalendarMainLayer() {
     return `${monthNames[m]} ${y}`;
   }, [mobileMonth]);
 
+  const mobileMonthValue = useMemo(() => {
+    const y = mobileMonth.getFullYear();
+    const m = String(mobileMonth.getMonth() + 1).padStart(2, "0");
+    return `${y}-${m}`;
+  }, [mobileMonth]);
+
   /** ✅ generate all dates of month for mobile list */
   const mobileDays = useMemo(() => {
     const year = mobileMonth.getFullYear();
@@ -510,7 +516,7 @@ export default function CalendarMainLayer() {
   };
 
   /** ✅ handle picker change */
-  const onMonthPicked = (e) => {
+  const onMonthPicked = (e, modeOverride) => {
     const v = e.target.value; // yyyy-mm
     if (!v) return;
     const [yy, mm] = v.split("-");
@@ -519,7 +525,8 @@ export default function CalendarMainLayer() {
 
     if (!Number.isFinite(year) || !Number.isFinite(monthIndex)) return;
 
-    if (pickerMode === "mobile") {
+    const mode = modeOverride || pickerMode;
+    if (mode === "mobile") {
       setMobileMonth(new Date(year, monthIndex, 1));
     } else {
       const api = calendarApiRef.current;
