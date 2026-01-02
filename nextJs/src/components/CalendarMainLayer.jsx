@@ -743,18 +743,19 @@ export default function CalendarMainLayer() {
                   </button>
 
                   {/* ✅ title clickable untuk month picker */}
-                  <button
-                    type="button"
-                    className="btn p-0 border-0 bg-transparent"
-                    style={{
-                      fontWeight: 800,
-                      fontSize: "16px",
-                      color: btnTextColor,
-                      cursor: "pointer",
-                      position: "relative",
-                    }}
-                  >
-                    {monthTitle}
+                  <div style={{ position: "relative", display: "inline-block" }}>
+                    <button
+                      type="button"
+                      className="btn p-0 border-0 bg-transparent"
+                      style={{
+                        fontWeight: 800,
+                        fontSize: "16px",
+                        color: btnTextColor,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {monthTitle}
+                    </button>
                     <input
                       type="month"
                       value={mobileMonthValue}
@@ -774,9 +775,10 @@ export default function CalendarMainLayer() {
                         appearance: "auto",
                         WebkitAppearance: "auto",
                         MozAppearance: "auto",
+                        zIndex: 2,
                       }}
                     />
-                  </button>
+                  </div>
 
                   {/* ✅ tombol center vertikal */}
                   <button
