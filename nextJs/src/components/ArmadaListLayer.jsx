@@ -492,7 +492,9 @@ export default function ArmadaListLayer() {
                 href="/armada-add"
                 className="btn btn-sm btn-outline-primary-600 d-inline-flex align-items-center gap-1 cvant-mobile-btn"
               >
-                <Icon icon="material-symbols:add-rounded" className="text-xl" />
+                <span className="cvant-btn-icon">
+                  <Icon icon="material-symbols:add-rounded" className="text-xl" />
+                </span>
                 Add New
               </Link>
             </div>
@@ -676,7 +678,8 @@ export default function ArmadaListLayer() {
         <style jsx global>{`
           @media (max-width: 767px) {
             .cvant-filter-wrap {
-              width: 100%;
+              flex: 1 1 auto !important;
+              min-width: 0 !important;
               display: flex !important;
               flex-wrap: nowrap !important;
               gap: 10px !important;
@@ -717,11 +720,12 @@ export default function ArmadaListLayer() {
 
             /* ✅ tombol add new di bawah search, nempel kanan */
             .cvant-action-wrap {
-              width: 100%;
+              flex: 0 0 auto !important;
+              width: auto !important;
               display: flex !important;
               justify-content: center !important;
               flex-wrap: nowrap !important;
-              margin-top: 8px !important;
+              margin-top: 0 !important;
             }
 
             .cvant-mobile-btn {
@@ -732,6 +736,10 @@ export default function ArmadaListLayer() {
               padding: 8px 12px !important;
               line-height: 1 !important;
               white-space: nowrap !important;
+            }
+
+            .cvant-mobile-btn .cvant-btn-icon {
+              display: none !important;
             }
 
             .cvant-action-wrap a {
