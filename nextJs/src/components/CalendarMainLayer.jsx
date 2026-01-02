@@ -664,15 +664,7 @@ export default function CalendarMainLayer() {
                       cursor: "pointer",
                     }}
                   >
-                    {monthTitle}{" "}
-                    <Icon
-                      icon="solar:calendar-linear"
-                      style={{
-                        fontSize: "18px",
-                        marginLeft: 6,
-                        opacity: 0.75,
-                      }}
-                    />
+                    {monthTitle}
                   </button>
 
                   {/* ✅ tombol center vertikal */}
@@ -839,6 +831,14 @@ export default function CalendarMainLayer() {
                   }}
                   viewDidMount={() => {
                     // ✅ make title clickable (desktop)
+                    const titleEl = document.querySelector(".fc-toolbar-title");
+                    if (titleEl) {
+                      titleEl.style.cursor = "pointer";
+                      titleEl.title = "Klik untuk pilih bulan & tahun";
+                      titleEl.onclick = () => openMonthPicker("desktop");
+                    }
+                  }}
+                  datesSet={() => {
                     const titleEl = document.querySelector(".fc-toolbar-title");
                     if (titleEl) {
                       titleEl.style.cursor = "pointer";
