@@ -291,7 +291,7 @@ export default function InvoiceListLayer() {
   const cardBorder = isLightMode ? "rgba(148,163,184,0.35)" : "#273142";
   const textMain = isLightMode ? "#0b1220" : "#ffffff";
   const textSub = isLightMode ? "#64748b" : "#94a3b8";
-  const reportAccent = "#22c55e";
+  const reportAccent = "#2765ec";
 
   const mobileActionBtnStyle = {
     width: 44,
@@ -382,34 +382,24 @@ export default function InvoiceListLayer() {
               <div className="d-flex justify-content-end mt-20 gap-2 cvant-report-actions">
                 <button
                   type="button"
-                  className="btn btn-outline-secondary radius-12 px-16"
-                  onClick={() => setShowPrintModal(false)}
-                  disabled={printing}
-                  style={{ border: "2px solid #64748b", color: "#e2e8f0" }}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  className="btn btn-primary radius-12 px-16"
+                  className="btn btn-outline-primary radius-12 px-16"
                   onClick={() => handleGenerateReport("month")}
                   disabled={printing}
                 >
                   {printing && printingRange === "month"
-                    ? "Mencetak..."
-                    : "Laporan Bulanan"}
+                    ? "Creating..."
+                    : "Monthly Report"}
                 </button>
 
                 <button
                   type="button"
-                  className="btn btn-success radius-12 px-16"
+                  className="btn btn-outline-success radius-12 px-16"
                   onClick={() => handleGenerateReport("year")}
                   disabled={printing}
                 >
                   {printing && printingRange === "year"
-                    ? "Mencetak..."
-                    : "Laporan Tahunan"}
+                    ? "Creating..."
+                    : "Yearly Report"}
                 </button>
               </div>
             </div>
