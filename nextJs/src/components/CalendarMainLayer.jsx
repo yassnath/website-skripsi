@@ -168,6 +168,12 @@ export default function CalendarMainLayer() {
     return `${y}-${m}`;
   }, [mobileMonth]);
 
+  const mobileDateValue = useMemo(() => {
+    const y = mobileMonth.getFullYear();
+    const m = String(mobileMonth.getMonth() + 1).padStart(2, "0");
+    return `${y}-${m}-01`;
+  }, [mobileMonth]);
+
   /** ✅ generate all dates of month for mobile list */
   const mobileDays = useMemo(() => {
     const year = mobileMonth.getFullYear();
@@ -534,6 +540,16 @@ export default function CalendarMainLayer() {
     }
   };
 
+  const onMobileDatePicked = (e) => {
+    const v = e.target.value; // yyyy-mm-dd
+    if (!v) return;
+    const [yy, mm] = v.split("-");
+    const year = Number(yy);
+    const monthIndex = Number(mm) - 1;
+    if (!Number.isFinite(year) || !Number.isFinite(monthIndex)) return;
+    setMobileMonth(new Date(year, monthIndex, 1));
+  };
+
   useEffect(() => {
     const start = new Date(mobileMonth.getFullYear(), mobileMonth.getMonth(), 1);
     const end = new Date(
@@ -757,14 +773,19 @@ export default function CalendarMainLayer() {
                       {monthTitle}
                     </button>
                     <input
-                      type="month"
-                      value={mobileMonthValue}
-                      onChange={(e) => onMonthPicked(e, "mobile")}
+                      type="date"
+                      value={mobileDateValue}
+                      onChange={onMobileDatePicked}
                       aria-label="Pilih bulan dan tahun"
+                      onClick={(e) => {
+                        if (typeof e.currentTarget.showPicker === "function") {
+                          e.currentTarget.showPicker();
+                        }
+                      }}
                       style={{
                         position: "absolute",
                         inset: 0,
-                        opacity: 0,
+                        opacity: 0.01,
                         cursor: "pointer",
                         width: "100%",
                         height: "100%",
@@ -775,6 +796,7 @@ export default function CalendarMainLayer() {
                         appearance: "auto",
                         WebkitAppearance: "auto",
                         MozAppearance: "auto",
+                        display: "block",
                         zIndex: 2,
                       }}
                     />
