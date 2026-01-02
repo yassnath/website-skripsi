@@ -233,7 +233,7 @@ export default function ArmadaListLayer() {
     }
   };
 
-  // ✅ Desktop action btn (tetap seperti sebelumnya)
+  // ✅ Desktop action btn (tetap)
   const actionBtnStyle = {
     width: 50,
     height: 40,
@@ -244,7 +244,7 @@ export default function ArmadaListLayer() {
     lineHeight: 1,
   };
 
-  // ✅ Mobile action btn (lebih compact)
+  // ✅ Mobile action btn
   const mobileActionBtnStyle = {
     width: 44,
     height: 38,
@@ -260,7 +260,6 @@ export default function ArmadaListLayer() {
   const searchBorder = isLightMode ? "#c7c8ca" : "#6c757d";
   const searchIcon = isLightMode ? "#0b1220" : "#ffffff";
 
-  // ✅ Card theme
   const cardBg = isLightMode ? "#ffffff" : "#1b2431";
   const cardBorder = isLightMode ? "rgba(148,163,184,0.35)" : "#273142";
   const textMain = isLightMode ? "#0b1220" : "#ffffff";
@@ -454,14 +453,17 @@ export default function ArmadaListLayer() {
         )}
 
         <div className="card armada-card">
-          <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
-            <div className="d-flex flex-wrap align-items-center gap-3">
-              <div className="d-flex align-items-center gap-2">
-                <span>Show</span>
+          <div className="card-header d-flex align-items-center justify-content-between gap-2 cvant-armada-mobile-header">
+            {/* ✅ LEFT: SHOW + SEARCH (MOBILE SEJAJAR) */}
+            <div className="d-flex align-items-center gap-2 flex-grow-1 cvant-armada-mobile-left">
+              <div className="d-flex align-items-center gap-2 cvant-armada-mobile-show">
+                <span className="d-none d-md-inline">Show</span>
                 <select
                   className="form-select form-select-sm w-auto"
                   value={limit}
-                  onChange={(e) => setLimit(parseInt(e.target.value || "10", 10))}
+                  onChange={(e) =>
+                    setLimit(parseInt(e.target.value || "10", 10))
+                  }
                 >
                   <option value="10">10</option>
                   <option value="15">15</option>
@@ -469,7 +471,7 @@ export default function ArmadaListLayer() {
                 </select>
               </div>
 
-              <div className="search-input style-two">
+              <div className="search-input style-two flex-grow-1 cvant-armada-mobile-search">
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
@@ -487,10 +489,11 @@ export default function ArmadaListLayer() {
               </div>
             </div>
 
-            <div className="d-flex flex-wrap align-items-center gap-2">
+            {/* ✅ RIGHT: ADD NEW (icon tetap, pojok kanan) */}
+            <div className="cvant-armada-mobile-add">
               <Link
                 href="/armada-add"
-                className="btn btn-sm btn-outline-primary-600 d-inline-flex align-items-center gap-1"
+                className="btn btn-sm btn-outline-primary-600 d-inline-flex align-items-center gap-1 cvant-armada-add-btn"
               >
                 <Icon icon="material-symbols:add-rounded" className="text-xl" />
                 Add New
@@ -567,7 +570,6 @@ export default function ArmadaListLayer() {
                           </div>
                         </div>
 
-                        {/* ✅ ACTION BUTTONS (VERTICAL CENTER FIX) */}
                         <div className="d-flex justify-content-end gap-2 mt-12">
                           <Link
                             href={`/armada-edit/${r.id}`}
@@ -598,7 +600,7 @@ export default function ArmadaListLayer() {
                   )}
                 </div>
 
-                {/* ✅ DESKTOP TABLE VIEW (TIDAK DIUBAH) */}
+                {/* ✅ DESKTOP TABLE VIEW */}
                 <div className="d-none d-md-block card-body table-responsive d-flex">
                   <table className="table bordered-table text-center align-middle armada-table">
                     <thead className="table-dark">
@@ -673,6 +675,50 @@ export default function ArmadaListLayer() {
           </div>
         </div>
       </div>
+
+      {/* ✅ MOBILE HEADER FIX CSS */}
+      <style jsx global>{`
+        @media (max-width: 767px) {
+          .cvant-armada-mobile-header {
+            flex-wrap: nowrap !important;
+          }
+
+          .cvant-armada-mobile-left {
+            flex-wrap: nowrap !important;
+            min-width: 0;
+          }
+
+          .cvant-armada-mobile-show select {
+            min-width: 64px !important;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+          }
+
+          .cvant-armada-mobile-search {
+            min-width: 0;
+          }
+
+          .cvant-armada-mobile-search input {
+            height: 38px !important;
+            font-size: 13px !important;
+            padding-left: 12px !important;
+          }
+
+          .cvant-armada-add-btn {
+            white-space: nowrap !important;
+            padding: 8px 10px !important;
+            font-size: 12px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 6px !important;
+          }
+
+          .cvant-armada-add-btn .text-xl {
+            font-size: 18px !important;
+          }
+        }
+      `}</style>
     </>
   );
 }
