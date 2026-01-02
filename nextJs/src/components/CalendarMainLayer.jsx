@@ -35,6 +35,7 @@ export default function CalendarMainLayer() {
   /** ✅ Month picker ref (dipakai mobile & desktop) */
   const monthPickerRef = useRef(null);
   const [pickerMode, setPickerMode] = useState("mobile"); // "mobile" | "desktop"
+  const titleMonthPickerRef = useRef(null);
 
   const getCssVar = (name, fallback) => {
     if (typeof window === "undefined") return fallback;
@@ -526,6 +527,61 @@ export default function CalendarMainLayer() {
     }
   };
 
+  const syncTitleMonthPicker = () => {
+    const input = titleMonthPickerRef.current;
+    if (!input) return;
+    const api = calendarApiRef.current;
+    const d = api?.getDate ? api.getDate() : new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    input.value = `${y}-${m}`;
+  };
+
+  const handleTitleMonthPicked = (e) => {
+    const v = e.target.value; // yyyy-mm
+    if (!v) return;
+    const [yy, mm] = v.split("-");
+    const year = Number(yy);
+    const monthIndex = Number(mm) - 1;
+    if (!Number.isFinite(year) || !Number.isFinite(monthIndex)) return;
+    const api = calendarApiRef.current;
+    if (api?.gotoDate) api.gotoDate(new Date(year, monthIndex, 1));
+  };
+
+  const attachTitleMonthPicker = () => {
+    if (typeof document === "undefined") return;
+    const titleEl = document.querySelector(".fc-toolbar-title");
+    if (!titleEl) return;
+
+    titleEl.style.cursor = "pointer";
+    titleEl.title = "Klik untuk pilih bulan & tahun";
+    if (!titleEl.style.position) titleEl.style.position = "relative";
+
+    let input = titleEl.querySelector('input[data-cvant-month-picker="true"]');
+    if (!input) {
+      input = document.createElement("input");
+      input.type = "month";
+      input.setAttribute("data-cvant-month-picker", "true");
+      input.setAttribute("aria-label", "Pilih bulan dan tahun");
+      input.style.position = "absolute";
+      input.style.inset = "0";
+      input.style.opacity = "0";
+      input.style.cursor = "pointer";
+      input.style.width = "100%";
+      input.style.height = "100%";
+      input.style.border = "0";
+      input.style.padding = "0";
+      input.style.margin = "0";
+      input.style.background = "transparent";
+      input.style.zIndex = "2";
+      input.addEventListener("change", handleTitleMonthPicked);
+      titleEl.appendChild(input);
+    }
+
+    titleMonthPickerRef.current = input;
+    syncTitleMonthPicker();
+  };
+
   return (
     <>
       {/* ✅ hidden month picker */}
@@ -821,6 +877,7 @@ export default function CalendarMainLayer() {
                       start: arg.startStr,
                       end: arg.endStr,
                     });
+                    attachTitleMonthPicker();
                   }}
                   ref={(el) => {
                     if (!el) return;
@@ -830,13 +887,7 @@ export default function CalendarMainLayer() {
                     } catch {}
                   }}
                   viewDidMount={() => {
-                    // ✅ make title clickable (desktop)
-                    const titleEl = document.querySelector(".fc-toolbar-title");
-                    if (titleEl) {
-                      titleEl.style.cursor = "pointer";
-                      titleEl.title = "Klik untuk pilih bulan & tahun";
-                      titleEl.onclick = () => openMonthPicker("desktop");
-                    }
+                    attachTitleMonthPicker();
                   }}
                   datesSet={() => {
                     const titleEl = document.querySelector(".fc-toolbar-title");
