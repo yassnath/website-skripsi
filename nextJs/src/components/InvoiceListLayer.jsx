@@ -273,6 +273,7 @@ export default function InvoiceListLayer() {
       )}&token=${encodeURIComponent(token)}`;
 
       window.open(url, "_blank");
+      setShowPrintModal(false);
     } catch (e) {
       setPrintError(e.message || "Gagal mencetak laporan");
     } finally {
@@ -290,6 +291,7 @@ export default function InvoiceListLayer() {
   const cardBorder = isLightMode ? "rgba(148,163,184,0.35)" : "#273142";
   const textMain = isLightMode ? "#0b1220" : "#ffffff";
   const textSub = isLightMode ? "#64748b" : "#94a3b8";
+  const reportAccent = "#3b82f6";
 
   const mobileActionBtnStyle = {
     width: 44,
@@ -304,6 +306,118 @@ export default function InvoiceListLayer() {
   return (
     <>
       <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
+        {showPrintModal && (
+          <div
+            className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+            style={{
+              zIndex: 9999,
+              background: "rgba(0,0,0,0.55)",
+              padding: "16px",
+            }}
+            onClick={() => {
+              if (!printing) setShowPrintModal(false);
+            }}
+          >
+            <div
+              className="radius-12 shadow-sm p-24 cvant-report-modal"
+              style={{
+                width: "100%",
+                maxWidth: "560px",
+                backgroundColor: "#1b2431",
+                border: `2px solid ${reportAccent}`,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="d-flex align-items-start justify-content-between gap-2">
+                <div className="d-flex align-items-start gap-12">
+                  <span style={{ marginTop: "2px" }}>
+                    <Icon
+                      icon="mdi:file-document-outline"
+                      style={{ fontSize: "28px", color: reportAccent }}
+                    />
+                  </span>
+
+                  <div>
+                    <h5 className="mb-8 fw-bold" style={{ color: "#ffffff" }}>
+                      Generate Report
+                    </h5>
+                    <p
+                      className="mb-0"
+                      style={{ color: "#cbd5e1", fontSize: "15px" }}
+                    >
+                      Pilih jenis laporan yang ingin dicetak.
+                    </p>
+                    {printError && (
+                      <p
+                        className="mb-0 mt-8"
+                        style={{ color: "#fca5a5", fontSize: "14px" }}
+                      >
+                        {printError}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn p-0"
+                  aria-label="Close"
+                  onClick={() => {
+                    if (!printing) setShowPrintModal(false);
+                  }}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    lineHeight: 1,
+                  }}
+                  disabled={printing}
+                >
+                  <Icon
+                    icon="solar:close-circle-linear"
+                    style={{ fontSize: 24, color: "#94a3b8" }}
+                  />
+                </button>
+              </div>
+
+              <div className="d-flex justify-content-end mt-20 gap-2 cvant-report-actions">
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary radius-12 px-16"
+                  onClick={() => setShowPrintModal(false)}
+                  disabled={printing}
+                  style={{ border: "2px solid #64748b", color: "#e2e8f0" }}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-primary radius-12 px-16"
+                  onClick={() => handleGenerateReport("month")}
+                  disabled={printing}
+                  style={{ border: `2px solid ${reportAccent}` }}
+                >
+                  {printing && printingRange === "month"
+                    ? "Mencetak..."
+                    : "Laporan Bulanan"}
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-outline-primary radius-12 px-16"
+                  onClick={() => handleGenerateReport("year")}
+                  disabled={printing}
+                  style={{ border: `2px solid ${reportAccent}` }}
+                >
+                  {printing && printingRange === "year"
+                    ? "Mencetak..."
+                    : "Laporan Tahunan"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="card armada-card">
           {/* ✅ HEADER — Desktop tetap, Mobile dirapikan via CSS */}
           <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
@@ -688,6 +802,20 @@ export default function InvoiceListLayer() {
 
         {/* ✅ MOBILE ONLY CSS FIX (DESKTOP TIDAK TERKENA) */}
         <style jsx global>{`
+          @media (min-width: 768px) {
+            .cvant-action-wrap .cvant-btn-icon {
+              display: inline-flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              line-height: 1 !important;
+            }
+
+            .cvant-action-wrap .cvant-btn-icon svg,
+            .cvant-action-wrap .cvant-btn-icon span {
+              display: block !important;
+            }
+          }
+
           @media (max-width: 767px) {
             /* ✅ action buttons center + lebih kecil */
             .cvant-action-wrap {
@@ -753,6 +881,17 @@ export default function InvoiceListLayer() {
 
             .cvant-search-wrap .icon {
               right: 10px !important;
+            }
+          }
+
+          @media (max-width: 575px) {
+            .cvant-report-actions {
+              flex-direction: column !important;
+              align-items: stretch !important;
+            }
+
+            .cvant-report-actions .btn {
+              width: 100% !important;
             }
           }
         `}</style>
