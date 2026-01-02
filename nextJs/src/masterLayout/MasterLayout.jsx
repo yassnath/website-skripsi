@@ -365,124 +365,80 @@ const MasterLayout = ({ children }) => {
         </main>
       </section>
 
-      {/* ✅ FIX + NEON GRADIENT + GLOW SIDEBAR */}
+      {/* ✅ FIX SIDEBAR WIDTH ACTIVE supaya toggle masih kelihatan */}
       <style jsx global>{`
-        /* ===== SPACING SIDEBAR MENU ===== */
-        .sidebar-menu > li:not(.sidebar-menu-group-title) {
-          margin-bottom: 8px !important;
+        /* ✅ sidebar default full */
+        .sidebar {
+          width: 280px;
+          transition: width 0.25s ease;
         }
 
-        .sidebar-menu-group-title {
-          margin: 14px 0 10px !important;
-          padding-top: 6px;
+        /* ✅ sidebar active jadi kecil (collapse mode) */
+        .sidebar.active {
+          width: 88px !important; /* ✅ pas icon */
+          overflow: hidden;
         }
 
-        .sidebar-menu > li.dropdown {
-          margin-bottom: 10px !important;
+        /* ✅ saat active, text menu hilang supaya icon doang */
+        .sidebar.active .sidebar-menu a span {
+          display: none !important;
         }
 
-        .sidebar-submenu > li {
-          margin-bottom: 6px !important;
+        /* ✅ icon tetap center */
+        .sidebar.active .sidebar-menu a {
+          justify-content: center !important;
+          padding-left: 0 !important;
+          padding-right: 0 !important;
         }
 
-        .sidebar-submenu > li:last-child {
-          margin-bottom: 0 !important;
+        .sidebar.active .sidebar-menu .menu-icon {
+          font-size: 22px !important;
         }
 
-        .sidebar-menu a,
-        .sidebar-submenu a {
-          display: flex;
-          align-items: center;
-          padding-top: 10px !important;
-          padding-bottom: 10px !important;
-          border-radius: 10px !important;
+        /* ✅ logo disesuaikan */
+        .sidebar.active .sidebar-logo .light-logo,
+        .sidebar.active .sidebar-logo .dark-logo {
+          display: none !important;
+        }
+
+        .sidebar.active .sidebar-logo .logo-icon {
+          display: block !important;
+          max-width: 48px;
+        }
+
+        /* ✅ dashboard-main mengikuti sidebar width */
+        .dashboard-main {
+          margin-left: 280px;
+          transition: margin-left 0.25s ease;
+        }
+
+        .dashboard-main.active {
+          margin-left: 88px !important;
+        }
+
+        /* ✅ supaya tombol strip 3 masih terlihat */
+        .navbar-header {
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          background: inherit;
+        }
+
+        /* ✅ sidebar tidak ganggu navbar toggle */
+        .sidebar-toggle {
+          z-index: 9999;
           position: relative;
-          transition: all 0.2s ease !important;
         }
 
-        /* ✅ Neon gradient background for main menu hover/active */
-        .sidebar-menu > li > a:hover,
-        .sidebar-menu > li > a.active-page {
-          background: linear-gradient(
-            90deg,
-            rgba(91, 140, 255, 0.94),
-            rgba(168, 85, 247, 0.92)
-          ) !important;
-          color: #fff !important;
-          box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25),
-            0 0 14px rgba(91, 140, 255, 0.18),
-            0 0 16px rgba(168, 85, 247, 0.14) !important;
-          transform: translateY(-1px);
-        }
-
-        /* ✅ icon ikut putih pas hover/active */
-        .sidebar-menu > li > a:hover .menu-icon,
-        .sidebar-menu > li > a.active-page .menu-icon {
-          color: #ffffff !important;
-          filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.18));
-        }
-
-        /* ✅ teks ikut putih */
-        .sidebar-menu > li > a:hover span,
-        .sidebar-menu > li > a.active-page span {
-          color: #ffffff !important;
-        }
-
-        /* ======================================
-           ✅ SUBMENU HOVER THEME-AWARE FIX
-           ====================================== */
-
-        /* base submenu */
-        .sidebar-submenu a {
-          padding-top: 9px !important;
-          padding-bottom: 9px !important;
-          border-radius: 8px !important;
-          transition: background 0.18s ease, color 0.18s ease !important;
-        }
-
-        /* ✅ DARK MODE: submenu hover -> putih */
-        html[data-bs-theme="dark"] .sidebar-submenu a:hover,
-        html[data-bs-theme="dark"] .sidebar-submenu a.active-page,
-        html[data-theme="dark"] .sidebar-submenu a:hover,
-        html[data-theme="dark"] .sidebar-submenu a.active-page {
-          background: rgba(91, 140, 255, 0.14) !important;
-          color: #ffffff !important;
-        }
-
-        /* ✅ LIGHT MODE: submenu hover -> text gelap */
-        html[data-bs-theme="light"] .sidebar-submenu a:hover,
-        html[data-bs-theme="light"] .sidebar-submenu a.active-page,
-        html[data-theme="light"] .sidebar-submenu a:hover,
-        html[data-theme="light"] .sidebar-submenu a.active-page {
-          background: rgba(91, 140, 255, 0.18) !important;
-          color: #0b1220 !important; /* ✅ teks gelap */
-          font-weight: 600;
-        }
-
-        /* circle dot tetap keliatan */
-        .sidebar-submenu a:hover .circle-icon,
-        .sidebar-submenu a.active-page .circle-icon {
-          opacity: 0.9;
-        }
-
-        /* ======================================
-           ✅ DOT COLOR FIX (Income = HIJAU, Expense = MERAH)
-           ====================================== */
-        .cvant-dot-income {
-          color: #22c55e !important;
-        }
-        .cvant-dot-expense {
-          color: #ef4444 !important;
-        }
-
-        /* Mobile spacing */
+        /* ✅ Mobile tetap pakai sidebar-open */
         @media (max-width: 991px) {
-          .sidebar-menu > li:not(.sidebar-menu-group-title) {
-            margin-bottom: 10px !important;
+          .dashboard-main,
+          .dashboard-main.active {
+            margin-left: 0 !important;
           }
 
-          .sidebar-submenu > li {
-            margin-bottom: 8px !important;
+          .sidebar.active {
+            width: 280px !important;
           }
         }
       `}</style>
