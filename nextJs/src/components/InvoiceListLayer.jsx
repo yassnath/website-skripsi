@@ -345,7 +345,7 @@ export default function InvoiceListLayer() {
                       className="mb-0"
                       style={{ color: "#cbd5e1", fontSize: "15px" }}
                     >
-                      Pilih jenis laporan yang ingin dicetak.
+                      Select the type of report you want to print.
                     </p>
                     {printError && (
                       <p
