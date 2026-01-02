@@ -527,6 +527,19 @@ export default function CalendarMainLayer() {
     }
   };
 
+  useEffect(() => {
+    const start = new Date(mobileMonth.getFullYear(), mobileMonth.getMonth(), 1);
+    const end = new Date(
+      mobileMonth.getFullYear(),
+      mobileMonth.getMonth() + 1,
+      1
+    );
+    setCurrentRange({
+      start: start.toISOString(),
+      end: end.toISOString(),
+    });
+  }, [mobileMonth]);
+
   const syncTitleMonthPicker = () => {
     const input = titleMonthPickerRef.current;
     if (!input) return;
@@ -555,6 +568,7 @@ export default function CalendarMainLayer() {
 
     titleEl.style.cursor = "pointer";
     titleEl.title = "Klik untuk pilih bulan & tahun";
+    titleEl.style.pointerEvents = "auto";
     if (!titleEl.style.position) titleEl.style.position = "relative";
 
     let input = titleEl.querySelector('input[data-cvant-month-picker="true"]');
@@ -565,21 +579,34 @@ export default function CalendarMainLayer() {
       input.setAttribute("aria-label", "Pilih bulan dan tahun");
       input.style.position = "absolute";
       input.style.inset = "0";
-      input.style.opacity = "0";
+      input.style.opacity = "0.01";
       input.style.cursor = "pointer";
       input.style.width = "100%";
       input.style.height = "100%";
+      input.style.display = "block";
+      input.style.pointerEvents = "auto";
+      input.style.appearance = "auto";
+      input.style.webkitAppearance = "auto";
+      input.style.MozAppearance = "auto";
       input.style.border = "0";
       input.style.padding = "0";
       input.style.margin = "0";
       input.style.background = "transparent";
-      input.style.zIndex = "2";
+      input.style.zIndex = "5";
+      input.addEventListener("click", () => {
+        if (typeof input.showPicker === "function") input.showPicker();
+      });
       input.addEventListener("change", handleTitleMonthPicked);
       titleEl.appendChild(input);
     }
 
     titleMonthPickerRef.current = input;
     syncTitleMonthPicker();
+    titleEl.onclick = () => {
+      syncTitleMonthPicker();
+      if (typeof input.showPicker === "function") input.showPicker();
+      else input.click();
+    };
   };
 
   return (
@@ -873,10 +900,25 @@ export default function CalendarMainLayer() {
                   contentHeight="auto"
                   expandRows={true}
                   datesSet={(arg) => {
+                    const startDate = arg?.view?.currentStart || arg.start;
+                    const endDate = arg?.view?.currentEnd || arg.end;
                     setCurrentRange({
-                      start: arg.startStr,
-                      end: arg.endStr,
+                      start: startDate?.toISOString
+                        ? startDate.toISOString()
+                        : arg.startStr,
+                      end: endDate?.toISOString
+                        ? endDate.toISOString()
+                        : arg.endStr,
                     });
+                    if (startDate) {
+                      setMobileMonth(
+                        new Date(
+                          startDate.getFullYear(),
+                          startDate.getMonth(),
+                          1
+                        )
+                      );
+                    }
                     attachTitleMonthPicker();
                   }}
                   ref={(el) => {
@@ -888,14 +930,6 @@ export default function CalendarMainLayer() {
                   }}
                   viewDidMount={() => {
                     attachTitleMonthPicker();
-                  }}
-                  datesSet={() => {
-                    const titleEl = document.querySelector(".fc-toolbar-title");
-                    if (titleEl) {
-                      titleEl.style.cursor = "pointer";
-                      titleEl.title = "Klik untuk pilih bulan & tahun";
-                      titleEl.onclick = () => openMonthPicker("desktop");
-                    }
                   }}
                   eventDidMount={(info) => {
                     info.el.removeAttribute("title");
