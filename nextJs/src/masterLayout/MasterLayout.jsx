@@ -115,10 +115,11 @@ const MasterLayout = ({ children }) => {
   return (
     <>
       <section className={mobileMenu ? "overlay active" : "overlay "}>
+        {/* ✅ Tambah helper class sidebar-collapsed */}
         <aside
           className={
             sidebarActive
-              ? "sidebar active "
+              ? "sidebar active sidebar-collapsed"
               : mobileMenu
               ? "sidebar sidebar-open"
               : "sidebar"
@@ -365,80 +366,188 @@ const MasterLayout = ({ children }) => {
         </main>
       </section>
 
-      {/* ✅ FIX SIDEBAR WIDTH ACTIVE supaya toggle masih kelihatan */}
+      {/* ✅ FIX + NEON GRADIENT + GLOW SIDEBAR */}
       <style jsx global>{`
-        /* ✅ sidebar default full */
-        .sidebar {
-          width: 280px;
-          transition: width 0.25s ease;
+        /* =========================================
+           ✅ DESKTOP COLLAPSED SIDEBAR HOVER FIX
+           ========================================= */
+
+        /* contoh default collapsed width (sesuaikan bila theme mu beda) */
+        .sidebar.sidebar-collapsed {
+          width: 92px !important; /* ✅ compact */
         }
 
-        /* ✅ sidebar active jadi kecil (collapse mode) */
-        .sidebar.active {
-          width: 88px !important; /* ✅ pas icon */
-          overflow: hidden;
-        }
-
-        /* ✅ saat active, text menu hilang supaya icon doang */
-        .sidebar.active .sidebar-menu a span {
-          display: none !important;
-        }
-
-        /* ✅ icon tetap center */
-        .sidebar.active .sidebar-menu a {
+        /* highlight follow width sidebar collapsed */
+        .sidebar.sidebar-collapsed .sidebar-menu > li > a {
           justify-content: center !important;
           padding-left: 0 !important;
           padding-right: 0 !important;
+          margin: 0 auto !important;
+          width: 66px !important; /* ✅ highlight “nempel” icon */
         }
 
-        .sidebar.active .sidebar-menu .menu-icon {
-          font-size: 22px !important;
-        }
-
-        /* ✅ logo disesuaikan */
-        .sidebar.active .sidebar-logo .light-logo,
-        .sidebar.active .sidebar-logo .dark-logo {
+        /* sembunyikan text saat collapsed */
+        .sidebar.sidebar-collapsed .sidebar-menu > li > a span {
           display: none !important;
         }
 
-        .sidebar.active .sidebar-logo .logo-icon {
-          display: block !important;
-          max-width: 48px;
+        .sidebar.sidebar-collapsed .sidebar-menu > li > a .menu-icon {
+          margin: 0 !important;
+          font-size: 22px !important;
         }
 
-        /* ✅ dashboard-main mengikuti sidebar width */
-        .dashboard-main {
-          margin-left: 280px;
-          transition: margin-left 0.25s ease;
+        /* hover/active highlight agar tidak full lebar */
+        .sidebar.sidebar-collapsed .sidebar-menu > li > a:hover,
+        .sidebar.sidebar-collapsed .sidebar-menu > li > a.active-page {
+          border-radius: 14px !important;
+          width: 66px !important;
+          margin: 0 auto !important;
+          transform: translateY(-1px);
         }
 
-        .dashboard-main.active {
-          margin-left: 88px !important;
+        /* dropdown anchor collapsed */
+        .sidebar.sidebar-collapsed .dropdown > a {
+          width: 66px !important;
+          margin: 0 auto !important;
+          justify-content: center !important;
         }
 
-        /* ✅ supaya tombol strip 3 masih terlihat */
-        .navbar-header {
-          position: sticky;
-          top: 0;
-          z-index: 100;
-          background: inherit;
+        .sidebar.sidebar-collapsed .sidebar-submenu {
+          display: none !important;
         }
 
-        /* ✅ sidebar tidak ganggu navbar toggle */
-        .sidebar-toggle {
-          z-index: 9999;
-          position: relative;
-        }
-
-        /* ✅ Mobile tetap pakai sidebar-open */
+        /* =========================================
+           ✅ MOBILE SIDEBAR WIDTH FIX
+           ========================================= */
         @media (max-width: 991px) {
-          .dashboard-main,
-          .dashboard-main.active {
-            margin-left: 0 !important;
+          .sidebar.sidebar-open {
+            width: 78vw !important; /* ✅ lebih kecil dari sebelumnya */
+            max-width: 320px !important;
+            left: 0 !important;
           }
 
-          .sidebar.active {
-            width: 280px !important;
+          /* biar header bars tetap kelihatan */
+          .overlay.active {
+            padding-left: 48px; /* ✅ sisakan sedikit ruang di kiri */
+          }
+
+          /* optional: geser sidebar supaya tidak terlalu mepet */
+          .sidebar.sidebar-open {
+            border-top-right-radius: 18px !important;
+            border-bottom-right-radius: 18px !important;
+          }
+        }
+
+        /* ===== SPACING SIDEBAR MENU ===== */
+        .sidebar-menu > li:not(.sidebar-menu-group-title) {
+          margin-bottom: 8px !important;
+        }
+
+        .sidebar-menu-group-title {
+          margin: 14px 0 10px !important;
+          padding-top: 6px;
+        }
+
+        .sidebar-menu > li.dropdown {
+          margin-bottom: 10px !important;
+        }
+
+        .sidebar-submenu > li {
+          margin-bottom: 6px !important;
+        }
+
+        .sidebar-submenu > li:last-child {
+          margin-bottom: 0 !important;
+        }
+
+        .sidebar-menu a,
+        .sidebar-submenu a {
+          display: flex;
+          align-items: center;
+          padding-top: 10px !important;
+          padding-bottom: 10px !important;
+          border-radius: 10px !important;
+          position: relative;
+          transition: all 0.2s ease !important;
+        }
+
+        /* ✅ Neon gradient background for main menu hover/active */
+        .sidebar-menu > li > a:hover,
+        .sidebar-menu > li > a.active-page {
+          background: linear-gradient(
+            90deg,
+            rgba(91, 140, 255, 0.94),
+            rgba(168, 85, 247, 0.92)
+          ) !important;
+          color: #fff !important;
+          box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25),
+            0 0 14px rgba(91, 140, 255, 0.18),
+            0 0 16px rgba(168, 85, 247, 0.14) !important;
+          transform: translateY(-1px);
+        }
+
+        /* ✅ icon ikut putih pas hover/active */
+        .sidebar-menu > li > a:hover .menu-icon,
+        .sidebar-menu > li > a.active-page .menu-icon {
+          color: #ffffff !important;
+          filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.18));
+        }
+
+        /* ✅ teks ikut putih */
+        .sidebar-menu > li > a:hover span,
+        .sidebar-menu > li > a.active-page span {
+          color: #ffffff !important;
+        }
+
+        /* base submenu */
+        .sidebar-submenu a {
+          padding-top: 9px !important;
+          padding-bottom: 9px !important;
+          border-radius: 8px !important;
+          transition: background 0.18s ease, color 0.18s ease !important;
+        }
+
+        /* ✅ DARK MODE: submenu hover -> putih */
+        html[data-bs-theme="dark"] .sidebar-submenu a:hover,
+        html[data-bs-theme="dark"] .sidebar-submenu a.active-page,
+        html[data-theme="dark"] .sidebar-submenu a:hover,
+        html[data-theme="dark"] .sidebar-submenu a.active-page {
+          background: rgba(91, 140, 255, 0.14) !important;
+          color: #ffffff !important;
+        }
+
+        /* ✅ LIGHT MODE: submenu hover -> text gelap */
+        html[data-bs-theme="light"] .sidebar-submenu a:hover,
+        html[data-bs-theme="light"] .sidebar-submenu a.active-page,
+        html[data-theme="light"] .sidebar-submenu a:hover,
+        html[data-theme="light"] .sidebar-submenu a.active-page {
+          background: rgba(91, 140, 255, 0.18) !important;
+          color: #0b1220 !important;
+          font-weight: 600;
+        }
+
+        /* circle dot tetap keliatan */
+        .sidebar-submenu a:hover .circle-icon,
+        .sidebar-submenu a.active-page .circle-icon {
+          opacity: 0.9;
+        }
+
+        /* DOT COLOR FIX */
+        .cvant-dot-income {
+          color: #22c55e !important;
+        }
+        .cvant-dot-expense {
+          color: #ef4444 !important;
+        }
+
+        /* Mobile spacing */
+        @media (max-width: 991px) {
+          .sidebar-menu > li:not(.sidebar-menu-group-title) {
+            margin-bottom: 10px !important;
+          }
+
+          .sidebar-submenu > li {
+            margin-bottom: 8px !important;
           }
         }
       `}</style>
