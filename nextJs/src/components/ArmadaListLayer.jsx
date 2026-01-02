@@ -677,14 +677,20 @@ export default function ArmadaListLayer() {
         {/* ✅ MOBILE ONLY CSS (DESKTOP TIDAK TERKENA) */}
         <style jsx global>{`
           @media (max-width: 767px) {
+            .armada-card .card-header {
+              flex-wrap: nowrap !important;
+              gap: 8px !important;
+            }
+
             .cvant-filter-wrap {
               flex: 1 1 auto !important;
+              width: auto !important;
               min-width: 0 !important;
               display: flex !important;
               flex-wrap: nowrap !important;
-              gap: 10px !important;
+              gap: 8px !important;
               align-items: center !important;
-              justify-content: space-between !important;
+              justify-content: flex-start !important;
             }
 
             .cvant-show-wrap {
@@ -697,14 +703,14 @@ export default function ArmadaListLayer() {
             }
 
             .cvant-show-wrap select {
-              width: 70px !important;
+              width: 60px !important;
               padding-left: 8px !important;
               padding-right: 8px !important;
             }
 
             .cvant-search-wrap {
-              flex: 0 1 55% !important;
-              max-width: 55% !important;
+              flex: 1 1 120px !important;
+              max-width: 140px !important;
               min-width: 0 !important;
             }
 
