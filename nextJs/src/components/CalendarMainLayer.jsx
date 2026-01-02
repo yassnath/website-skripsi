@@ -746,15 +746,36 @@ export default function CalendarMainLayer() {
                   <button
                     type="button"
                     className="btn p-0 border-0 bg-transparent"
-                    onClick={() => openMonthPicker("mobile")}
                     style={{
                       fontWeight: 800,
                       fontSize: "16px",
                       color: btnTextColor,
                       cursor: "pointer",
+                      position: "relative",
                     }}
                   >
                     {monthTitle}
+                    <input
+                      type="month"
+                      value={mobileMonthValue}
+                      onChange={(e) => onMonthPicked(e, "mobile")}
+                      aria-label="Pilih bulan dan tahun"
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        opacity: 0,
+                        cursor: "pointer",
+                        width: "100%",
+                        height: "100%",
+                        border: 0,
+                        padding: 0,
+                        margin: 0,
+                        background: "transparent",
+                        appearance: "auto",
+                        WebkitAppearance: "auto",
+                        MozAppearance: "auto",
+                      }}
+                    />
                   </button>
 
                   {/* ✅ tombol center vertikal */}
