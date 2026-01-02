@@ -310,7 +310,7 @@ export default function InvoiceListLayer() {
             {/* ✅ Show + Search (mobile jadi 1 baris via CSS) */}
             <div className="cvant-filter-wrap d-flex flex-wrap align-items-center gap-3">
               <div className="cvant-show-wrap d-flex align-items-center gap-2">
-                <span>Show</span>
+                <span className="cvant-show-label">Show</span>
                 <select
                   className="form-select form-select-sm w-auto"
                   value={String(limit)}
@@ -696,6 +696,10 @@ export default function InvoiceListLayer() {
             .cvant-show-wrap {
               flex: 0 0 auto !important;
               white-space: nowrap !important;
+            }
+
+            .cvant-show-label {
+              display: none !important;
             }
 
             .cvant-show-wrap select {

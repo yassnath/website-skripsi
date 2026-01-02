@@ -454,9 +454,9 @@ export default function ArmadaListLayer() {
           {/* ✅ HEADER */}
           <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
             {/* ✅ Show + Search */}
-            <div className="cvant-mobile-filter d-flex flex-wrap align-items-center gap-3">
-              <div className="d-flex align-items-center gap-2 cvant-mobile-show">
-                <span>Show</span>
+            <div className="cvant-filter-wrap d-flex flex-wrap align-items-center gap-3">
+              <div className="cvant-show-wrap d-flex align-items-center gap-2">
+                <span className="cvant-show-label">Show</span>
                 <select
                   className="form-select form-select-sm w-auto"
                   value={limit}
@@ -468,7 +468,7 @@ export default function ArmadaListLayer() {
                 </select>
               </div>
 
-              <div className="search-input style-two cvant-mobile-search">
+              <div className="search-input style-two cvant-search-wrap">
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
@@ -485,20 +485,9 @@ export default function ArmadaListLayer() {
                 </span>
               </div>
 
-              {/* ✅ MOBILE ONLY: Add New nempel kanan & bawah search */}
-              <div className="d-md-none cvant-mobile-addnew">
-                <Link
-                  href="/armada-add"
-                  className="btn btn-sm btn-outline-primary-600 d-inline-flex align-items-center gap-1"
-                >
-                  <Icon icon="material-symbols:add-rounded" className="text-xl" />
-                  Add New
-                </Link>
-              </div>
             </div>
 
-            {/* ✅ DESKTOP: Add New tetap seperti semula (tidak berubah) */}
-            <div className="d-none d-md-flex flex-wrap align-items-center gap-2">
+            <div className="cvant-action-wrap d-flex flex-wrap align-items-center gap-2">
               <Link
                 href="/armada-add"
                 className="btn btn-sm btn-outline-primary-600 d-inline-flex align-items-center gap-1"
@@ -686,45 +675,56 @@ export default function ArmadaListLayer() {
         {/* ✅ MOBILE ONLY CSS (DESKTOP TIDAK TERKENA) */}
         <style jsx global>{`
           @media (max-width: 767px) {
-            .cvant-mobile-filter {
+            .cvant-filter-wrap {
               width: 100%;
+              display: flex !important;
               flex-wrap: nowrap !important;
               gap: 10px !important;
               align-items: center !important;
+              justify-content: space-between !important;
             }
 
-            .cvant-mobile-show {
+            .cvant-show-wrap {
               flex: 0 0 auto !important;
               white-space: nowrap !important;
             }
 
-            .cvant-mobile-show select {
+            .cvant-show-label {
+              display: none !important;
+            }
+
+            .cvant-show-wrap select {
               width: 70px !important;
               padding-left: 8px !important;
               padding-right: 8px !important;
             }
 
-            .cvant-mobile-search {
+            .cvant-search-wrap {
               flex: 1 1 auto !important;
               min-width: 0 !important;
             }
 
-            .cvant-mobile-search input {
+            .cvant-search-wrap input {
               width: 100% !important;
               font-size: 12px !important;
               padding-left: 12px !important;
               padding-right: 32px !important;
             }
 
+            .cvant-search-wrap .icon {
+              right: 10px !important;
+            }
+
             /* ✅ tombol add new di bawah search, nempel kanan */
-            .cvant-mobile-addnew {
+            .cvant-action-wrap {
               width: 100%;
               display: flex !important;
               justify-content: flex-end !important;
+              flex-wrap: nowrap !important;
               margin-top: 8px !important;
             }
 
-            .cvant-mobile-addnew a {
+            .cvant-action-wrap a {
               white-space: nowrap !important;
             }
           }
