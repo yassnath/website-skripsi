@@ -703,7 +703,8 @@ export default function ArmadaListLayer() {
             }
 
             .cvant-search-wrap {
-              flex: 1 1 auto !important;
+              flex: 0 1 55% !important;
+              max-width: 55% !important;
               min-width: 0 !important;
             }
 
