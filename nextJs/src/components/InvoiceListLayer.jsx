@@ -291,7 +291,7 @@ export default function InvoiceListLayer() {
   const cardBorder = isLightMode ? "rgba(148,163,184,0.35)" : "#273142";
   const textMain = isLightMode ? "#0b1220" : "#ffffff";
   const textSub = isLightMode ? "#64748b" : "#94a3b8";
-  const reportAccent = "#3b82f6";
+  const reportAccent = "#22c55e";
 
   const mobileActionBtnStyle = {
     width: 44,
@@ -395,7 +395,6 @@ export default function InvoiceListLayer() {
                   className="btn btn-primary radius-12 px-16"
                   onClick={() => handleGenerateReport("month")}
                   disabled={printing}
-                  style={{ border: `2px solid ${reportAccent}` }}
                 >
                   {printing && printingRange === "month"
                     ? "Mencetak..."
@@ -404,10 +403,9 @@ export default function InvoiceListLayer() {
 
                 <button
                   type="button"
-                  className="btn btn-outline-primary radius-12 px-16"
+                  className="btn btn-success radius-12 px-16"
                   onClick={() => handleGenerateReport("year")}
                   disabled={printing}
-                  style={{ border: `2px solid ${reportAccent}` }}
                 >
                   {printing && printingRange === "year"
                     ? "Mencetak..."
