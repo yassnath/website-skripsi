@@ -173,17 +173,6 @@ export default function InvoiceListLayer() {
         const invList = Array.isArray(invoices)
           ? invoices.map((i) => {
               const normTanggal = normalizeDate(i.tanggal);
-              const rinc = Array.isArray(i.rincian) ? i.rincian : [];
-
-              const platsFromRincian = rinc
-                .map((r) => r?.armada?.plat_nomor || r?.plat_nomor || null)
-                .filter(Boolean);
-
-              const uniquePlats = Array.from(new Set(platsFromRincian));
-              const platText =
-                uniquePlats.length > 0
-                  ? uniquePlats.join(", ")
-                  : i.armada?.plat_nomor || "-";
 
               return {
                 ...i,
@@ -193,7 +182,8 @@ export default function InvoiceListLayer() {
                 tanggal_display: toDisplay(i.tanggal),
                 total: i.total_bayar,
                 nama: i.nama_pelanggan,
-                plat: platText,
+
+                // ✅ untuk mobile info
                 recorded_by: i.diterima_oleh || "-",
               };
             })
@@ -210,7 +200,8 @@ export default function InvoiceListLayer() {
                 tanggal_display: toDisplay(e.tanggal),
                 total: e.total_pengeluaran,
                 nama: "-",
-                plat: "-",
+
+                // ✅ untuk mobile info
                 recorded_by: e.dicatat_oleh || "Admin",
               };
             })
@@ -243,8 +234,7 @@ export default function InvoiceListLayer() {
       list = data.filter(
         (i) =>
           (i.nama || "").toLowerCase().includes(s) ||
-          (i.no || "").toLowerCase().includes(s) ||
-          (i.plat || "").toLowerCase().includes(s)
+          (i.no || "").toLowerCase().includes(s)
       );
     }
 
@@ -315,11 +305,12 @@ export default function InvoiceListLayer() {
     <>
       <div className={`cvant-page-in ${pageIn ? "is-in" : ""}`}>
         <div className="card armada-card">
+          {/* ✅ HEADER — Desktop tetap, Mobile dirapikan via CSS */}
           <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
-            {/* ✅ SHOW + SEARCH SEJAJAR HORIZONTAL DI MOBILE */}
-            <div className="d-flex align-items-center gap-2 flex-grow-1 cvant-mobile-top">
-              <div className="d-flex align-items-center gap-2 cvant-mobile-show">
-                <span className="d-none d-md-inline">Show</span>
+            {/* ✅ Show + Search (mobile jadi 1 baris via CSS) */}
+            <div className="cvant-filter-wrap d-flex flex-wrap align-items-center gap-3">
+              <div className="cvant-show-wrap d-flex align-items-center gap-2">
+                <span>Show</span>
                 <select
                   className="form-select form-select-sm w-auto"
                   value={String(limit)}
@@ -339,12 +330,12 @@ export default function InvoiceListLayer() {
                 </select>
               </div>
 
-              <div className="search-input style-two flex-grow-1 cvant-mobile-search">
+              <div className="search-input style-two cvant-search-wrap">
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   type="text"
-                  placeholder="Search..."
+                  placeholder="Search income or expense..."
                   style={{
                     backgroundColor: searchBg,
                     color: searchText,
@@ -357,57 +348,37 @@ export default function InvoiceListLayer() {
               </div>
             </div>
 
-            {/* ✅ BUTTONS: DESKTOP (icon tetap ada) */}
-            <div className="d-none d-md-flex align-items-center gap-2">
+            {/* ✅ Action buttons — Mobile jadi center, icon disembunyikan via CSS */}
+            <div className="cvant-action-wrap d-flex align-items-center gap-2">
               {userRole === "owner" && (
                 <button
-                  className="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1"
+                  className="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 cvant-mobile-btn"
                   onClick={() => setShowPrintModal(true)}
                 >
-                  <Icon icon="mdi:printer" />
+                  <span className="cvant-btn-icon">
+                    <Icon icon="mdi:printer" />
+                  </span>
                   Report PDF
                 </button>
               )}
 
               <Link
                 href="/invoice-add"
-                className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
+                className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 cvant-mobile-btn"
               >
-                <Icon icon="material-symbols:add-rounded" />
+                <span className="cvant-btn-icon">
+                  <Icon icon="material-symbols:add-rounded" />
+                </span>
                 Add Income
               </Link>
 
               <Link
                 href="/invoice-expense"
-                className="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1"
+                className="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1 cvant-mobile-btn"
               >
-                <Icon icon="mdi:cash-minus" />
-                Add Expense
-              </Link>
-            </div>
-
-            {/* ✅ BUTTONS: MOBILE (icon dihilangkan + center + 1 baris) */}
-            <div className="d-flex d-md-none justify-content-center w-100 gap-2 mt-2 cvant-mobile-actions">
-              {userRole === "owner" && (
-                <button
-                  className="btn btn-sm btn-outline-success cvant-btn-compact"
-                  onClick={() => setShowPrintModal(true)}
-                >
-                  Report PDF
-                </button>
-              )}
-
-              <Link
-                href="/invoice-add"
-                className="btn btn-sm btn-outline-primary cvant-btn-compact"
-              >
-                Add Income
-              </Link>
-
-              <Link
-                href="/invoice-expense"
-                className="btn btn-sm btn-outline-warning cvant-btn-compact"
-              >
+                <span className="cvant-btn-icon">
+                  <Icon icon="mdi:cash-minus" />
+                </span>
                 Add Expense
               </Link>
             </div>
@@ -419,7 +390,7 @@ export default function InvoiceListLayer() {
               <div className="p-4">Loading…</div>
             ) : (
               <>
-                {/* ✅ MOBILE CARD LIST */}
+                {/* ✅ MOBILE CARD LIST (TATANAN TETAP) */}
                 <div className="d-md-none p-3 d-flex flex-column gap-12">
                   {filtered.length === 0 ? (
                     <div className="text-center py-4" style={{ color: textSub }}>
@@ -469,6 +440,7 @@ export default function InvoiceListLayer() {
                           </span>
                         </div>
 
+                        {/* ✅ NAMA + DICATAT OLEH */}
                         <div className="mt-10">
                           <div style={{ fontSize: "13px", color: textSub }}>
                             Nama:{" "}
@@ -496,6 +468,7 @@ export default function InvoiceListLayer() {
                           </div>
                         </div>
 
+                        {/* ✅ ACTION BUTTONS */}
                         <div className="d-flex justify-content-end gap-2 mt-12">
                           {item.type === "Income" ? (
                             <>
@@ -542,25 +515,13 @@ export default function InvoiceListLayer() {
                               </button>
                             </>
                           )}
-
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            style={mobileActionBtnStyle}
-                            onClick={() => openDeleteConfirm(item)}
-                          >
-                            <Icon
-                              icon="mdi:trash-can-outline"
-                              width={18}
-                              height={18}
-                            />
-                          </button>
                         </div>
                       </div>
                     ))
                   )}
                 </div>
 
-                {/* ✅ DESKTOP TABLE TETAP */}
+                {/* ✅ DESKTOP TABLE (TIDAK DIUBAH SAMA SEKALI) */}
                 <div className="d-none d-md-block card-body table-responsive d-flex">
                   <table className="table bordered-table text-center align-middle">
                     <thead className="table-dark">
@@ -694,46 +655,74 @@ export default function InvoiceListLayer() {
             )}
           </div>
         </div>
+
+        {/* ✅ MOBILE ONLY CSS FIX (DESKTOP TIDAK TERKENA) */}
+        <style jsx global>{`
+          @media (max-width: 767px) {
+            /* ✅ action buttons center + lebih kecil */
+            .cvant-action-wrap {
+              width: 100%;
+              justify-content: center !important;
+              flex-wrap: nowrap !important;
+              gap: 10px !important;
+            }
+
+            .cvant-mobile-btn {
+              display: inline-flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              font-size: 12px !important;
+              padding: 8px 12px !important;
+              line-height: 1 !important;
+              white-space: nowrap !important;
+            }
+
+            /* ✅ HILANGKAN ICON BUTTON (mobile only) */
+            .cvant-mobile-btn .cvant-btn-icon {
+              display: none !important;
+            }
+
+            /* ✅ Filter wrap = show + search jadi sejajar */
+            .cvant-filter-wrap {
+              width: 100%;
+              display: flex !important;
+              flex-wrap: nowrap !important;
+              align-items: center !important;
+              gap: 10px !important;
+              justify-content: space-between !important;
+            }
+
+            /* ✅ Show wrap kecil */
+            .cvant-show-wrap {
+              flex: 0 0 auto !important;
+              white-space: nowrap !important;
+            }
+
+            .cvant-show-wrap select {
+              width: 70px !important;
+              padding-left: 8px !important;
+              padding-right: 8px !important;
+            }
+
+            /* ✅ Search flex */
+            .cvant-search-wrap {
+              flex: 1 1 auto !important;
+              min-width: 0 !important;
+            }
+
+            .cvant-search-wrap input {
+              width: 100% !important;
+              font-size: 12px !important;
+              padding-left: 12px !important;
+              padding-right: 32px !important;
+            }
+
+            .cvant-search-wrap .icon {
+              right: 10px !important;
+            }
+          }
+        `}</style>
       </div>
-
-      {/* ✅ CSS khusus mobile (rapihin top header) */}
-      <style jsx global>{`
-        @media (max-width: 767px) {
-          .cvant-mobile-top {
-            width: 100%;
-            flex-wrap: nowrap !important;
-          }
-
-          .cvant-mobile-show {
-            min-width: 72px;
-          }
-
-          .cvant-mobile-show select {
-            min-width: 72px;
-          }
-
-          .cvant-mobile-search input {
-            height: 38px !important;
-            font-size: 13px !important;
-            padding-left: 12px !important;
-          }
-
-          .cvant-mobile-actions {
-            flex-wrap: nowrap;
-          }
-
-          .cvant-btn-compact {
-            font-size: 12px !important;
-            padding: 8px 10px !important;
-            line-height: 1 !important;
-            white-space: nowrap !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            text-align: center !important;
-          }
-        }
-      `}</style>
     </>
   );
 }

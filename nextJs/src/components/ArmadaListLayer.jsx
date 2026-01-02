@@ -233,7 +233,6 @@ export default function ArmadaListLayer() {
     }
   };
 
-  // ✅ Desktop action btn (tetap)
   const actionBtnStyle = {
     width: 50,
     height: 40,
@@ -244,7 +243,6 @@ export default function ArmadaListLayer() {
     lineHeight: 1,
   };
 
-  // ✅ Mobile action btn
   const mobileActionBtnStyle = {
     width: 44,
     height: 38,
@@ -453,17 +451,16 @@ export default function ArmadaListLayer() {
         )}
 
         <div className="card armada-card">
-          <div className="card-header d-flex align-items-center justify-content-between gap-2 cvant-armada-mobile-header">
-            {/* ✅ LEFT: SHOW + SEARCH (MOBILE SEJAJAR) */}
-            <div className="d-flex align-items-center gap-2 flex-grow-1 cvant-armada-mobile-left">
-              <div className="d-flex align-items-center gap-2 cvant-armada-mobile-show">
-                <span className="d-none d-md-inline">Show</span>
+          {/* ✅ HEADER */}
+          <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+            {/* ✅ Show + Search */}
+            <div className="cvant-mobile-filter d-flex flex-wrap align-items-center gap-3">
+              <div className="d-flex align-items-center gap-2 cvant-mobile-show">
+                <span>Show</span>
                 <select
                   className="form-select form-select-sm w-auto"
                   value={limit}
-                  onChange={(e) =>
-                    setLimit(parseInt(e.target.value || "10", 10))
-                  }
+                  onChange={(e) => setLimit(parseInt(e.target.value || "10", 10))}
                 >
                   <option value="10">10</option>
                   <option value="15">15</option>
@@ -471,7 +468,7 @@ export default function ArmadaListLayer() {
                 </select>
               </div>
 
-              <div className="search-input style-two flex-grow-1 cvant-armada-mobile-search">
+              <div className="search-input style-two cvant-mobile-search">
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
@@ -487,13 +484,24 @@ export default function ArmadaListLayer() {
                   <Icon icon="ion:search-outline" />
                 </span>
               </div>
+
+              {/* ✅ MOBILE ONLY: Add New nempel kanan & bawah search */}
+              <div className="d-md-none cvant-mobile-addnew">
+                <Link
+                  href="/armada-add"
+                  className="btn btn-sm btn-outline-primary-600 d-inline-flex align-items-center gap-1"
+                >
+                  <Icon icon="material-symbols:add-rounded" className="text-xl" />
+                  Add New
+                </Link>
+              </div>
             </div>
 
-            {/* ✅ RIGHT: ADD NEW (icon tetap, pojok kanan) */}
-            <div className="cvant-armada-mobile-add">
+            {/* ✅ DESKTOP: Add New tetap seperti semula (tidak berubah) */}
+            <div className="d-none d-md-flex flex-wrap align-items-center gap-2">
               <Link
                 href="/armada-add"
-                className="btn btn-sm btn-outline-primary-600 d-inline-flex align-items-center gap-1 cvant-armada-add-btn"
+                className="btn btn-sm btn-outline-primary-600 d-inline-flex align-items-center gap-1"
               >
                 <Icon icon="material-symbols:add-rounded" className="text-xl" />
                 Add New
@@ -600,7 +608,7 @@ export default function ArmadaListLayer() {
                   )}
                 </div>
 
-                {/* ✅ DESKTOP TABLE VIEW */}
+                {/* ✅ DESKTOP TABLE VIEW (TIDAK DIUBAH) */}
                 <div className="d-none d-md-block card-body table-responsive d-flex">
                   <table className="table bordered-table text-center align-middle armada-table">
                     <thead className="table-dark">
@@ -674,51 +682,54 @@ export default function ArmadaListLayer() {
             )}
           </div>
         </div>
+
+        {/* ✅ MOBILE ONLY CSS (DESKTOP TIDAK TERKENA) */}
+        <style jsx global>{`
+          @media (max-width: 767px) {
+            .cvant-mobile-filter {
+              width: 100%;
+              flex-wrap: nowrap !important;
+              gap: 10px !important;
+              align-items: center !important;
+            }
+
+            .cvant-mobile-show {
+              flex: 0 0 auto !important;
+              white-space: nowrap !important;
+            }
+
+            .cvant-mobile-show select {
+              width: 70px !important;
+              padding-left: 8px !important;
+              padding-right: 8px !important;
+            }
+
+            .cvant-mobile-search {
+              flex: 1 1 auto !important;
+              min-width: 0 !important;
+            }
+
+            .cvant-mobile-search input {
+              width: 100% !important;
+              font-size: 12px !important;
+              padding-left: 12px !important;
+              padding-right: 32px !important;
+            }
+
+            /* ✅ tombol add new di bawah search, nempel kanan */
+            .cvant-mobile-addnew {
+              width: 100%;
+              display: flex !important;
+              justify-content: flex-end !important;
+              margin-top: 8px !important;
+            }
+
+            .cvant-mobile-addnew a {
+              white-space: nowrap !important;
+            }
+          }
+        `}</style>
       </div>
-
-      {/* ✅ MOBILE HEADER FIX CSS */}
-      <style jsx global>{`
-        @media (max-width: 767px) {
-          .cvant-armada-mobile-header {
-            flex-wrap: nowrap !important;
-          }
-
-          .cvant-armada-mobile-left {
-            flex-wrap: nowrap !important;
-            min-width: 0;
-          }
-
-          .cvant-armada-mobile-show select {
-            min-width: 64px !important;
-            padding-left: 10px !important;
-            padding-right: 10px !important;
-          }
-
-          .cvant-armada-mobile-search {
-            min-width: 0;
-          }
-
-          .cvant-armada-mobile-search input {
-            height: 38px !important;
-            font-size: 13px !important;
-            padding-left: 12px !important;
-          }
-
-          .cvant-armada-add-btn {
-            white-space: nowrap !important;
-            padding: 8px 10px !important;
-            font-size: 12px !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 6px !important;
-          }
-
-          .cvant-armada-add-btn .text-xl {
-            font-size: 18px !important;
-          }
-        }
-      `}</style>
     </>
   );
 }
