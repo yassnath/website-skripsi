@@ -250,7 +250,7 @@ const MasterLayout = ({ children }) => {
                       href="/armada-add"
                       className={pathname === "/armada-add" ? "active-page" : ""}
                     >
-                      <i className="ri-circle-fill circle-icon text-warning-main w-auto" />{" "}
+                      <i className="ri-circle-fill circle-icon text-success-main w-auto" />{" "}
                       Add New
                     </Link>
                   </li>
