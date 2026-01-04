@@ -95,11 +95,17 @@ const IncomeVsExpense = () => {
         const invoicesRaw = Array.isArray(invRes) ? invRes : [];
         const expensesRaw = Array.isArray(expRes) ? expRes : [];
 
-        const incomeList = invoicesRaw.map((i) => ({
+        const incomeList = invoicesRaw.map((i) => {
+          const totalBersih =
+            i.total_bayar ??
+            (Number(i.total_biaya || 0) - Number(i.pph || 0));
+
+          return {
           type: "Income",
           tanggal: i.tanggal,
-          total: Number(i.total_biaya || 0),
-        }));
+            total: Number(totalBersih || 0),
+          };
+        });
 
         const expenseList = expensesRaw.map((e) => ({
           type: "Expense",
