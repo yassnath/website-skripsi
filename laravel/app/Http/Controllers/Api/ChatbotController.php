@@ -9,6 +9,7 @@ use App\Models\Invoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class ChatbotController extends Controller
 {
@@ -125,6 +126,7 @@ class ChatbotController extends Controller
             'Fokus menjawab pertanyaan terkait modul Invoice, Expense, Armada/Fleet, Calendar, dan Laporan.',
             'Gunakan data konteks yang diberikan untuk menjawab dengan akurat.',
             'Jika data belum cukup, minta klarifikasi atau arahkan ke halaman yang relevan di dashboard.',
+            'Jika Context memuat period, gunakan data period tersebut untuk pertanyaan terkait waktu dan sebutkan rentangnya.',
             'Jangan mengarang data, jangan tampilkan rahasia seperti API key atau token.',
             'Jawab dalam Bahasa Indonesia, ringkas namun informatif.',
             "Profil pengguna: {$name} (role: {$role}).",
@@ -135,10 +137,15 @@ class ChatbotController extends Controller
     {
         $lower = Str::lower($message);
 
+        $range = $this->detectDateRange($message);
+        $rangeStart = $range ? $range['start'] : null;
+        $rangeEnd = $range ? $range['end'] : null;
+
         $wantsInvoice = $this->hasAny($lower, ['invoice', 'tagihan', 'pendapatan', 'income', 'faktur']);
         $wantsExpense = $this->hasAny($lower, ['expense', 'pengeluaran', 'biaya', 'cost']);
         $wantsArmada = $this->hasAny($lower, ['armada', 'fleet', 'truk', 'truck', 'plat']);
         $wantsReport = $this->hasAny($lower, ['laporan', 'report', 'ringkasan', 'summary']);
+        $wantsPeriod = $range !== null;
 
         $wantsInvoiceList = $this->hasAny($lower, ['daftar invoice', 'list invoice', 'semua invoice', 'data invoice']);
         $wantsExpenseList = $this->hasAny($lower, ['daftar expense', 'list expense', 'semua expense', 'data expense', 'daftar pengeluaran']);
@@ -148,8 +155,18 @@ class ChatbotController extends Controller
         $expenseLimit = $wantsExpenseList ? 30 : 5;
         $armadaLimit = $wantsArmadaList ? 30 : 5;
 
-        $totalIncome = (float) Invoice::sum('total_bayar');
-        $totalExpense = (float) Expense::sum('total_pengeluaran');
+        $invoiceScope = Invoice::query();
+        $expenseScope = Expense::query();
+
+        if ($rangeStart && $rangeEnd) {
+            $invoiceScope->whereBetween('tanggal', [$rangeStart, $rangeEnd]);
+            $expenseScope->whereBetween('tanggal', [$rangeStart, $rangeEnd]);
+        }
+
+        $totalIncome = (float) (clone $invoiceScope)->sum('total_bayar');
+        $totalExpense = (float) (clone $expenseScope)->sum('total_pengeluaran');
+        $invoiceCount = (clone $invoiceScope)->count();
+        $expenseCount = (clone $expenseScope)->count();
 
         $context = [
             'app' => [
@@ -161,8 +178,8 @@ class ChatbotController extends Controller
                 'role' => $user?->role,
             ],
             'stats' => [
-                'invoice_count' => Invoice::count(),
-                'expense_count' => Expense::count(),
+                'invoice_count' => $invoiceCount,
+                'expense_count' => $expenseCount,
                 'armada_count' => Armada::count(),
                 'total_income' => $totalIncome,
                 'total_expense' => $totalExpense,
@@ -171,10 +188,25 @@ class ChatbotController extends Controller
             ],
         ];
 
+        if ($rangeStart && $rangeEnd && $range) {
+            $context['period'] = [
+                'label' => $range['label'],
+                'start' => $rangeStart->toDateString(),
+                'end' => $rangeEnd->toDateString(),
+            ];
+            $context['stats']['range'] = $range['label'];
+        }
+
         if ($wantsInvoice || $wantsReport || $wantsInvoiceList) {
-            $context['latest_invoices'] = Invoice::with('armada')
+            $invoiceQuery = Invoice::with('armada')
                 ->orderByDesc('tanggal')
-                ->limit($invoiceLimit)
+                ->limit($invoiceLimit);
+
+            if ($rangeStart && $rangeEnd) {
+                $invoiceQuery->whereBetween('tanggal', [$rangeStart, $rangeEnd]);
+            }
+
+            $context['latest_invoices'] = $invoiceQuery
                 ->get(['id', 'no_invoice', 'nama_pelanggan', 'tanggal', 'status', 'total_bayar', 'armada_id'])
                 ->map(function ($item) {
                     return [
@@ -196,8 +228,14 @@ class ChatbotController extends Controller
         }
 
         if ($wantsExpense || $wantsReport || $wantsExpenseList) {
-            $context['latest_expenses'] = Expense::orderByDesc('tanggal')
-                ->limit($expenseLimit)
+            $expenseQuery = Expense::orderByDesc('tanggal')
+                ->limit($expenseLimit);
+
+            if ($rangeStart && $rangeEnd) {
+                $expenseQuery->whereBetween('tanggal', [$rangeStart, $rangeEnd]);
+            }
+
+            $context['latest_expenses'] = $expenseQuery
                 ->get(['id', 'no_expense', 'tanggal', 'kategori', 'status', 'total_pengeluaran', 'keterangan'])
                 ->map(function ($item) {
                     return [
@@ -231,18 +269,22 @@ class ChatbotController extends Controller
                 ->all();
         }
 
-        if ($wantsReport) {
-            $start = now()->startOfMonth()->toDateString();
-            $end = now()->endOfMonth()->toDateString();
+        if ($wantsReport || $wantsPeriod) {
+            $summaryStart = $rangeStart ?: now()->startOfMonth();
+            $summaryEnd = $rangeEnd ?: now()->endOfMonth();
 
-            $monthlyIncome = (float) Invoice::whereBetween('tanggal', [$start, $end])->sum('total_bayar');
-            $monthlyExpense = (float) Expense::whereBetween('tanggal', [$start, $end])->sum('total_pengeluaran');
+            $periodIncome = (float) Invoice::whereBetween('tanggal', [$summaryStart, $summaryEnd])->sum('total_bayar');
+            $periodExpense = (float) Expense::whereBetween('tanggal', [$summaryStart, $summaryEnd])->sum('total_pengeluaran');
+            $periodLabel = $range
+                ? $range['label']
+                : $this->formatMonthLabel((int) $summaryStart->format('n'), (int) $summaryStart->format('Y'));
 
-            $context['monthly_summary'] = [
-                'range' => "{$start} to {$end}",
-                'income' => $monthlyIncome,
-                'expense' => $monthlyExpense,
-                'net' => $monthlyIncome - $monthlyExpense,
+            $context['period_summary'] = [
+                'label' => $periodLabel,
+                'range' => "{$summaryStart->toDateString()} to {$summaryEnd->toDateString()}",
+                'income' => $periodIncome,
+                'expense' => $periodExpense,
+                'net' => $periodIncome - $periodExpense,
             ];
         }
 
@@ -274,6 +316,9 @@ class ChatbotController extends Controller
             'invoice', 'expense', 'armada', 'fleet', 'laporan', 'report', 'ringkasan',
             'summary', 'status', 'tanggal', 'customer', 'pelanggan', 'total', 'bayar',
             'pengeluaran', 'pendapatan', 'truk', 'truck', 'daftar', 'list', 'semua',
+            'bulan', 'tahun', 'januari', 'februari', 'maret', 'april', 'mei', 'juni',
+            'juli', 'agustus', 'september', 'oktober', 'november', 'desember',
+            'sekarang', 'berjalan', 'depan', 'berikutnya', 'lalu', 'sebelumnya',
         ];
 
         $tokens = [];
@@ -289,6 +334,95 @@ class ChatbotController extends Controller
         $tokens = array_values(array_unique($tokens));
 
         return array_slice($tokens, 0, 5);
+    }
+
+    private function detectDateRange(string $message): ?array
+    {
+        $lower = Str::lower($message);
+        $now = now();
+
+        $year = null;
+        if (preg_match('/\b(20\d{2})\b/', $lower, $match)) {
+            $year = (int) $match[1];
+        }
+
+        if ($this->hasAny($lower, ['bulan ini', 'bulan sekarang', 'bulan berjalan', 'bulan saat ini'])) {
+            $target = $now->copy();
+            return [
+                'label' => $this->formatMonthLabel($target->month, $target->year),
+                'start' => $target->copy()->startOfMonth(),
+                'end' => $target->copy()->endOfMonth(),
+            ];
+        }
+
+        if ($this->hasAny($lower, ['bulan lalu', 'bulan sebelumnya'])) {
+            $target = $now->copy()->subMonthNoOverflow();
+            return [
+                'label' => $this->formatMonthLabel($target->month, $target->year),
+                'start' => $target->copy()->startOfMonth(),
+                'end' => $target->copy()->endOfMonth(),
+            ];
+        }
+
+        if ($this->hasAny($lower, ['bulan depan', 'bulan berikutnya'])) {
+            $target = $now->copy()->addMonthNoOverflow();
+            return [
+                'label' => $this->formatMonthLabel($target->month, $target->year),
+                'start' => $target->copy()->startOfMonth(),
+                'end' => $target->copy()->endOfMonth(),
+            ];
+        }
+
+        $monthMap = [
+            'januari' => 1,
+            'februari' => 2,
+            'maret' => 3,
+            'april' => 4,
+            'mei' => 5,
+            'juni' => 6,
+            'juli' => 7,
+            'agustus' => 8,
+            'september' => 9,
+            'oktober' => 10,
+            'november' => 11,
+            'desember' => 12,
+        ];
+
+        foreach ($monthMap as $name => $month) {
+            if (Str::contains($lower, $name)) {
+                $targetYear = $year ?: $now->year;
+                $target = Carbon::create($targetYear, $month, 1);
+                return [
+                    'label' => $this->formatMonthLabel($target->month, $target->year),
+                    'start' => $target->copy()->startOfMonth(),
+                    'end' => $target->copy()->endOfMonth(),
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    private function formatMonthLabel(int $month, int $year): string
+    {
+        $names = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
+        ];
+
+        $monthName = $names[$month] ?? 'Bulan ' . $month;
+
+        return $monthName . ' ' . $year;
     }
 
     private function searchMatches(array $tokens): array

@@ -79,14 +79,14 @@ const ChatbotWidget = () => {
           <div className="cvant-chatbot__header">
             <div>
               <div className="cvant-chatbot__title">Asisten CV ANT</div>
-              <div className="cvant-chatbot__subtitle">Cerebras AI</div>
+              <div className="cvant-chatbot__subtitle">Chat Bot</div>
             </div>
             <button
               type="button"
               className="cvant-chatbot__clear"
               onClick={clearChat}
             >
-              Reset
+              Reset Chat
             </button>
           </div>
 
