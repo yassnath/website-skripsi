@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ArmadaController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\ChatbotController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,6 +43,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth.api')->group(function () {
 
     Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/chat', [ChatbotController::class, 'chat']);
 
     // ARMADA
     Route::get('/armadas', [ArmadaController::class, 'index']);

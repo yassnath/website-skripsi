@@ -31,4 +31,10 @@ return [
         ],
     ],
 
+    'cerebras' => [
+        'key' => env('CEREBRAS_API_KEY'),
+        'model' => env('CEREBRAS_MODEL', 'llama3.1-70b'),
+        'url' => env('CEREBRAS_API_URL', 'https://api.cerebras.ai/v1/chat/completions'),
+    ],
+
 ];

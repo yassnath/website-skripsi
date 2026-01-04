@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import { usePathname } from "next/navigation";
 import ThemeToggleButton from "../helper/ThemeToggleButton";
 import Link from "next/link";
+import ChatbotWidget from "../components/ChatbotWidget";
 
 const MasterLayout = ({ children }) => {
   let pathname = usePathname();
@@ -363,6 +364,8 @@ const MasterLayout = ({ children }) => {
               </div>
             </div>
           </footer>
+
+          <ChatbotWidget />
         </main>
       </section>
 
