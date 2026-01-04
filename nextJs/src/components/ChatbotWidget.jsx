@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 const defaultGreeting = {
   role: "assistant",
   content:
-    "Halo! Saya Asisten CV ANT. Saya bisa bantu info invoice, expense, armada, dan laporan. Tanyakan apa saja ya.",
+    "Halo! Saya adalah Asisten CV ANT. Saya akan membantu anda.",
 };
 
 const ChatbotWidget = () => {
