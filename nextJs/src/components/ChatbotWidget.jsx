@@ -1384,6 +1384,7 @@ const ChatbotWidget = () => {
           padding: 12px;
           border-top: 1px solid var(--border-color);
           background: var(--white);
+          font-size: 13px;
         }
 
         .cvant-chatbot__input textarea {
