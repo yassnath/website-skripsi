@@ -1341,6 +1341,21 @@ const ChatbotWidget = () => {
           overflow-y: auto;
           background: var(--bg-color);
           flex: 1;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
+        }
+
+        .cvant-chatbot__messages::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .cvant-chatbot__messages::-webkit-scrollbar-thumb {
+          background: rgba(148, 163, 184, 0.6);
+          border-radius: 999px;
+        }
+
+        .cvant-chatbot__messages::-webkit-scrollbar-track {
+          background: transparent;
         }
 
         .cvant-chatbot__bubble {
@@ -1383,10 +1398,25 @@ const ChatbotWidget = () => {
           height: 52px;
           line-height: 1.4;
           overflow-y: auto;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
+        }
+
+        .cvant-chatbot__input textarea::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .cvant-chatbot__input textarea::-webkit-scrollbar-thumb {
+          background: rgba(148, 163, 184, 0.6);
+          border-radius: 999px;
+        }
+
+        .cvant-chatbot__input textarea::-webkit-scrollbar-track {
+          background: transparent;
         }
 
         .cvant-chatbot__input textarea::placeholder {
-          font-size: 12px;
+          font-size: 13px;
         }
 
         .cvant-chatbot__input button {
