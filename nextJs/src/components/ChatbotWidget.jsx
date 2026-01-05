@@ -182,6 +182,198 @@ const formatArmadaCapacity = (value) => {
   return String(value);
 };
 
+const sortArmadasByUsage = (list, order = "desc") => {
+  const sorted = [...(Array.isArray(list) ? list : [])];
+  sorted.sort((a, b) => {
+    const diff = (a?.__usedCount || 0) - (b?.__usedCount || 0);
+    if (diff !== 0) return order === "asc" ? diff : -diff;
+    return String(a?.nama_truk || "").localeCompare(String(b?.nama_truk || ""));
+  });
+  return sorted;
+};
+
+const buildArmadaListReply = ({
+  list,
+  order = "desc",
+  title,
+  includeTotal = false,
+}) => {
+  if (!list || list.length === 0) return "Belum ada data armada.";
+  const sorted = sortArmadasByUsage(list, order);
+  const lines = sorted.map((armada, idx) => {
+    const nama = safeText(armada?.nama_truk, "Armada");
+    const plat = safeText(armada?.plat_nomor);
+    const kapasitasLabel = formatArmadaCapacity(armada?.kapasitas);
+    const statusLabel = formatArmadaStatus(armada?.status);
+    const usage = armada?.__usedCount || 0;
+    return `${idx + 1}. ${nama} (${plat}) | Kapasitas (Tonase): ${kapasitasLabel} | Status: ${statusLabel} | Penggunaan: ${usage}x`;
+  });
+  const header = title ? `${title}\n` : "";
+  const totalUsage = includeTotal
+    ? sorted.reduce((sum, armada) => sum + (armada?.__usedCount || 0), 0)
+    : 0;
+  const totalLine = includeTotal
+    ? `Total penggunaan armada tercatat ${totalUsage}x.\n`
+    : "";
+  return `${header}${totalLine}${lines.join("\n")}`;
+};
+
+const formatTransactionLine = (item) => {
+  const typeLabel = safeText(item?.type, "Income");
+  const no = safeText(item?.no);
+  const nama = safeText(item?.nama);
+  const tanggal = safeText(item?.tanggal_display);
+  const total = formatRupiah(item?.total);
+  const status = safeText(item?.status);
+  const recordedLabel = typeLabel === "Expense" ? "Dicatat oleh" : "Diterima oleh";
+  const recordedBy = safeText(item?.recorded_by);
+
+  return `${typeLabel} | Nomor: ${no} | Nama: ${nama} | Tanggal: ${tanggal} | Total: ${total} | Status: ${status} | ${recordedLabel}: ${recordedBy}`;
+};
+
+const ARMADA_START_KEYS = [
+  "armada_start_date",
+  "tanggal_berangkat",
+  "tgl_berangkat",
+  "berangkat_tanggal",
+  "start_date",
+  "tanggal_mulai",
+  "start",
+];
+const ARMADA_END_KEYS = [
+  "armada_end_date",
+  "tanggal_sampai",
+  "tgl_sampai",
+  "tiba_tanggal",
+  "end_date",
+  "tanggal_selesai",
+  "end",
+];
+
+const ensureArray = (val) => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
+const pickFirstDate = (obj, keys) => {
+  for (const key of keys) {
+    const norm = normalizeDate(obj?.[key]);
+    if (norm) return norm;
+  }
+  return "";
+};
+
+const resolveArmadaLabel = (row, invoice, armadaById) => {
+  const directName =
+    row?.armada?.nama_truk ||
+    invoice?.armada?.nama_truk ||
+    "";
+  const directPlate =
+    row?.armada?.plat_nomor ||
+    invoice?.armada?.plat_nomor ||
+    "";
+  if (directName || directPlate) {
+    const name = safeText(directName, "Armada");
+    const plate = safeText(directPlate, "-");
+    return { label: `${name} (${plate})`, id: row?.armada_id ?? row?.armada?.id ?? invoice?.armada_id ?? invoice?.armada?.id ?? null };
+  }
+
+  const id =
+    row?.armada_id ??
+    row?.armada?.id ??
+    invoice?.armada_id ??
+    invoice?.armada?.id ??
+    null;
+  if (id != null && armadaById.has(String(id))) {
+    const arm = armadaById.get(String(id));
+    const name = safeText(arm?.nama_truk, "Armada");
+    const plate = safeText(arm?.plat_nomor, "-");
+    return { label: `${name} (${plate})`, id };
+  }
+
+  return { label: "Armada (-)", id };
+};
+
+const buildArmadaScheduleItems = (invoices, armadas) => {
+  const armadaById = new Map();
+  (Array.isArray(armadas) ? armadas : []).forEach((armada) => {
+    if (armada?.id != null) {
+      armadaById.set(String(armada.id), armada);
+    }
+  });
+
+  const items = [];
+  (Array.isArray(invoices) ? invoices : []).forEach((inv) => {
+    const invoiceInfo = {
+      type: "Income",
+      no: inv?.no_invoice,
+      nama: inv?.nama_pelanggan,
+      tanggal_display: toDisplay(inv?.tanggal),
+      total: inv?.total_bayar,
+      status: inv?.status,
+      recorded_by: inv?.diterima_oleh || "-",
+    };
+
+    const rincian = ensureArray(inv?.rincian);
+    const rows = rincian.length > 0 ? rincian : [inv];
+
+    rows.forEach((row) => {
+      const startRaw =
+        pickFirstDate(row, ARMADA_START_KEYS) ||
+        pickFirstDate(inv, ARMADA_START_KEYS);
+      const endRaw =
+        pickFirstDate(row, ARMADA_END_KEYS) ||
+        pickFirstDate(inv, ARMADA_END_KEYS);
+      const armadaInfo = resolveArmadaLabel(row, inv, armadaById);
+
+      if (startRaw) {
+        items.push({
+          kind: "departure",
+          date_raw: startRaw,
+          date_display: toDisplay(startRaw),
+          armada_label: armadaInfo.label,
+          armada_id: armadaInfo.id,
+          invoice: invoiceInfo,
+        });
+      }
+
+      if (endRaw) {
+        items.push({
+          kind: "arrival",
+          date_raw: endRaw,
+          date_display: toDisplay(endRaw),
+          armada_label: armadaInfo.label,
+          armada_id: armadaInfo.id,
+          invoice: invoiceInfo,
+        });
+      }
+    });
+  });
+
+  return items;
+};
+
+const buildInvoiceSummaryList = (invoices) =>
+  (Array.isArray(invoices) ? invoices : []).map((inv) => ({
+    type: "Income",
+    no: inv?.no_invoice,
+    nama: inv?.nama_pelanggan,
+    tanggal_raw: normalizeDate(inv?.tanggal),
+    tanggal_display: toDisplay(inv?.tanggal),
+    total: inv?.total_bayar,
+    status: inv?.status,
+    recorded_by: inv?.diterima_oleh || "-",
+  }));
+
 const ChatbotWidget = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([defaultGreeting]);
@@ -209,7 +401,8 @@ const ChatbotWidget = () => {
       api.get("/invoices"),
     ]);
 
-    const usageCountById = buildUsageCountById(invoices);
+    const invoicesList = Array.isArray(invoices) ? invoices : [];
+    const usageCountById = buildUsageCountById(invoicesList);
     const list = (Array.isArray(armadas) ? armadas : []).map((armada) => ({
       ...armada,
       __usedCount:
@@ -222,7 +415,7 @@ const ChatbotWidget = () => {
       return String(a.nama_truk || "").localeCompare(String(b.nama_truk || ""));
     });
 
-    const data = { armadas: list, usageCountById };
+    const data = { armadas: list, usageCountById, invoices: invoicesList };
     usageCacheRef.current = { data, fetchedAt: now };
     return data;
   };
@@ -280,6 +473,18 @@ const ChatbotWidget = () => {
       lower.includes("truk") ||
       lower.includes("truck") ||
       lower.includes("fleet");
+    const invoiceExpenseHints = [
+      "invoice",
+      "expense",
+      "transaksi",
+      "income",
+      "pemasukan",
+      "pengeluaran",
+      "biaya",
+    ];
+    const hasInvoiceExpenseHint =
+      invoiceExpenseHints.some((keyword) => lower.includes(keyword)) ||
+      /\b(?:inc|exp)[-\s_]*\d{4}\b/i.test(lower);
     const recentUserMentions = messages
       .filter((item) => item.role === "user")
       .slice(-3)
@@ -292,7 +497,8 @@ const ChatbotWidget = () => {
           msg.includes("fleet")
         );
       });
-    const hasArmadaContext = hasArmadaKeyword || recentUserMentions;
+    const hasArmadaContext =
+      hasArmadaKeyword || (recentUserMentions && !hasInvoiceExpenseHint);
 
     const usageKeywords = [
       "digunakan",
@@ -325,6 +531,33 @@ const ChatbotWidget = () => {
       "lihat",
       "apa saja",
     ];
+    const leastKeywords = [
+      "paling sedikit",
+      "terkecil",
+      "paling kecil",
+      "paling jarang",
+      "minimum",
+      "min",
+      "least",
+    ];
+    const departKeywords = [
+      "berangkat",
+      "keberangkatan",
+      "jadwal berangkat",
+      "jadwal keberangkatan",
+      "departure",
+      "start",
+      "mulai",
+    ];
+    const arriveKeywords = [
+      "tiba",
+      "sampai",
+      "kedatangan",
+      "arrival",
+      "end",
+      "selesai",
+    ];
+    const scheduleKeywords = [...departKeywords, ...arriveKeywords, "jadwal"];
 
     const isUsageQuery =
       hasArmadaContext &&
@@ -344,13 +577,23 @@ const ChatbotWidget = () => {
       detailKeywords.some((keyword) => lower.includes(keyword));
     const isListQuery =
       hasArmadaContext && listKeywords.some((keyword) => lower.includes(keyword));
+    const isLeastQuery =
+      hasArmadaContext &&
+      leastKeywords.some((keyword) => lower.includes(keyword));
+    const isScheduleQuery =
+      hasArmadaContext &&
+      scheduleKeywords.some((keyword) => lower.includes(keyword));
+    const wantsDepart = departKeywords.some((keyword) => lower.includes(keyword));
+    const wantsArrive = arriveKeywords.some((keyword) => lower.includes(keyword));
+    const years = extractYears(text);
+    const hasYear = years.length > 0;
 
     if (!hasArmadaContext) {
       return null;
     }
 
     try {
-      const { armadas } = await getArmadaUsageData();
+      const { armadas, invoices } = await getArmadaUsageData();
       if (!armadas.length) return "Belum ada data armada.";
 
       const textKey = normalizeKey(text);
@@ -377,7 +620,103 @@ const ChatbotWidget = () => {
         if (nameMatches.length > 0) matches = nameMatches;
       }
 
-      const usedList = armadas.filter((armada) => (armada.__usedCount || 0) > 0);
+      const orderForList = isLeastQuery ? "asc" : "desc";
+
+      if (isScheduleQuery) {
+        const scheduleItems = buildArmadaScheduleItems(invoices, armadas);
+        let scoped = scheduleItems;
+
+        if (matches.length > 0) {
+          const matchIds = matches
+            .map((m) => (m?.id != null ? String(m.id) : null))
+            .filter(Boolean);
+          const matchKeys = matches.map((m) =>
+            normalizeKey(formatArmadaLabel(m))
+          );
+
+          scoped = scoped.filter((item) => {
+            const itemId = item?.armada_id != null ? String(item.armada_id) : "";
+            if (itemId && matchIds.includes(itemId)) return true;
+            const itemKey = normalizeKey(item?.armada_label || "");
+            return matchKeys.some((key) => key && itemKey.includes(key));
+          });
+        }
+
+        if (hasYear) {
+          scoped = scoped.filter((item) =>
+            years.some((year) =>
+              String(item?.date_raw || "").startsWith(`${year}-`)
+            )
+          );
+        }
+
+        if (wantsDepart && !wantsArrive) {
+          scoped = scoped.filter((item) => item.kind === "departure");
+        } else if (wantsArrive && !wantsDepart) {
+          scoped = scoped.filter((item) => item.kind === "arrival");
+        }
+
+        if (!scoped.length) {
+          const kindLabel =
+            wantsDepart && !wantsArrive
+              ? "keberangkatan"
+              : wantsArrive && !wantsDepart
+              ? "kedatangan"
+              : "keberangkatan/kedatangan";
+          const yearText = hasYear ? ` pada tahun ${years.join(", ")}` : "";
+          const armadaText =
+            matches.length === 1
+              ? ` untuk ${formatArmadaLabel(matches[0])}`
+              : "";
+          const invoiceSummary = buildInvoiceSummaryList(invoices);
+          const invoiceScoped = hasYear
+            ? invoiceSummary.filter((item) =>
+                years.some((year) =>
+                  String(item?.tanggal_raw || "").startsWith(`${year}-`)
+                )
+              )
+            : invoiceSummary;
+          const sortedInvoice = sortByTanggalDesc(invoiceScoped);
+          if (sortedInvoice.length > 0) {
+            const lines = sortedInvoice.map(
+              (item, idx) => `${idx + 1}. ${formatTransactionLine(item)}`
+            );
+            return `Data ${kindLabel} armada${armadaText}${yearText} tidak ditemukan. Berikut transaksi invoice${yearText} (${sortedInvoice.length} data):\n${lines.join(
+              "\n"
+            )}`;
+          }
+          return `Tidak ada data ${kindLabel} armada${armadaText}${yearText}.`;
+        }
+
+        const scheduleAsc =
+          lower.includes("paling awal") || lower.includes("terawal");
+        const sorted = [...scoped].sort((a, b) =>
+          String(a?.date_raw || "").localeCompare(String(b?.date_raw || ""))
+        );
+        if (!scheduleAsc) sorted.reverse();
+
+        const kindLabel =
+          wantsDepart && !wantsArrive
+            ? "keberangkatan"
+            : wantsArrive && !wantsDepart
+            ? "kedatangan"
+            : "keberangkatan & kedatangan";
+        const yearText = hasYear ? ` tahun ${years.join(", ")}` : "";
+        const armadaText =
+          matches.length === 1
+            ? ` untuk ${formatArmadaLabel(matches[0])}`
+            : "";
+        const header = `Jadwal ${kindLabel} armada${armadaText}${yearText} (${sorted.length} data):`;
+        const lines = sorted.map((item, idx) => {
+          const kind = item.kind === "departure" ? "Berangkat" : "Tiba";
+          const invoiceLine = formatTransactionLine(item.invoice);
+          return `${idx + 1}. ${kind}: ${item.date_display} | Armada: ${
+            item.armada_label
+          } | ${invoiceLine}`;
+        });
+
+        return `${header}\n${lines.join("\n")}`;
+      }
 
       if (isDetailQuery) {
         if (matches.length === 1) {
@@ -394,73 +733,39 @@ const ChatbotWidget = () => {
           }x`;
         }
 
-        if (matches.length > 1) {
-          const lines = matches
-            .slice(0, 5)
-            .map(
-              (armada, idx) => {
-                const statusLabel = formatArmadaStatus(armada?.status);
-                const kapasitasLabel = formatArmadaCapacity(armada?.kapasitas);
-                return `${idx + 1}. ${formatArmadaLabel(
-                  armada
-                )} | Kapasitas (Tonase): ${kapasitasLabel} | Status: ${statusLabel} | Penggunaan: ${
-                  armada.__usedCount || 0
-                }x`;
-              }
-            )
-            .join("\n");
-          const tail =
-            matches.length > 5
-              ? `\nDan ${matches.length - 5} lainnya. Sebutkan nama/plat yang tepat.`
-              : "\nSebutkan nama/plat yang tepat untuk detail.";
-          return `Saya menemukan beberapa armada yang cocok:\n${lines}${tail}`;
-        }
-
-        return "Sebutkan nama/plat armada untuk menampilkan detailnya.";
+        const title = matches.length
+          ? "Beberapa armada cocok. Daftar lengkap armada:"
+          : "Daftar armada:";
+        return buildArmadaListReply({
+          list: armadas,
+          order: orderForList,
+          title,
+          includeTotal: true,
+        });
       }
 
       if (!isUsageQuery && !isCountQuery && !isTopQuery && isListQuery) {
-        const maxItems = 8;
-        const lines = armadas
-          .slice(0, maxItems)
-          .map((armada, idx) => {
-            const nama = safeText(armada?.nama_truk, "Armada");
-            const plat = safeText(armada?.plat_nomor);
-            const kapasitasLabel = formatArmadaCapacity(armada?.kapasitas);
-            const statusLabel = formatArmadaStatus(armada?.status);
-            const usage = armada.__usedCount || 0;
-            return `${idx + 1}. ${nama} (${plat}) | Kapasitas (Tonase): ${kapasitasLabel} | Status: ${statusLabel} | Penggunaan: ${usage}x`;
-          })
-          .join("\n");
-        const tail =
-          armadas.length > maxItems
-            ? `\nDan ${armadas.length - maxItems} lainnya.`
-            : "";
-        return `Daftar armada:\n${lines}${tail}`;
+        const title = isLeastQuery
+          ? "Urutan penggunaan armada dari yang paling sedikit:"
+          : "Daftar armada:";
+        return buildArmadaListReply({
+          list: armadas,
+          order: orderForList,
+          title,
+          includeTotal: true,
+        });
       }
 
       if (!isUsageQuery && !isCountQuery && !isTopQuery && !isDetailQuery) {
-        const maxItems = 8;
-        const lines = armadas
-          .slice(0, maxItems)
-          .map((armada, idx) => {
-            const nama = safeText(armada?.nama_truk, "Armada");
-            const plat = safeText(armada?.plat_nomor);
-            const kapasitasLabel = formatArmadaCapacity(armada?.kapasitas);
-            const statusLabel = formatArmadaStatus(armada?.status);
-            const usage = armada.__usedCount || 0;
-            return `${idx + 1}. ${nama} (${plat}) | Kapasitas (Tonase): ${kapasitasLabel} | Status: ${statusLabel} | Penggunaan: ${usage}x`;
-          })
-          .join("\n");
-        const tail =
-          armadas.length > maxItems
-            ? `\nDan ${armadas.length - maxItems} lainnya.`
-            : "";
-        return `Daftar armada:\n${lines}${tail}`;
-      }
-
-      if (!usedList.length) {
-        return "Belum ada data penggunaan armada pada invoice.";
+        const title = isLeastQuery
+          ? "Urutan penggunaan armada dari yang paling sedikit:"
+          : "Daftar armada:";
+        return buildArmadaListReply({
+          list: armadas,
+          order: orderForList,
+          title,
+          includeTotal: true,
+        });
       }
 
       if (matches.length === 1) {
@@ -471,49 +776,51 @@ const ChatbotWidget = () => {
       }
 
       if (matches.length > 1) {
-        const lines = matches
-          .slice(0, 5)
-          .map(
-            (armada, idx) =>
-              `${idx + 1}. ${formatArmadaLabel(armada)} - ${
-                armada.__usedCount || 0
-              }x`
-          )
-          .join("\n");
-        const tail =
-          matches.length > 5
-            ? `\nDan ${matches.length - 5} lainnya. Sebutkan nama/plat yang tepat.`
-            : "\nSebutkan nama/plat yang tepat untuk detail.";
-        return `Saya menemukan beberapa armada yang cocok:\n${lines}${tail}`;
+        const title = isLeastQuery
+          ? "Beberapa armada cocok. Urutan penggunaan dari yang paling sedikit:"
+          : "Beberapa armada cocok. Daftar lengkap armada:";
+        return buildArmadaListReply({
+          list: armadas,
+          order: orderForList,
+          title,
+          includeTotal: true,
+        });
       }
 
-      const topList = usedList.slice(0, 5);
-      const lines = topList
-        .map(
-          (armada, idx) =>
-            `${idx + 1}. ${formatArmadaLabel(armada)} - ${
-              armada.__usedCount || 0
-            }x`
-        )
-        .join("\n");
-      const top = topList[0];
+      const sortedByUsage = sortArmadasByUsage(
+        armadas,
+        isLeastQuery ? "asc" : "desc"
+      );
+      const top = sortedByUsage[0];
 
       if (isTopQuery) {
-        return `Armada paling sering digunakan: ${formatArmadaLabel(top)} (${
-          top.__usedCount || 0
-        }x).\nTop penggunaan saat ini:\n${lines}`;
+        return buildArmadaListReply({
+          list: armadas,
+          order: "desc",
+          title: `Armada paling sering digunakan: ${formatArmadaLabel(top)} (${
+            top.__usedCount || 0
+          }x).\nUrutan penggunaan armada dari yang paling banyak:`,
+          includeTotal: true,
+        });
       }
 
-      const totalUsage = usedList.reduce(
-        (sum, armada) => sum + (armada.__usedCount || 0),
-        0
-      );
-      const totalLine =
-        totalUsage > 0
-          ? `Total penggunaan armada tercatat ${totalUsage}x.\n`
-          : "";
+      if (isLeastQuery) {
+        return buildArmadaListReply({
+          list: armadas,
+          order: "asc",
+          title: `Armada paling sedikit digunakan: ${formatArmadaLabel(top)} (${
+            top.__usedCount || 0
+          }x).\nUrutan penggunaan armada dari yang paling sedikit:`,
+          includeTotal: true,
+        });
+      }
 
-      return `${totalLine}Ringkasan penggunaan armada tertinggi:\n${lines}\nSebutkan nama/plat jika ingin detail armada tertentu.`;
+      return buildArmadaListReply({
+        list: armadas,
+        order: "desc",
+        title: "Ringkasan penggunaan armada (urut terbanyak):",
+        includeTotal: true,
+      });
     } catch (err) {
       return "Maaf, saya belum bisa mengambil data penggunaan armada saat ini.";
     }
@@ -779,25 +1086,13 @@ const ChatbotWidget = () => {
           }
 
           const sorted = sortByTanggalDesc(list);
-          const maxItems = 6;
-          const lines = sorted.slice(0, maxItems).map((item, idx) => {
-            const no = safeText(item?.no);
-            const nama = safeText(item?.nama);
-            const tanggal = safeText(item?.tanggal_display);
-            const total = formatRupiah(item?.total);
-            const status = safeText(item?.status);
-
-            return `${idx + 1}. ${no} | ${nama} | ${tanggal} | ${total} | ${status}`;
-          });
-
-          const tail =
-            list.length > maxItems
-              ? `\nDan ${list.length - maxItems} lainnya.`
-              : "";
+          const lines = sorted.map(
+            (item, idx) => `${idx + 1}. ${formatTransactionLine(item)}`
+          );
 
           return `Transaksi ${label} tahun ${yearLabel} (${list.length} data):\n${lines.join(
             "\n"
-          )}${tail}`;
+          )}`;
         };
 
         const wantsIncomeOnly = hasIncome && !hasExpense;
@@ -811,14 +1106,21 @@ const ChatbotWidget = () => {
           return buildListSection(scopedExpense, "expense");
         }
 
-        if (!scopedIncome.length && !scopedExpense.length) {
+        const combined = sortByTanggalDesc([
+          ...scopedIncome,
+          ...scopedExpense,
+        ]);
+
+        if (!combined.length) {
           return `Tidak ada transaksi income maupun expense pada tahun ${yearLabel}.`;
         }
 
-        const sections = [];
-        sections.push(buildListSection(scopedIncome, "income"));
-        sections.push(buildListSection(scopedExpense, "expense"));
-        return sections.join("\n\n");
+        const combinedLines = combined.map(
+          (item, idx) => `${idx + 1}. ${formatTransactionLine(item)}`
+        );
+        return `Transaksi tahun ${yearLabel} (${combined.length} data):\n${combinedLines.join(
+          "\n"
+        )}`;
       }
     } catch (err) {
       return "Maaf, saya belum bisa mengambil data invoice/expense saat ini.";
