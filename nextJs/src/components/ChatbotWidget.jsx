@@ -73,6 +73,34 @@ const formatDatesInText = (value) => {
   );
 };
 
+const extractYears = (value) => {
+  const text = String(value || "");
+  const lower = text.toLowerCase();
+  const matches = text.match(/\b(19|20)\d{2}\b/g) || [];
+  const years = [];
+  const pushYear = (year) => {
+    const y = String(year);
+    if (!years.includes(y)) years.push(y);
+  };
+
+  matches.forEach(pushYear);
+
+  const currentYear = new Date().getFullYear();
+  if (lower.includes("tahun lalu") || lower.includes("tahun sebelumnya")) {
+    pushYear(currentYear - 1);
+  }
+  if (lower.includes("tahun ini") || lower.includes("tahun sekarang")) {
+    pushYear(currentYear);
+  }
+
+  return years;
+};
+
+const sortByTanggalDesc = (list) =>
+  [...(Array.isArray(list) ? list : [])].sort((a, b) =>
+    String(b?.tanggal_raw || "").localeCompare(String(a?.tanggal_raw || ""))
+  );
+
 const safeText = (value, fallback = "-") => {
   if (value == null || String(value).trim() === "") return fallback;
   return String(value);
@@ -438,6 +466,9 @@ const ChatbotWidget = () => {
   const buildInvoiceExpenseReply = async (text) => {
     const lower = text.toLowerCase();
     const textKey = normalizeKey(text);
+    const years = extractYears(text);
+    const hasYear = years.length > 0;
+    const yearLabel = hasYear ? years.join(", ") : "";
 
     const incomeKeywords = [
       "income",
@@ -489,12 +520,19 @@ const ChatbotWidget = () => {
       !hasIncome &&
       !hasExpense &&
       !hasTransaction &&
-      !hasNumberPattern
+      !hasNumberPattern &&
+      !hasYear
     ) {
       return null;
     }
 
-    if (!wantsDetail && !wantsBiggest && !wantsTotal && !hasNumberPattern) {
+    if (
+      !wantsDetail &&
+      !wantsBiggest &&
+      !wantsTotal &&
+      !hasNumberPattern &&
+      !hasYear
+    ) {
       return null;
     }
 
@@ -533,6 +571,18 @@ const ChatbotWidget = () => {
         return formatIncomeDetail(matchedIncome, "Detail Transaksi Income");
       }
 
+      const filterByYears = (list) => {
+        if (!hasYear) return list;
+        return (Array.isArray(list) ? list : []).filter((item) =>
+          years.some((year) =>
+            String(item?.tanggal_raw || "").startsWith(`${year}-`)
+          )
+        );
+      };
+
+      const scopedIncome = filterByYears(incomeList);
+      const scopedExpense = filterByYears(expenseList);
+
       if (hasNumberPattern) {
         return "Nomor invoice/expense tersebut tidak ditemukan.";
       }
@@ -553,36 +603,56 @@ const ChatbotWidget = () => {
         const wantsBoth =
           (hasIncome && hasExpense) || (!hasIncome && !hasExpense);
 
-        const topIncome = pickLargestByTotal(incomeList);
-        const topExpense = pickLargestByTotal(expenseList);
+        const topIncome = pickLargestByTotal(scopedIncome);
+        const topExpense = pickLargestByTotal(scopedExpense);
+        const incomeTitle = hasYear
+          ? `Transaksi Income Terbesar tahun ${yearLabel}`
+          : "Transaksi Income Terbesar";
+        const expenseTitle = hasYear
+          ? `Transaksi Expense Terbesar tahun ${yearLabel}`
+          : "Transaksi Expense Terbesar";
 
         if (wantsBoth) {
           const chunks = [];
           if (topIncome) {
-            chunks.push(formatIncomeDetail(topIncome, "Transaksi Income Terbesar"));
+            chunks.push(formatIncomeDetail(topIncome, incomeTitle));
           } else {
-            chunks.push("Transaksi Income Terbesar: tidak ada data.");
+            chunks.push(
+              hasYear
+                ? `Transaksi Income Terbesar tahun ${yearLabel}: tidak ada data.`
+                : "Transaksi Income Terbesar: tidak ada data."
+            );
           }
 
           if (topExpense) {
-            chunks.push(
-              formatExpenseDetail(topExpense, "Transaksi Expense Terbesar")
-            );
+            chunks.push(formatExpenseDetail(topExpense, expenseTitle));
           } else {
-            chunks.push("Transaksi Expense Terbesar: tidak ada data.");
+            chunks.push(
+              hasYear
+                ? `Transaksi Expense Terbesar tahun ${yearLabel}: tidak ada data.`
+                : "Transaksi Expense Terbesar: tidak ada data."
+            );
           }
 
           return chunks.join("\n\n");
         }
 
         if (hasIncome) {
-          if (!topIncome) return "Belum ada data income.";
-          return formatIncomeDetail(topIncome, "Transaksi Income Terbesar");
+          if (!topIncome) {
+            return hasYear
+              ? `Belum ada data income tahun ${yearLabel}.`
+              : "Belum ada data income.";
+          }
+          return formatIncomeDetail(topIncome, incomeTitle);
         }
 
         if (hasExpense) {
-          if (!topExpense) return "Belum ada data expense.";
-          return formatExpenseDetail(topExpense, "Transaksi Expense Terbesar");
+          if (!topExpense) {
+            return hasYear
+              ? `Belum ada data expense tahun ${yearLabel}.`
+              : "Belum ada data expense.";
+          }
+          return formatExpenseDetail(topExpense, expenseTitle);
         }
       }
 
@@ -593,20 +663,79 @@ const ChatbotWidget = () => {
             0
           );
 
-        const totalIncome = sumTotals(incomeList);
-        const totalExpense = sumTotals(expenseList);
+        const totalIncome = sumTotals(scopedIncome);
+        const totalExpense = sumTotals(scopedExpense);
 
         if (hasIncome && !hasExpense) {
-          return `Total income saat ini: ${formatRupiah(totalIncome)}`;
+          return hasYear
+            ? `Total income tahun ${yearLabel}: ${formatRupiah(totalIncome)}`
+            : `Total income saat ini: ${formatRupiah(totalIncome)}`;
         }
 
         if (hasExpense && !hasIncome) {
-          return `Total expense saat ini: ${formatRupiah(totalExpense)}`;
+          return hasYear
+            ? `Total expense tahun ${yearLabel}: ${formatRupiah(totalExpense)}`
+            : `Total expense saat ini: ${formatRupiah(totalExpense)}`;
+        }
+
+        if (hasYear) {
+          return `Total income tahun ${yearLabel}: ${formatRupiah(
+            totalIncome
+          )}\nTotal expense tahun ${yearLabel}: ${formatRupiah(totalExpense)}`;
         }
 
         return `Total income: ${formatRupiah(
           totalIncome
         )}\nTotal expense: ${formatRupiah(totalExpense)}`;
+      }
+
+      if (hasYear) {
+        const buildListSection = (list, label) => {
+          if (!list.length) {
+            return `Tidak ada transaksi ${label} pada tahun ${yearLabel}.`;
+          }
+
+          const sorted = sortByTanggalDesc(list);
+          const maxItems = 6;
+          const lines = sorted.slice(0, maxItems).map((item, idx) => {
+            const no = safeText(item?.no);
+            const nama = safeText(item?.nama);
+            const tanggal = safeText(item?.tanggal_display);
+            const total = formatRupiah(item?.total);
+            const status = safeText(item?.status);
+
+            return `${idx + 1}. ${no} | ${nama} | ${tanggal} | ${total} | ${status}`;
+          });
+
+          const tail =
+            list.length > maxItems
+              ? `\nDan ${list.length - maxItems} lainnya.`
+              : "";
+
+          return `Transaksi ${label} tahun ${yearLabel} (${list.length} data):\n${lines.join(
+            "\n"
+          )}${tail}`;
+        };
+
+        const wantsIncomeOnly = hasIncome && !hasExpense;
+        const wantsExpenseOnly = hasExpense && !hasIncome;
+
+        if (wantsIncomeOnly) {
+          return buildListSection(scopedIncome, "income");
+        }
+
+        if (wantsExpenseOnly) {
+          return buildListSection(scopedExpense, "expense");
+        }
+
+        if (!scopedIncome.length && !scopedExpense.length) {
+          return `Tidak ada transaksi income maupun expense pada tahun ${yearLabel}.`;
+        }
+
+        const sections = [];
+        sections.push(buildListSection(scopedIncome, "income"));
+        sections.push(buildListSection(scopedExpense, "expense"));
+        return sections.join("\n\n");
       }
     } catch (err) {
       return "Maaf, saya belum bisa mengambil data invoice/expense saat ini.";
