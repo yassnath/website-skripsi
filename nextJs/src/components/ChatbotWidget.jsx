@@ -169,6 +169,19 @@ const formatArmadaLabel = (armada) => {
   return `${name}${plate}`;
 };
 
+const formatArmadaStatus = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "ready") return "Ready";
+  if (normalized === "full") return "Full";
+  if (normalized.includes("ready")) return "Ready";
+  return "Full";
+};
+
+const formatArmadaCapacity = (value) => {
+  if (value == null || String(value).trim() === "") return "-";
+  return String(value);
+};
+
 const ChatbotWidget = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([defaultGreeting]);
@@ -262,11 +275,24 @@ const ChatbotWidget = () => {
 
   const buildArmadaUsageReply = async (text) => {
     const lower = text.toLowerCase();
-    const hasArmada =
+    const hasArmadaKeyword =
       lower.includes("armada") ||
       lower.includes("truk") ||
       lower.includes("truck") ||
       lower.includes("fleet");
+    const recentUserMentions = messages
+      .filter((item) => item.role === "user")
+      .slice(-3)
+      .some((item) => {
+        const msg = String(item?.content || "").toLowerCase();
+        return (
+          msg.includes("armada") ||
+          msg.includes("truk") ||
+          msg.includes("truck") ||
+          msg.includes("fleet")
+        );
+      });
+    const hasArmadaContext = hasArmadaKeyword || recentUserMentions;
 
     const usageKeywords = [
       "digunakan",
@@ -286,24 +312,40 @@ const ChatbotWidget = () => {
       "status",
       "kapasitas",
       "ready",
+      "full",
+    ];
+    const listKeywords = [
+      "daftar",
+      "list",
+      "data",
+      "semua",
+      "semuanya",
+      "seluruh",
+      "tampilkan",
+      "lihat",
+      "apa saja",
     ];
 
     const isUsageQuery =
-      hasArmada && usageKeywords.some((keyword) => lower.includes(keyword));
+      hasArmadaContext &&
+      usageKeywords.some((keyword) => lower.includes(keyword));
     const isCountQuery =
-      hasArmada &&
+      hasArmadaContext &&
       (lower.includes("berapa kali") || lower.includes("berapa x"));
     const isTopQuery =
-      hasArmada &&
+      hasArmadaContext &&
       (lower.includes("paling banyak") ||
         lower.includes("paling sering") ||
         lower.includes("terbanyak") ||
         lower.includes("tersering") ||
         lower.includes("top"));
     const isDetailQuery =
-      hasArmada && detailKeywords.some((keyword) => lower.includes(keyword));
+      hasArmadaContext &&
+      detailKeywords.some((keyword) => lower.includes(keyword));
+    const isListQuery =
+      hasArmadaContext && listKeywords.some((keyword) => lower.includes(keyword));
 
-    if (!isUsageQuery && !isCountQuery && !isTopQuery && !isDetailQuery) {
+    if (!hasArmadaContext) {
       return null;
     }
 
@@ -340,30 +382,31 @@ const ChatbotWidget = () => {
       if (isDetailQuery) {
         if (matches.length === 1) {
           const armada = matches[0];
-          return `Detail armada:\n- Nama: ${safeText(
+          const statusLabel = formatArmadaStatus(armada?.status);
+          const kapasitasLabel = formatArmadaCapacity(armada?.kapasitas);
+          return `Detail armada:\n- Nama Truk: ${safeText(
             armada?.nama_truk,
             "Armada"
-          )}\n- Plat: ${safeText(
+          )}\n- Plat Nomor: ${safeText(
             armada?.plat_nomor
-          )}\n- Kapasitas: ${safeText(
-            armada?.kapasitas
-          )}\n- Status: ${safeText(
-            armada?.status
-          )}\n- Penggunaan: ${armada.__usedCount || 0}x`;
+          )}\n- Kapasitas (Tonase): ${kapasitasLabel}\n- Status: ${statusLabel}\n- Penggunaan: ${
+            armada.__usedCount || 0
+          }x`;
         }
 
         if (matches.length > 1) {
           const lines = matches
             .slice(0, 5)
             .map(
-              (armada, idx) =>
-                `${idx + 1}. ${formatArmadaLabel(
+              (armada, idx) => {
+                const statusLabel = formatArmadaStatus(armada?.status);
+                const kapasitasLabel = formatArmadaCapacity(armada?.kapasitas);
+                return `${idx + 1}. ${formatArmadaLabel(
                   armada
-                )} | Status: ${safeText(
-                  armada?.status
-                )} | Kapasitas: ${safeText(
-                  armada?.kapasitas
-                )} | Penggunaan: ${armada.__usedCount || 0}x`
+                )} | Kapasitas (Tonase): ${kapasitasLabel} | Status: ${statusLabel} | Penggunaan: ${
+                  armada.__usedCount || 0
+                }x`;
+              }
             )
             .join("\n");
           const tail =
@@ -374,6 +417,46 @@ const ChatbotWidget = () => {
         }
 
         return "Sebutkan nama/plat armada untuk menampilkan detailnya.";
+      }
+
+      if (!isUsageQuery && !isCountQuery && !isTopQuery && isListQuery) {
+        const maxItems = 8;
+        const lines = armadas
+          .slice(0, maxItems)
+          .map((armada, idx) => {
+            const nama = safeText(armada?.nama_truk, "Armada");
+            const plat = safeText(armada?.plat_nomor);
+            const kapasitasLabel = formatArmadaCapacity(armada?.kapasitas);
+            const statusLabel = formatArmadaStatus(armada?.status);
+            const usage = armada.__usedCount || 0;
+            return `${idx + 1}. ${nama} (${plat}) | Kapasitas (Tonase): ${kapasitasLabel} | Status: ${statusLabel} | Penggunaan: ${usage}x`;
+          })
+          .join("\n");
+        const tail =
+          armadas.length > maxItems
+            ? `\nDan ${armadas.length - maxItems} lainnya.`
+            : "";
+        return `Daftar armada:\n${lines}${tail}`;
+      }
+
+      if (!isUsageQuery && !isCountQuery && !isTopQuery && !isDetailQuery) {
+        const maxItems = 8;
+        const lines = armadas
+          .slice(0, maxItems)
+          .map((armada, idx) => {
+            const nama = safeText(armada?.nama_truk, "Armada");
+            const plat = safeText(armada?.plat_nomor);
+            const kapasitasLabel = formatArmadaCapacity(armada?.kapasitas);
+            const statusLabel = formatArmadaStatus(armada?.status);
+            const usage = armada.__usedCount || 0;
+            return `${idx + 1}. ${nama} (${plat}) | Kapasitas (Tonase): ${kapasitasLabel} | Status: ${statusLabel} | Penggunaan: ${usage}x`;
+          })
+          .join("\n");
+        const tail =
+          armadas.length > maxItems
+            ? `\nDan ${armadas.length - maxItems} lainnya.`
+            : "";
+        return `Daftar armada:\n${lines}${tail}`;
       }
 
       if (!usedList.length) {
