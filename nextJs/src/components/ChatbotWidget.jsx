@@ -12,6 +12,8 @@ const defaultGreeting = {
 
 const ARMADA_USAGE_CACHE_MS = 30000;
 const INVOICE_EXPENSE_CACHE_MS = 30000;
+const INPUT_MIN_HEIGHT = 36;
+const INPUT_MAX_HEIGHT = 52;
 
 const normalizeKey = (value) =>
   String(value || "")
@@ -71,6 +73,16 @@ const formatDatesInText = (value) => {
     /\b(\d{4})-(\d{2})-(\d{2})\b/g,
     "$3-$2-$1"
   );
+};
+
+const adjustTextareaHeight = (textarea) => {
+  if (!textarea) return;
+  textarea.style.height = "auto";
+  const nextHeight = Math.max(
+    INPUT_MIN_HEIGHT,
+    Math.min(textarea.scrollHeight, INPUT_MAX_HEIGHT)
+  );
+  textarea.style.height = `${nextHeight}px`;
 };
 
 const extractYears = (value) => {
@@ -389,6 +401,7 @@ const ChatbotWidget = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const endRef = useRef(null);
+  const inputRef = useRef(null);
   const usageCacheRef = useRef({ data: null, fetchedAt: 0 });
   const invoiceExpenseCacheRef = useRef({ data: null, fetchedAt: 0 });
 
@@ -396,6 +409,10 @@ const ChatbotWidget = () => {
     if (!open) return;
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [open, messages, loading]);
+
+  useEffect(() => {
+    adjustTextareaHeight(inputRef.current);
+  }, [input, open]);
 
   const getArmadaUsageData = async () => {
     const now = Date.now();
@@ -1191,6 +1208,20 @@ const ChatbotWidget = () => {
     setMessages([defaultGreeting]);
   };
 
+  const handleInputChange = (event) => {
+    setInput(event.target.value);
+    adjustTextareaHeight(event.target);
+  };
+
+  const handleInputKeyDown = (event) => {
+    if (event.key !== "Enter" || event.shiftKey || event.isComposing) {
+      return;
+    }
+
+    event.preventDefault();
+    sendMessage(event);
+  };
+
   return (
     <div className={`cvant-chatbot ${open ? "open" : ""}`}>
       <button
@@ -1240,9 +1271,11 @@ const ChatbotWidget = () => {
 
           <form className="cvant-chatbot__input" onSubmit={sendMessage}>
             <textarea
-              rows={2}
+              ref={inputRef}
+              rows={1}
               value={input}
-              onChange={(event) => setInput(event.target.value)}
+              onChange={handleInputChange}
+              onKeyDown={handleInputKeyDown}
               placeholder="Tanya tentang invoice, expense, armada..."
               aria-label="Tulis pesan"
             />
@@ -1346,7 +1379,7 @@ const ChatbotWidget = () => {
         }
 
         .cvant-chatbot__messages::-webkit-scrollbar {
-          width: 6px;
+          width: 4px;
         }
 
         .cvant-chatbot__messages::-webkit-scrollbar-thumb {
@@ -1396,7 +1429,9 @@ const ChatbotWidget = () => {
           color: var(--text-primary-light);
           font-size: 13px;
           resize: none;
-          height: 52px;
+          height: 36px;
+          max-height: 52px;
+          min-height: 36px;
           line-height: 1.4;
           overflow-y: auto;
           scrollbar-width: thin;
@@ -1404,7 +1439,7 @@ const ChatbotWidget = () => {
         }
 
         .cvant-chatbot__input textarea::-webkit-scrollbar {
-          width: 6px;
+          width: 4px;
         }
 
         .cvant-chatbot__input textarea::-webkit-scrollbar-thumb {
@@ -1417,7 +1452,7 @@ const ChatbotWidget = () => {
         }
 
         .cvant-chatbot__input textarea::placeholder {
-          font-size: 13px;
+          font-size: 11px;
         }
 
         .cvant-chatbot__input button {
