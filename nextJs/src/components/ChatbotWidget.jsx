@@ -12,7 +12,7 @@ const defaultGreeting = {
 
 const ARMADA_USAGE_CACHE_MS = 30000;
 const INVOICE_EXPENSE_CACHE_MS = 30000;
-const INPUT_MIN_HEIGHT = 36;
+const INPUT_MIN_HEIGHT = 32;
 const INPUT_MAX_HEIGHT = 52;
 
 const normalizeKey = (value) =>
@@ -1379,7 +1379,7 @@ const ChatbotWidget = () => {
         }
 
         .cvant-chatbot__messages::-webkit-scrollbar {
-          width: 4px;
+          width: 3px;
         }
 
         .cvant-chatbot__messages::-webkit-scrollbar-thumb {
@@ -1422,24 +1422,24 @@ const ChatbotWidget = () => {
 
         .cvant-chatbot__input textarea {
           flex: 1;
-          padding: 8px 10px;
+          padding: 6px 10px;
           border-radius: 10px;
           border: 1px solid var(--border-color);
           background: var(--bg-color);
           color: var(--text-primary-light);
           font-size: 13px;
           resize: none;
-          height: 36px;
+          height: 32px;
           max-height: 52px;
-          min-height: 36px;
-          line-height: 1.4;
+          min-height: 32px;
+          line-height: 1.3;
           overflow-y: auto;
           scrollbar-width: thin;
           scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
         }
 
         .cvant-chatbot__input textarea::-webkit-scrollbar {
-          width: 4px;
+          width: 3px;
         }
 
         .cvant-chatbot__input textarea::-webkit-scrollbar-thumb {
@@ -1452,7 +1452,7 @@ const ChatbotWidget = () => {
         }
 
         .cvant-chatbot__input textarea::placeholder {
-          font-size: 11px;
+          font-size: 10px;
         }
 
         .cvant-chatbot__input button {
