@@ -1385,6 +1385,10 @@ const ChatbotWidget = () => {
           overflow-y: auto;
         }
 
+        .cvant-chatbot__input textarea::placeholder {
+          font-size: 12px;
+        }
+
         .cvant-chatbot__input button {
           width: 38px;
           height: 38px;
