@@ -218,6 +218,15 @@ const buildArmadaListReply = ({
   return `${header}${totalLine}${lines.join("\n")}`;
 };
 
+const formatArmadaUsageLine = (armada) => {
+  const kapasitasLabel = formatArmadaCapacity(armada?.kapasitas);
+  const statusLabel = formatArmadaStatus(armada?.status);
+  const usage = armada?.__usedCount || 0;
+  return `${formatArmadaLabel(
+    armada
+  )} | Kapasitas (Tonase): ${kapasitasLabel} | Status: ${statusLabel} | Penggunaan: ${usage}x`;
+};
+
 const formatTransactionLine = (item) => {
   const typeLabel = safeText(item?.type, "Income");
   const no = safeText(item?.no);
@@ -768,14 +777,14 @@ const ChatbotWidget = () => {
         });
       }
 
-      if (matches.length === 1) {
+      if (!isTopQuery && !isLeastQuery && matches.length === 1) {
         const armada = matches[0];
         return `Armada ${formatArmadaLabel(armada)} digunakan ${
           armada.__usedCount || 0
         }x berdasarkan data invoice.`;
       }
 
-      if (matches.length > 1) {
+      if (!isTopQuery && !isLeastQuery && matches.length > 1) {
         const title = isLeastQuery
           ? "Beberapa armada cocok. Urutan penggunaan dari yang paling sedikit:"
           : "Beberapa armada cocok. Daftar lengkap armada:";
@@ -787,32 +796,19 @@ const ChatbotWidget = () => {
         });
       }
 
+      const baseListForExtreme = matches.length > 0 ? matches : armadas;
       const sortedByUsage = sortArmadasByUsage(
-        armadas,
+        baseListForExtreme,
         isLeastQuery ? "asc" : "desc"
       );
       const top = sortedByUsage[0];
 
       if (isTopQuery) {
-        return buildArmadaListReply({
-          list: armadas,
-          order: "desc",
-          title: `Armada paling sering digunakan: ${formatArmadaLabel(top)} (${
-            top.__usedCount || 0
-          }x).\nUrutan penggunaan armada dari yang paling banyak:`,
-          includeTotal: true,
-        });
+        return `Armada paling sering digunakan: ${formatArmadaUsageLine(top)}.`;
       }
 
       if (isLeastQuery) {
-        return buildArmadaListReply({
-          list: armadas,
-          order: "asc",
-          title: `Armada paling sedikit digunakan: ${formatArmadaLabel(top)} (${
-            top.__usedCount || 0
-          }x).\nUrutan penggunaan armada dari yang paling sedikit:`,
-          includeTotal: true,
-        });
+        return `Armada paling sedikit digunakan: ${formatArmadaUsageLine(top)}.`;
       }
 
       return buildArmadaListReply({
@@ -1243,8 +1239,8 @@ const ChatbotWidget = () => {
           </div>
 
           <form className="cvant-chatbot__input" onSubmit={sendMessage}>
-            <input
-              type="text"
+            <textarea
+              rows={2}
               value={input}
               onChange={(event) => setInput(event.target.value)}
               placeholder="Tanya tentang invoice, expense, armada..."
@@ -1375,7 +1371,7 @@ const ChatbotWidget = () => {
           background: var(--white);
         }
 
-        .cvant-chatbot__input input {
+        .cvant-chatbot__input textarea {
           flex: 1;
           padding: 8px 10px;
           border-radius: 10px;
@@ -1383,6 +1379,10 @@ const ChatbotWidget = () => {
           background: var(--bg-color);
           color: var(--text-primary-light);
           font-size: 13px;
+          resize: none;
+          height: 52px;
+          line-height: 1.4;
+          overflow-y: auto;
         }
 
         .cvant-chatbot__input button {
