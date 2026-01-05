@@ -79,23 +79,39 @@ const LatestRegisteredOne = () => {
     }
   };
 
-  const formatTanggal = (raw) => {
-    if (!raw) return "-";
+  const normalizeDate = (value) => {
+    if (!value) return "";
+    const str = String(value).trim();
 
-    if (/^\d{2}-\d{2}-\d{4}$/.test(raw)) return raw;
+    if (/^\d{2}-\d{2}-\d{4}$/.test(str)) {
+      const [dd, mm, yyyy] = str.split("-");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
 
-    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-      const [y, m, d] = raw.split("-");
-      return `${d}-${m}-${y}`;
+    if (/^\d{4}-\d{2}-\d{2}T/.test(str)) {
+      const d = new Date(str);
+      if (!isNaN(d)) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+      return str.split("T")[0];
     }
 
-    if (raw.includes("T")) {
-      const [y, m, d] = raw.split("T")[0].split("-");
-      return `${d}-${m}-${y}`;
-    }
-
-    return raw;
+    if (/^\d{4}-\d{2}-\d{2}\s/.test(str)) return str.split(" ")[0];
+    return "";
   };
+
+  const toDisplay = (value) => {
+    const norm = normalizeDate(value);
+    if (!norm) return "-";
+    const [y, m, d] = norm.split("-");
+    return `${d}-${m}-${y}`;
+  };
+
+  const toSortable = (value) => normalizeDate(value) || "";
 
   const fetchData = async () => {
     try {
@@ -108,18 +124,22 @@ const LatestRegisteredOne = () => {
       const expenses = Array.isArray(expRes) ? expRes : [];
 
       const incomeFormatted = invoices
-        .map((i) => ({
-          id: i.id,
-          no_invoice: i.no_invoice,
-          nama_pelanggan: i.nama_pelanggan,
-          tanggal: formatTanggal(i.tanggal),
-          total_bayar: Number(i.total_bayar),
-          status: i.status,
-        }))
+        .map((i) => {
+          const tanggalRaw = normalizeDate(i.tanggal);
+          return {
+            id: i.id,
+            no_invoice: i.no_invoice,
+            nama_pelanggan: i.nama_pelanggan,
+            tanggal: toDisplay(i.tanggal),
+            tanggal_raw: tanggalRaw,
+            total_bayar: Number(i.total_bayar),
+            status: i.status,
+          };
+        })
         .sort((a, b) => {
-          const da = new Date(a.tanggal.split("-").reverse().join("-"));
-          const db = new Date(b.tanggal.split("-").reverse().join("-"));
-          return db - da;
+          return toSortable(b.tanggal_raw).localeCompare(
+            toSortable(a.tanggal_raw)
+          );
         })
         .slice(0, 6);
 
@@ -130,7 +150,7 @@ const LatestRegisteredOne = () => {
         type: "invoice",
         no: i.no_invoice,
         customer: i.nama_pelanggan || "-",
-        tanggal: formatTanggal(i.tanggal),
+        tanggal: toDisplay(i.tanggal),
         total: Number(i.total_bayar),
         status: i.status,
         link: `/invoice-preview?id=${i.id}`,
@@ -141,7 +161,7 @@ const LatestRegisteredOne = () => {
         type: "expense",
         no: e.no_expense,
         customer: "-",
-        tanggal: formatTanggal(e.tanggal),
+        tanggal: toDisplay(e.tanggal),
         total: Number(e.total_pengeluaran),
         status: e.status || "Recorded",
         link: `/expense-preview?id=${e.id}`,

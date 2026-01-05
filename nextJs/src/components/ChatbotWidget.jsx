@@ -11,6 +11,7 @@ const defaultGreeting = {
 };
 
 const ARMADA_USAGE_CACHE_MS = 30000;
+const INVOICE_EXPENSE_CACHE_MS = 30000;
 
 const normalizeKey = (value) =>
   String(value || "")
@@ -24,6 +25,83 @@ const tokenize = (value) =>
     .trim()
     .split(/\s+/)
     .filter((token) => token.length > 1);
+
+const normalizeDate = (value) => {
+  if (!value) return "";
+  const str = String(value).trim();
+
+  if (/^\d{2}-\d{2}-\d{4}$/.test(str)) {
+    const [dd, mm, yyyy] = str.split("-");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+
+  if (/^\d{4}-\d{2}-\d{2}T/.test(str)) {
+    const d = new Date(str);
+    if (!isNaN(d)) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+    return str.split("T")[0];
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}\s/.test(str)) return str.split(" ")[0];
+  return "";
+};
+
+const toDisplay = (value) => {
+  const norm = normalizeDate(value);
+  if (!norm) return "-";
+  const [y, m, d] = norm.split("-");
+  return `${d}-${m}-${y}`;
+};
+
+const formatRupiah = (num) =>
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(num || 0);
+
+const formatDatesInText = (value) => {
+  if (value == null) return "";
+  return String(value).replace(
+    /\b(\d{4})-(\d{2})-(\d{2})\b/g,
+    "$3-$2-$1"
+  );
+};
+
+const safeText = (value, fallback = "-") => {
+  if (value == null || String(value).trim() === "") return fallback;
+  return String(value);
+};
+
+const pickLargestByTotal = (list) => {
+  let best = null;
+
+  (Array.isArray(list) ? list : []).forEach((item) => {
+    if (!item) return;
+    const total = Number(item.total) || 0;
+    const bestTotal = Number(best?.total) || 0;
+
+    if (!best || total > bestTotal) {
+      best = item;
+      return;
+    }
+
+    if (total === bestTotal) {
+      const currentDate = item.tanggal_raw || "";
+      const bestDate = best?.tanggal_raw || "";
+      if (currentDate && currentDate > bestDate) {
+        best = item;
+      }
+    }
+  });
+
+  return best;
+};
 
 const buildUsageCountById = (invoices) => {
   const map = new Map();
@@ -70,6 +148,7 @@ const ChatbotWidget = () => {
   const [loading, setLoading] = useState(false);
   const endRef = useRef(null);
   const usageCacheRef = useRef({ data: null, fetchedAt: 0 });
+  const invoiceExpenseCacheRef = useRef({ data: null, fetchedAt: 0 });
 
   useEffect(() => {
     if (!open) return;
@@ -107,6 +186,52 @@ const ChatbotWidget = () => {
     return data;
   };
 
+  const getInvoiceExpenseData = async () => {
+    const now = Date.now();
+    const cached = invoiceExpenseCacheRef.current;
+
+    if (cached?.data && now - cached.fetchedAt < INVOICE_EXPENSE_CACHE_MS) {
+      return cached.data;
+    }
+
+    const [invoices, expenses] = await Promise.all([
+      api.get("/invoices"),
+      api.get("/expenses"),
+    ]);
+
+    const incomeList = Array.isArray(invoices)
+      ? invoices.map((i) => ({
+          ...i,
+          type: "Income",
+          no: i.no_invoice,
+          tanggal_raw: normalizeDate(i.tanggal),
+          tanggal_display: toDisplay(i.tanggal),
+          total: i.total_bayar,
+          nama: i.nama_pelanggan,
+          status: i.status,
+          recorded_by: i.diterima_oleh || "-",
+        }))
+      : [];
+
+    const expenseList = Array.isArray(expenses)
+      ? expenses.map((e) => ({
+          ...e,
+          type: "Expense",
+          no: e.no_expense,
+          tanggal_raw: normalizeDate(e.tanggal),
+          tanggal_display: toDisplay(e.tanggal),
+          total: e.total_pengeluaran,
+          nama: "-",
+          status: e.status,
+          recorded_by: e.dicatat_oleh || "Admin",
+        }))
+      : [];
+
+    const data = { incomeList, expenseList };
+    invoiceExpenseCacheRef.current = { data, fetchedAt: now };
+    return data;
+  };
+
   const buildArmadaUsageReply = async (text) => {
     const lower = text.toLowerCase();
     const hasArmada =
@@ -126,6 +251,15 @@ const ChatbotWidget = () => {
       "used",
     ];
 
+    const detailKeywords = [
+      "detail",
+      "info",
+      "informasi",
+      "status",
+      "kapasitas",
+      "ready",
+    ];
+
     const isUsageQuery =
       hasArmada && usageKeywords.some((keyword) => lower.includes(keyword));
     const isCountQuery =
@@ -138,8 +272,12 @@ const ChatbotWidget = () => {
         lower.includes("terbanyak") ||
         lower.includes("tersering") ||
         lower.includes("top"));
+    const isDetailQuery =
+      hasArmada && detailKeywords.some((keyword) => lower.includes(keyword));
 
-    if (!isUsageQuery && !isCountQuery && !isTopQuery) return null;
+    if (!isUsageQuery && !isCountQuery && !isTopQuery && !isDetailQuery) {
+      return null;
+    }
 
     try {
       const { armadas } = await getArmadaUsageData();
@@ -170,6 +308,46 @@ const ChatbotWidget = () => {
       }
 
       const usedList = armadas.filter((armada) => (armada.__usedCount || 0) > 0);
+
+      if (isDetailQuery) {
+        if (matches.length === 1) {
+          const armada = matches[0];
+          return `Detail armada:\n- Nama: ${safeText(
+            armada?.nama_truk,
+            "Armada"
+          )}\n- Plat: ${safeText(
+            armada?.plat_nomor
+          )}\n- Kapasitas: ${safeText(
+            armada?.kapasitas
+          )}\n- Status: ${safeText(
+            armada?.status
+          )}\n- Penggunaan: ${armada.__usedCount || 0}x`;
+        }
+
+        if (matches.length > 1) {
+          const lines = matches
+            .slice(0, 5)
+            .map(
+              (armada, idx) =>
+                `${idx + 1}. ${formatArmadaLabel(
+                  armada
+                )} | Status: ${safeText(
+                  armada?.status
+                )} | Kapasitas: ${safeText(
+                  armada?.kapasitas
+                )} | Penggunaan: ${armada.__usedCount || 0}x`
+            )
+            .join("\n");
+          const tail =
+            matches.length > 5
+              ? `\nDan ${matches.length - 5} lainnya. Sebutkan nama/plat yang tepat.`
+              : "\nSebutkan nama/plat yang tepat untuk detail.";
+          return `Saya menemukan beberapa armada yang cocok:\n${lines}${tail}`;
+        }
+
+        return "Sebutkan nama/plat armada untuk menampilkan detailnya.";
+      }
+
       if (!usedList.length) {
         return "Belum ada data penggunaan armada pada invoice.";
       }
@@ -230,6 +408,213 @@ const ChatbotWidget = () => {
     }
   };
 
+  const formatIncomeDetail = (item, title) => {
+    const lines = [
+      `${title}:`,
+      `- No. Invoice: ${safeText(item?.no)}`,
+      `- Nama Pelanggan: ${safeText(item?.nama)}`,
+      `- Tanggal: ${safeText(item?.tanggal_display)}`,
+      `- Status: ${safeText(item?.status)}`,
+      `- Total Bayar: ${formatRupiah(item?.total)}`,
+    ];
+    const receivedBy = safeText(item?.recorded_by, "");
+    if (receivedBy) lines.push(`- Diterima oleh: ${receivedBy}`);
+    return lines.join("\n");
+  };
+
+  const formatExpenseDetail = (item, title) => {
+    const lines = [
+      `${title}:`,
+      `- No. Expense: ${safeText(item?.no)}`,
+      `- Tanggal: ${safeText(item?.tanggal_display)}`,
+      `- Status: ${safeText(item?.status)}`,
+      `- Total Pengeluaran: ${formatRupiah(item?.total)}`,
+    ];
+    const recordedBy = safeText(item?.recorded_by, "");
+    if (recordedBy) lines.push(`- Dicatat oleh: ${recordedBy}`);
+    return lines.join("\n");
+  };
+
+  const buildInvoiceExpenseReply = async (text) => {
+    const lower = text.toLowerCase();
+    const textKey = normalizeKey(text);
+
+    const incomeKeywords = [
+      "income",
+      "pemasukan",
+      "pendapatan",
+      "invoice",
+    ];
+    const expenseKeywords = ["expense", "pengeluaran", "biaya", "cost"];
+    const transactionKeywords = ["transaksi", "transaction"];
+    const detailKeywords = [
+      "detail",
+      "rincian",
+      "info",
+      "informasi",
+      "cek",
+      "lihat",
+      "status",
+    ];
+    const biggestKeywords = [
+      "terbesar",
+      "paling besar",
+      "tertinggi",
+      "biggest",
+      "largest",
+      "max",
+      "maksimal",
+      "top",
+    ];
+    const totalKeywords = ["total", "jumlah", "akumulasi", "sum"];
+    const numberPattern = /\b(?:inc|exp)[-\s_]*\d{4}[-\s_]*\d{3,}\b/i;
+
+    const hasIncome = incomeKeywords.some((keyword) => lower.includes(keyword));
+    const hasExpense = expenseKeywords.some((keyword) =>
+      lower.includes(keyword)
+    );
+    const hasTransaction = transactionKeywords.some((keyword) =>
+      lower.includes(keyword)
+    );
+    const wantsDetail = detailKeywords.some((keyword) =>
+      lower.includes(keyword)
+    );
+    const wantsBiggest = biggestKeywords.some((keyword) =>
+      lower.includes(keyword)
+    );
+    const wantsTotal = totalKeywords.some((keyword) => lower.includes(keyword));
+    const hasNumberPattern = numberPattern.test(lower);
+
+    if (
+      !hasIncome &&
+      !hasExpense &&
+      !hasTransaction &&
+      !hasNumberPattern
+    ) {
+      return null;
+    }
+
+    if (!wantsDetail && !wantsBiggest && !wantsTotal && !hasNumberPattern) {
+      return null;
+    }
+
+    try {
+      const { incomeList, expenseList } = await getInvoiceExpenseData();
+      const hasAny = incomeList.length > 0 || expenseList.length > 0;
+      if (!hasAny) return "Belum ada data income atau expense.";
+
+      const matchByNumber = (list) =>
+        (Array.isArray(list) ? list : []).find((item) => {
+          const key = normalizeKey(item?.no);
+          return key && textKey.includes(key);
+        });
+
+      const matchedIncome = matchByNumber(incomeList);
+      const matchedExpense = matchByNumber(expenseList);
+
+      if (matchedIncome || matchedExpense) {
+        if (matchedExpense && !matchedIncome) {
+          return formatExpenseDetail(
+            matchedExpense,
+            "Detail Transaksi Expense"
+          );
+        }
+        if (matchedIncome && !matchedExpense) {
+          return formatIncomeDetail(matchedIncome, "Detail Transaksi Income");
+        }
+
+        if (matchedExpense && !hasIncome) {
+          return formatExpenseDetail(
+            matchedExpense,
+            "Detail Transaksi Expense"
+          );
+        }
+
+        return formatIncomeDetail(matchedIncome, "Detail Transaksi Income");
+      }
+
+      if (hasNumberPattern) {
+        return "Nomor invoice/expense tersebut tidak ditemukan.";
+      }
+
+      if (wantsDetail && !wantsBiggest && !wantsTotal) {
+        if (hasIncome && !hasExpense) {
+          return "Sebutkan nomor invoice untuk menampilkan detailnya.";
+        }
+
+        if (hasExpense && !hasIncome) {
+          return "Sebutkan nomor expense untuk menampilkan detailnya.";
+        }
+
+        return "Sebutkan nomor invoice atau expense untuk menampilkan detailnya.";
+      }
+
+      if (wantsBiggest) {
+        const wantsBoth =
+          (hasIncome && hasExpense) || (!hasIncome && !hasExpense);
+
+        const topIncome = pickLargestByTotal(incomeList);
+        const topExpense = pickLargestByTotal(expenseList);
+
+        if (wantsBoth) {
+          const chunks = [];
+          if (topIncome) {
+            chunks.push(formatIncomeDetail(topIncome, "Transaksi Income Terbesar"));
+          } else {
+            chunks.push("Transaksi Income Terbesar: tidak ada data.");
+          }
+
+          if (topExpense) {
+            chunks.push(
+              formatExpenseDetail(topExpense, "Transaksi Expense Terbesar")
+            );
+          } else {
+            chunks.push("Transaksi Expense Terbesar: tidak ada data.");
+          }
+
+          return chunks.join("\n\n");
+        }
+
+        if (hasIncome) {
+          if (!topIncome) return "Belum ada data income.";
+          return formatIncomeDetail(topIncome, "Transaksi Income Terbesar");
+        }
+
+        if (hasExpense) {
+          if (!topExpense) return "Belum ada data expense.";
+          return formatExpenseDetail(topExpense, "Transaksi Expense Terbesar");
+        }
+      }
+
+      if (wantsTotal) {
+        const sumTotals = (list) =>
+          (Array.isArray(list) ? list : []).reduce(
+            (sum, item) => sum + (Number(item?.total) || 0),
+            0
+          );
+
+        const totalIncome = sumTotals(incomeList);
+        const totalExpense = sumTotals(expenseList);
+
+        if (hasIncome && !hasExpense) {
+          return `Total income saat ini: ${formatRupiah(totalIncome)}`;
+        }
+
+        if (hasExpense && !hasIncome) {
+          return `Total expense saat ini: ${formatRupiah(totalExpense)}`;
+        }
+
+        return `Total income: ${formatRupiah(
+          totalIncome
+        )}\nTotal expense: ${formatRupiah(totalExpense)}`;
+      }
+    } catch (err) {
+      return "Maaf, saya belum bisa mengambil data invoice/expense saat ini.";
+    }
+
+    return null;
+  };
+
   const sendMessage = async (event) => {
     event?.preventDefault();
     const text = input.trim();
@@ -247,7 +632,22 @@ const ChatbotWidget = () => {
     try {
       const localReply = await buildArmadaUsageReply(text);
       if (localReply) {
-        setMessages((prev) => [...prev, { role: "assistant", content: localReply }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: formatDatesInText(localReply),
+          },
+        ]);
+        return;
+      }
+
+      const invoiceReply = await buildInvoiceExpenseReply(text);
+      if (invoiceReply) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: formatDatesInText(invoiceReply) },
+        ]);
         return;
       }
 
@@ -260,12 +660,18 @@ const ChatbotWidget = () => {
         res?.reply ||
         "Maaf, AI belum bisa memberikan jawaban. Coba ulangi lagi.";
 
-      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: formatDatesInText(reply) },
+      ]);
     } catch (err) {
       const fallback =
         err?.message ||
         "Maaf, ada kendala saat menghubungi AI. Coba beberapa saat lagi.";
-      setMessages((prev) => [...prev, { role: "assistant", content: fallback }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: formatDatesInText(fallback) },
+      ]);
     } finally {
       setLoading(false);
     }
