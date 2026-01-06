@@ -1452,7 +1452,13 @@ const ChatbotWidget = () => {
         }
 
         .cvant-chatbot__input textarea::placeholder {
-          font-size: 10px;
+          font-size: 9px !important;
+          line-height: 1.2;
+        }
+
+        .cvant-chatbot__input textarea::-webkit-input-placeholder {
+          font-size: 9px !important;
+          line-height: 1.2;
         }
 
         .cvant-chatbot__input button {
