@@ -973,6 +973,7 @@ const ChatbotWidget = () => {
     if (
       !wantsDetail &&
       !wantsBiggest &&
+      !wantsSmallest &&
       !wantsTotal &&
       !hasNumberPattern &&
       !hasYear
@@ -1031,7 +1032,7 @@ const ChatbotWidget = () => {
         return "Nomor invoice/expense tersebut tidak ditemukan.";
       }
 
-      if (wantsDetail && !wantsBiggest && !wantsTotal) {
+      if (wantsDetail && !wantsBiggest && !wantsSmallest && !wantsTotal) {
         if (hasIncome && !hasExpense) {
           return "Sebutkan nomor invoice untuk menampilkan detailnya.";
         }
