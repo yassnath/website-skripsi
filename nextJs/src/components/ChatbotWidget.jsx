@@ -902,12 +902,8 @@ const ChatbotWidget = () => {
     const hasYear = years.length > 0;
     const yearLabel = hasYear ? years.join(", ") : "";
 
-    const incomeKeywords = [
-      "income",
-      "pemasukan",
-      "pendapatan",
-      "invoice",
-    ];
+    const incomeKeywords = ["income", "pemasukan", "pendapatan"];
+    const invoiceKeywords = ["invoice"];
     const expenseKeywords = ["expense", "pengeluaran", "biaya", "cost"];
     const transactionKeywords = ["transaksi", "transaction"];
     const detailKeywords = [
@@ -941,8 +937,13 @@ const ChatbotWidget = () => {
     const totalKeywords = ["total", "jumlah", "akumulasi", "sum"];
     const numberPattern = /\b(?:inc|exp)[-\s_]*\d{4}[-\s_]*\d{3,}\b/i;
 
-    const hasIncome = incomeKeywords.some((keyword) => lower.includes(keyword));
-    const hasExpense = expenseKeywords.some((keyword) =>
+    const hasIncomeKeyword = incomeKeywords.some((keyword) =>
+      lower.includes(keyword)
+    );
+    const hasExpenseKeyword = expenseKeywords.some((keyword) =>
+      lower.includes(keyword)
+    );
+    const hasInvoiceKeyword = invoiceKeywords.some((keyword) =>
       lower.includes(keyword)
     );
     const hasTransaction = transactionKeywords.some((keyword) =>
@@ -960,12 +961,32 @@ const ChatbotWidget = () => {
     const wantsTotal = totalKeywords.some((keyword) => lower.includes(keyword));
     const hasNumberPattern = numberPattern.test(lower);
 
+    let wantsIncome = hasIncomeKeyword;
+    let wantsExpense = hasExpenseKeyword;
+
+    if (hasInvoiceKeyword) {
+      if (!hasIncomeKeyword && !hasExpenseKeyword) {
+        wantsIncome = true;
+        wantsExpense = true;
+      } else if (hasExpenseKeyword && !hasIncomeKeyword) {
+        wantsIncome = false;
+        wantsExpense = true;
+      } else if (hasIncomeKeyword && !hasExpenseKeyword) {
+        wantsIncome = true;
+        wantsExpense = false;
+      } else {
+        wantsIncome = true;
+        wantsExpense = true;
+      }
+    }
+
     if (
-      !hasIncome &&
-      !hasExpense &&
+      !hasIncomeKeyword &&
+      !hasExpenseKeyword &&
       !hasTransaction &&
       !hasNumberPattern &&
-      !hasYear
+      !hasYear &&
+      !hasInvoiceKeyword
     ) {
       return null;
     }
@@ -978,7 +999,7 @@ const ChatbotWidget = () => {
       !hasNumberPattern &&
       !hasYear
     ) {
-      return null;
+      if (!hasInvoiceKeyword) return null;
     }
 
     try {
@@ -1027,17 +1048,81 @@ const ChatbotWidget = () => {
 
       const scopedIncome = filterByYears(incomeList);
       const scopedExpense = filterByYears(expenseList);
+      const yearText = hasYear ? ` tahun ${yearLabel}` : "";
+
+      const buildListSection = (list, label) => {
+        if (!list.length) {
+          return `Tidak ada transaksi ${label}${yearText}.`;
+        }
+
+        const sorted = sortByTanggalDesc(list);
+        const lines = sorted.map(
+          (item, idx) => `${idx + 1}. ${formatTransactionLine(item)}`
+        );
+
+        return `Transaksi ${label}${yearText} (${list.length} data):\n${lines.join(
+          "\n"
+        )}`;
+      };
+
+      const buildCombinedList = () => {
+        const combined = sortByTanggalDesc([
+          ...scopedIncome,
+          ...scopedExpense,
+        ]);
+
+        if (!combined.length) {
+          return `Tidak ada transaksi income maupun expense${yearText}.`;
+        }
+
+        const combinedLines = combined.map(
+          (item, idx) => `${idx + 1}. ${formatTransactionLine(item)}`
+        );
+        return `Transaksi${yearText} (${combined.length} data):\n${combinedLines.join(
+          "\n"
+        )}`;
+      };
 
       if (hasNumberPattern) {
         return "Nomor invoice/expense tersebut tidak ditemukan.";
       }
 
+      if (
+        !wantsDetail &&
+        !wantsBiggest &&
+        !wantsSmallest &&
+        !wantsTotal &&
+        hasInvoiceKeyword
+      ) {
+        if (wantsIncome && !wantsExpense) {
+          return buildListSection(scopedIncome, "income");
+        }
+
+        if (wantsExpense && !wantsIncome) {
+          return buildListSection(scopedExpense, "expense");
+        }
+
+        return buildCombinedList();
+      }
+
       if (wantsDetail && !wantsBiggest && !wantsSmallest && !wantsTotal) {
-        if (hasIncome && !hasExpense) {
+        if (hasInvoiceKeyword) {
+          if (wantsIncome && !wantsExpense) {
+            return buildListSection(scopedIncome, "income");
+          }
+
+          if (wantsExpense && !wantsIncome) {
+            return buildListSection(scopedExpense, "expense");
+          }
+
+          return buildCombinedList();
+        }
+
+        if (wantsIncome && !wantsExpense) {
           return "Sebutkan nomor invoice untuk menampilkan detailnya.";
         }
 
-        if (hasExpense && !hasIncome) {
+        if (wantsExpense && !wantsIncome) {
           return "Sebutkan nomor expense untuk menampilkan detailnya.";
         }
 
@@ -1046,7 +1131,7 @@ const ChatbotWidget = () => {
 
       if (wantsBiggest) {
         const wantsBoth =
-          (hasIncome && hasExpense) || (!hasIncome && !hasExpense);
+          (wantsIncome && wantsExpense) || (!wantsIncome && !wantsExpense);
 
         const topIncome = pickLargestByTotal(scopedIncome);
         const topExpense = pickLargestByTotal(scopedExpense);
@@ -1082,7 +1167,7 @@ const ChatbotWidget = () => {
           return chunks.join("\n\n");
         }
 
-        if (hasIncome) {
+        if (wantsIncome && !wantsExpense) {
           if (!topIncome) {
             return hasYear
               ? `Belum ada data income tahun ${yearLabel}.`
@@ -1091,7 +1176,7 @@ const ChatbotWidget = () => {
           return formatIncomeDetail(topIncome, incomeTitle);
         }
 
-        if (hasExpense) {
+        if (wantsExpense && !wantsIncome) {
           if (!topExpense) {
             return hasYear
               ? `Belum ada data expense tahun ${yearLabel}.`
@@ -1103,7 +1188,7 @@ const ChatbotWidget = () => {
 
       if (wantsSmallest) {
         const wantsBoth =
-          (hasIncome && hasExpense) || (!hasIncome && !hasExpense);
+          (wantsIncome && wantsExpense) || (!wantsIncome && !wantsExpense);
 
         const minIncome = pickSmallestByTotal(scopedIncome);
         const minExpense = pickSmallestByTotal(scopedExpense);
@@ -1139,7 +1224,7 @@ const ChatbotWidget = () => {
           return chunks.join("\n\n");
         }
 
-        if (hasIncome) {
+        if (wantsIncome && !wantsExpense) {
           if (!minIncome) {
             return hasYear
               ? `Belum ada data income tahun ${yearLabel}.`
@@ -1148,7 +1233,7 @@ const ChatbotWidget = () => {
           return formatIncomeDetail(minIncome, incomeTitle);
         }
 
-        if (hasExpense) {
+        if (wantsExpense && !wantsIncome) {
           if (!minExpense) {
             return hasYear
               ? `Belum ada data expense tahun ${yearLabel}.`
@@ -1168,13 +1253,13 @@ const ChatbotWidget = () => {
         const totalIncome = sumTotals(scopedIncome);
         const totalExpense = sumTotals(scopedExpense);
 
-        if (hasIncome && !hasExpense) {
+        if (wantsIncome && !wantsExpense) {
           return hasYear
             ? `Total income tahun ${yearLabel}: ${formatRupiah(totalIncome)}`
             : `Total income saat ini: ${formatRupiah(totalIncome)}`;
         }
 
-        if (hasExpense && !hasIncome) {
+        if (wantsExpense && !wantsIncome) {
           return hasYear
             ? `Total expense tahun ${yearLabel}: ${formatRupiah(totalExpense)}`
             : `Total expense saat ini: ${formatRupiah(totalExpense)}`;
@@ -1192,23 +1277,8 @@ const ChatbotWidget = () => {
       }
 
       if (hasYear) {
-        const buildListSection = (list, label) => {
-          if (!list.length) {
-            return `Tidak ada transaksi ${label} pada tahun ${yearLabel}.`;
-          }
-
-          const sorted = sortByTanggalDesc(list);
-          const lines = sorted.map(
-            (item, idx) => `${idx + 1}. ${formatTransactionLine(item)}`
-          );
-
-          return `Transaksi ${label} tahun ${yearLabel} (${list.length} data):\n${lines.join(
-            "\n"
-          )}`;
-        };
-
-        const wantsIncomeOnly = hasIncome && !hasExpense;
-        const wantsExpenseOnly = hasExpense && !hasIncome;
+        const wantsIncomeOnly = wantsIncome && !wantsExpense;
+        const wantsExpenseOnly = wantsExpense && !wantsIncome;
 
         if (wantsIncomeOnly) {
           return buildListSection(scopedIncome, "income");
@@ -1217,22 +1287,7 @@ const ChatbotWidget = () => {
         if (wantsExpenseOnly) {
           return buildListSection(scopedExpense, "expense");
         }
-
-        const combined = sortByTanggalDesc([
-          ...scopedIncome,
-          ...scopedExpense,
-        ]);
-
-        if (!combined.length) {
-          return `Tidak ada transaksi income maupun expense pada tahun ${yearLabel}.`;
-        }
-
-        const combinedLines = combined.map(
-          (item, idx) => `${idx + 1}. ${formatTransactionLine(item)}`
-        );
-        return `Transaksi tahun ${yearLabel} (${combined.length} data):\n${combinedLines.join(
-          "\n"
-        )}`;
+        return buildCombinedList();
       }
     } catch (err) {
       return "Maaf, saya belum bisa mengambil data invoice/expense saat ini.";
