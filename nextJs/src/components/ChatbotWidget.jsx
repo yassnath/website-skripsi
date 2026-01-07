@@ -1430,7 +1430,7 @@ const ChatbotWidget = () => {
               value={input}
               onChange={handleInputChange}
               onKeyDown={handleInputKeyDown}
-              placeholder="Tanya tentang invoice, expense, armada..."
+              placeholder="Tanya tentang invoice dan armada..."
               aria-label="Tulis pesan"
             />
             <button type="submit" disabled={!input.trim() || loading}>
