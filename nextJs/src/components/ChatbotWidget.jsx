@@ -60,12 +60,23 @@ const toDisplay = (value) => {
   return `${d}-${m}-${y}`;
 };
 
+const parseAmount = (value) => {
+  if (value == null) return 0;
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : 0;
+  }
+  const cleaned = String(value).replace(/[^0-9-]/g, "");
+  if (!cleaned || cleaned === "-") return 0;
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 const formatRupiah = (num) =>
   new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
     minimumFractionDigits: 0,
-  }).format(num || 0);
+  }).format(parseAmount(num));
 
 const formatDatesInText = (value) => {
   if (value == null) return "";
@@ -123,8 +134,8 @@ const pickLargestByTotal = (list) => {
 
   (Array.isArray(list) ? list : []).forEach((item) => {
     if (!item) return;
-    const total = Number(item.total) || 0;
-    const bestTotal = Number(best?.total) || 0;
+    const total = parseAmount(item.total);
+    const bestTotal = parseAmount(best?.total);
 
     if (!best || total > bestTotal) {
       best = item;
@@ -148,12 +159,10 @@ const pickSmallestByTotal = (list) => {
 
   (Array.isArray(list) ? list : []).forEach((item) => {
     if (!item) return;
-    const total = Number(item.total);
-    if (!Number.isFinite(total)) return;
+    const total = parseAmount(item.total);
+    const bestTotal = parseAmount(best?.total);
 
-    const bestTotal = Number(best?.total);
-
-    if (!best || total < bestTotal || !Number.isFinite(bestTotal)) {
+    if (!best || total < bestTotal) {
       best = item;
       return;
     }
@@ -1246,7 +1255,7 @@ const ChatbotWidget = () => {
       if (wantsTotal) {
         const sumTotals = (list) =>
           (Array.isArray(list) ? list : []).reduce(
-            (sum, item) => sum + (Number(item?.total) || 0),
+            (sum, item) => sum + parseAmount(item?.total),
             0
           );
 
