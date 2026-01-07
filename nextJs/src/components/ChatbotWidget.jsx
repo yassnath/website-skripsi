@@ -143,6 +143,33 @@ const pickLargestByTotal = (list) => {
   return best;
 };
 
+const pickSmallestByTotal = (list) => {
+  let best = null;
+
+  (Array.isArray(list) ? list : []).forEach((item) => {
+    if (!item) return;
+    const total = Number(item.total);
+    if (!Number.isFinite(total)) return;
+
+    const bestTotal = Number(best?.total);
+
+    if (!best || total < bestTotal || !Number.isFinite(bestTotal)) {
+      best = item;
+      return;
+    }
+
+    if (total === bestTotal) {
+      const currentDate = item.tanggal_raw || "";
+      const bestDate = best?.tanggal_raw || "";
+      if (currentDate && currentDate > bestDate) {
+        best = item;
+      }
+    }
+  });
+
+  return best;
+};
+
 const buildUsageCountById = (invoices) => {
   const map = new Map();
 
@@ -237,6 +264,20 @@ const formatArmadaUsageLine = (armada) => {
   return `${formatArmadaLabel(
     armada
   )} | Kapasitas (Tonase): ${kapasitasLabel} | Status: ${statusLabel} | Penggunaan: ${usage}x`;
+};
+
+const formatArmadaDetail = (armada, title = "Detail armada") => {
+  const kapasitasLabel = formatArmadaCapacity(armada?.kapasitas);
+  const statusLabel = formatArmadaStatus(armada?.status);
+  const usage = armada?.__usedCount || 0;
+  return [
+    `${title}:`,
+    `- Nama Truk: ${safeText(armada?.nama_truk, "Armada")}`,
+    `- Plat Nomor: ${safeText(armada?.plat_nomor)}`,
+    `- Kapasitas (Tonase): ${kapasitasLabel}`,
+    `- Status: ${statusLabel}`,
+    `- Penggunaan: ${usage}x`,
+  ].join("\n");
 };
 
 const formatTransactionLine = (item) => {
@@ -746,17 +787,7 @@ const ChatbotWidget = () => {
 
       if (isDetailQuery) {
         if (matches.length === 1) {
-          const armada = matches[0];
-          const statusLabel = formatArmadaStatus(armada?.status);
-          const kapasitasLabel = formatArmadaCapacity(armada?.kapasitas);
-          return `Detail armada:\n- Nama Truk: ${safeText(
-            armada?.nama_truk,
-            "Armada"
-          )}\n- Plat Nomor: ${safeText(
-            armada?.plat_nomor
-          )}\n- Kapasitas (Tonase): ${kapasitasLabel}\n- Status: ${statusLabel}\n- Penggunaan: ${
-            armada.__usedCount || 0
-          }x`;
+          return formatArmadaDetail(matches[0]);
         }
 
         const title = matches.length
@@ -795,10 +826,7 @@ const ChatbotWidget = () => {
       }
 
       if (!isTopQuery && !isLeastQuery && matches.length === 1) {
-        const armada = matches[0];
-        return `Armada ${formatArmadaLabel(armada)} digunakan ${
-          armada.__usedCount || 0
-        }x berdasarkan data invoice.`;
+        return formatArmadaDetail(matches[0]);
       }
 
       if (!isTopQuery && !isLeastQuery && matches.length > 1) {
@@ -821,11 +849,11 @@ const ChatbotWidget = () => {
       const top = sortedByUsage[0];
 
       if (isTopQuery) {
-        return `Armada paling sering digunakan: ${formatArmadaUsageLine(top)}.`;
+        return formatArmadaDetail(top, "Armada paling sering digunakan");
       }
 
       if (isLeastQuery) {
-        return `Armada paling sedikit digunakan: ${formatArmadaUsageLine(top)}.`;
+        return formatArmadaDetail(top, "Armada paling sedikit digunakan");
       }
 
       return buildArmadaListReply({
@@ -842,27 +870,28 @@ const ChatbotWidget = () => {
   const formatIncomeDetail = (item, title) => {
     const lines = [
       `${title}:`,
-      `- No. Invoice: ${safeText(item?.no)}`,
-      `- Nama Pelanggan: ${safeText(item?.nama)}`,
+      `- Type: Income`,
+      `- Nomor: ${safeText(item?.no)}`,
+      `- Nama: ${safeText(item?.nama)}`,
       `- Tanggal: ${safeText(item?.tanggal_display)}`,
       `- Status: ${safeText(item?.status)}`,
-      `- Total Bayar: ${formatRupiah(item?.total)}`,
+      `- Total: ${formatRupiah(item?.total)}`,
+      `- Diterima oleh: ${safeText(item?.recorded_by)}`,
     ];
-    const receivedBy = safeText(item?.recorded_by, "");
-    if (receivedBy) lines.push(`- Diterima oleh: ${receivedBy}`);
     return lines.join("\n");
   };
 
   const formatExpenseDetail = (item, title) => {
     const lines = [
       `${title}:`,
-      `- No. Expense: ${safeText(item?.no)}`,
+      `- Type: Expense`,
+      `- Nomor: ${safeText(item?.no)}`,
+      `- Nama: ${safeText(item?.nama)}`,
       `- Tanggal: ${safeText(item?.tanggal_display)}`,
       `- Status: ${safeText(item?.status)}`,
-      `- Total Pengeluaran: ${formatRupiah(item?.total)}`,
+      `- Total: ${formatRupiah(item?.total)}`,
+      `- Dicatat oleh: ${safeText(item?.recorded_by)}`,
     ];
-    const recordedBy = safeText(item?.recorded_by, "");
-    if (recordedBy) lines.push(`- Dicatat oleh: ${recordedBy}`);
     return lines.join("\n");
   };
 
@@ -900,6 +929,15 @@ const ChatbotWidget = () => {
       "maksimal",
       "top",
     ];
+    const smallestKeywords = [
+      "terkecil",
+      "paling kecil",
+      "terendah",
+      "minimum",
+      "min",
+      "smallest",
+      "lowest",
+    ];
     const totalKeywords = ["total", "jumlah", "akumulasi", "sum"];
     const numberPattern = /\b(?:inc|exp)[-\s_]*\d{4}[-\s_]*\d{3,}\b/i;
 
@@ -914,6 +952,9 @@ const ChatbotWidget = () => {
       lower.includes(keyword)
     );
     const wantsBiggest = biggestKeywords.some((keyword) =>
+      lower.includes(keyword)
+    );
+    const wantsSmallest = smallestKeywords.some((keyword) =>
       lower.includes(keyword)
     );
     const wantsTotal = totalKeywords.some((keyword) => lower.includes(keyword));
@@ -1056,6 +1097,63 @@ const ChatbotWidget = () => {
               : "Belum ada data expense.";
           }
           return formatExpenseDetail(topExpense, expenseTitle);
+        }
+      }
+
+      if (wantsSmallest) {
+        const wantsBoth =
+          (hasIncome && hasExpense) || (!hasIncome && !hasExpense);
+
+        const minIncome = pickSmallestByTotal(scopedIncome);
+        const minExpense = pickSmallestByTotal(scopedExpense);
+        const incomeTitle = hasYear
+          ? `Transaksi Income Terkecil tahun ${yearLabel}`
+          : "Transaksi Income Terkecil";
+        const expenseTitle = hasYear
+          ? `Transaksi Expense Terkecil tahun ${yearLabel}`
+          : "Transaksi Expense Terkecil";
+
+        if (wantsBoth) {
+          const chunks = [];
+          if (minIncome) {
+            chunks.push(formatIncomeDetail(minIncome, incomeTitle));
+          } else {
+            chunks.push(
+              hasYear
+                ? `Transaksi Income Terkecil tahun ${yearLabel}: tidak ada data.`
+                : "Transaksi Income Terkecil: tidak ada data."
+            );
+          }
+
+          if (minExpense) {
+            chunks.push(formatExpenseDetail(minExpense, expenseTitle));
+          } else {
+            chunks.push(
+              hasYear
+                ? `Transaksi Expense Terkecil tahun ${yearLabel}: tidak ada data.`
+                : "Transaksi Expense Terkecil: tidak ada data."
+            );
+          }
+
+          return chunks.join("\n\n");
+        }
+
+        if (hasIncome) {
+          if (!minIncome) {
+            return hasYear
+              ? `Belum ada data income tahun ${yearLabel}.`
+              : "Belum ada data income.";
+          }
+          return formatIncomeDetail(minIncome, incomeTitle);
+        }
+
+        if (hasExpense) {
+          if (!minExpense) {
+            return hasYear
+              ? `Belum ada data expense tahun ${yearLabel}.`
+              : "Belum ada data expense.";
+          }
+          return formatExpenseDetail(minExpense, expenseTitle);
         }
       }
 
