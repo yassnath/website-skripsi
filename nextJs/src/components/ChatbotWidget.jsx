@@ -10,6 +10,11 @@ const defaultGreeting = {
     "Halo! Saya adalah Asisten CV ANT. Saya akan membantu anda.",
 };
 
+const UNCLEAR_OWNER =
+  "Tidak ada pertanyaan yang jelas. Apakah Anda memiliki pertanyaan terkait data Invoice (Income dan Expense), Fleet, Calendar, atau Laporan?";
+const UNCLEAR_ADMIN =
+  "Tidak ada pertanyaan yang jelas. Apakah Anda memiliki pertanyaan terkait data Invoice (Income dan Expense), Fleet atau Calendar?";
+
 const ARMADA_USAGE_CACHE_MS = 30000;
 const INVOICE_EXPENSE_CACHE_MS = 30000;
 const INPUT_MIN_HEIGHT = 32;
@@ -84,6 +89,22 @@ const formatDatesInText = (value) => {
     /\b(\d{4})-(\d{2})-(\d{2})\b/g,
     "$3-$2-$1"
   );
+};
+
+const getUnclearPrompt = (role) =>
+  String(role || "").toLowerCase() === "admin" ? UNCLEAR_ADMIN : UNCLEAR_OWNER;
+
+const isReportQuery = (text) => {
+  const lower = String(text || "").toLowerCase();
+  const reportKeywords = [
+    "laporan",
+    "report",
+    "reports",
+    "rekap",
+    "summary",
+    "pdf",
+  ];
+  return reportKeywords.some((keyword) => lower.includes(keyword));
 };
 
 const adjustTextareaHeight = (textarea) => {
@@ -450,10 +471,17 @@ const ChatbotWidget = () => {
   const [messages, setMessages] = useState([defaultGreeting]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState("");
   const endRef = useRef(null);
   const inputRef = useRef(null);
   const usageCacheRef = useRef({ data: null, fetchedAt: 0 });
   const invoiceExpenseCacheRef = useRef({ data: null, fetchedAt: 0 });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setUserRole(localStorage.getItem("role") || "");
+    }
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -944,6 +972,17 @@ const ChatbotWidget = () => {
       "lowest",
     ];
     const totalKeywords = ["total", "jumlah", "akumulasi", "sum"];
+    const netKeywords = [
+      "total bersih",
+      "bersih",
+      "net",
+      "laba",
+      "untung",
+      "profit",
+      "rugi",
+      "minus",
+      "selisih",
+    ];
     const numberPattern = /\b(?:inc|exp)[-\s_]*\d{4}[-\s_]*\d{3,}\b/i;
 
     const hasIncomeKeyword = incomeKeywords.some((keyword) =>
@@ -968,6 +1007,7 @@ const ChatbotWidget = () => {
       lower.includes(keyword)
     );
     const wantsTotal = totalKeywords.some((keyword) => lower.includes(keyword));
+    const wantsNet = netKeywords.some((keyword) => lower.includes(keyword));
     const hasNumberPattern = numberPattern.test(lower);
 
     let wantsIncome = hasIncomeKeyword;
@@ -1005,6 +1045,7 @@ const ChatbotWidget = () => {
       !wantsBiggest &&
       !wantsSmallest &&
       !wantsTotal &&
+      !wantsNet &&
       !hasNumberPattern &&
       !hasYear
     ) {
@@ -1195,6 +1236,28 @@ const ChatbotWidget = () => {
         }
       }
 
+      if (wantsNet) {
+        const totalIncome = scopedIncome.reduce(
+          (sum, item) => sum + parseAmount(item?.total),
+          0
+        );
+        const totalExpense = scopedExpense.reduce(
+          (sum, item) => sum + parseAmount(item?.total),
+          0
+        );
+        const netValue = totalIncome - totalExpense;
+        const status =
+          netValue > 0 ? "Untung" : netValue < 0 ? "Rugi" : "Imbang";
+        const netLabel =
+          netValue < 0
+            ? `-${formatRupiah(Math.abs(netValue))}`
+            : formatRupiah(netValue);
+        const scopeLabel = hasYear ? ` tahun ${yearLabel}` : "";
+        return `Total bersih${scopeLabel}: ${netLabel}\nStatus: ${status}\nTotal income${scopeLabel}: ${formatRupiah(
+          totalIncome
+        )}\nTotal expense${scopeLabel}: ${formatRupiah(totalExpense)}`;
+      }
+
       if (wantsSmallest) {
         const wantsBoth =
           (wantsIncome && wantsExpense) || (!wantsIncome && !wantsExpense);
@@ -1320,6 +1383,18 @@ const ChatbotWidget = () => {
     setLoading(true);
 
     try {
+      const role = String(userRole || "").toLowerCase();
+      if (role === "admin" && isReportQuery(text)) {
+        const denyMessage = `Maaf, akses laporan hanya untuk owner.\n${getUnclearPrompt(
+          role
+        )}`;
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: formatDatesInText(denyMessage) },
+        ]);
+        return;
+      }
+
       const localReply = await buildArmadaUsageReply(text);
       if (localReply) {
         setMessages((prev) => [
@@ -1346,9 +1421,13 @@ const ChatbotWidget = () => {
         history,
       });
 
-      const reply =
+      let reply =
         res?.reply ||
         "Maaf, AI belum bisa memberikan jawaban. Coba ulangi lagi.";
+
+      if (reply && reply.toLowerCase().includes("tidak ada pertanyaan yang jelas")) {
+        reply = getUnclearPrompt(userRole);
+      }
 
       setMessages((prev) => [
         ...prev,
