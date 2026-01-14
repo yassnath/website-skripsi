@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { api } from "@/lib/api";
+import { formatInvoiceNumber } from "@/lib/invoiceNumber";
 
 // -----------------------------
 // Helpers
@@ -203,6 +204,7 @@ const RecentActivity = () => {
 
       // ✅ FIX: gunakan tanggal input invoice (bukan created_at)
       const invoiceDate = inv?.tanggal || inv?.created_at;
+      const invoiceNumber = formatInvoiceNumber(inv?.no_invoice, invoiceDate);
 
       const time = getTime(inv, "tanggal", "created_at", "updated_at");
       const dateLabel = formatDateDMY(invoiceDate);
@@ -211,7 +213,7 @@ const RecentActivity = () => {
         key: `inc-create-${id ?? Math.random()}`,
         time,
         title: "Pembuatan Income Invoice",
-        line1: safeStr(inv?.no_invoice, "-"),
+        line1: safeStr(invoiceNumber, "-"),
         href: id != null ? `/invoice-preview?id=${id}` : null,
         actor: getActorFromInvoice(inv),
         dateLabel,
@@ -316,12 +318,17 @@ const RecentActivity = () => {
 
       // ✅ FIX: gunakan tanggal input expense
       const dateLabel = formatDateDMY(exp?.tanggal || exp?.created_at);
+      const expenseNumberRaw = exp?.no_expense || exp?.no_invoice || exp?.kode;
+      const expenseNumber = formatInvoiceNumber(
+        expenseNumberRaw,
+        exp?.tanggal || exp?.created_at
+      );
 
       items.push({
         key: `exp-create-${id ?? Math.random()}`,
         time,
         title: "Pembuatan Expense",
-        line1: safeStr(exp?.no_expense || exp?.no_invoice || exp?.kode, "-"),
+        line1: safeStr(expenseNumber, "-"),
         href: id != null ? `/expense-preview?id=${id}` : null,
         actor: getActorFromExpense(exp),
         dateLabel,

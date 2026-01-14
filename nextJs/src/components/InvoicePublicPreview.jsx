@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { formatInvoiceNumber } from "@/lib/invoiceNumber";
 
 /**
  * ✅ ANIMASI MASUK (sama seperti page lain)
@@ -87,11 +88,16 @@ export default function InvoicePublicPreview({ id }) {
   const handleDownloadPdf = () => {
     if (!pdfUrl) return;
 
+    const invoiceNumber = formatInvoiceNumber(
+      invoice?.no_invoice,
+      invoice?.tanggal
+    );
     const a = document.createElement("a");
     a.href = pdfUrl;
-    a.download = invoice?.no_invoice
-      ? `invoice-${invoice.no_invoice}.pdf`
-      : `invoice-${id}.pdf`;
+    a.download =
+      invoiceNumber && invoiceNumber !== "-"
+        ? `invoice-${invoiceNumber}.pdf`
+        : `invoice-${id}.pdf`;
 
     document.body.appendChild(a);
     a.click();
@@ -145,7 +151,14 @@ export default function InvoicePublicPreview({ id }) {
                   <h5 className="fw-bold mb-2 text-light">INVOICE</h5>
                   <div className="small">
                     <strong>No:</strong>{" "}
-                    <span className="opacity-90">{safeStr(invoice.no_invoice)}</span>
+                    <span className="opacity-90">
+                      {safeStr(
+                        formatInvoiceNumber(
+                          invoice.no_invoice,
+                          invoice.tanggal
+                        )
+                      )}
+                    </span>
                   </div>
                   <div className="small">
                     <strong>Tanggal:</strong>{" "}

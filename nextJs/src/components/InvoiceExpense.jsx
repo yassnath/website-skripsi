@@ -111,10 +111,14 @@ export default function InvoiceExpensePage() {
         const expenses = await api.get("/expenses");
         const list = Array.isArray(expenses) ? expenses : [];
         const nextNumber = (list.length + 1).toString().padStart(4, "0");
-        const newNumber = `EXP-${new Date().getFullYear()}-${nextNumber}`;
+        const now = new Date();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const newNumber = `EXP-${month}-${now.getFullYear()}-${nextNumber}`;
         setForm((prev) => ({ ...prev, no_expense: newNumber }));
       } catch {
-        const fallbackNumber = `EXP-${new Date().getFullYear()}-0001`;
+        const now = new Date();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const fallbackNumber = `EXP-${month}-${now.getFullYear()}-0001`;
         setForm((prev) => ({ ...prev, no_expense: fallbackNumber }));
       }
     };

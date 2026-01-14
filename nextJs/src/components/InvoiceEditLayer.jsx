@@ -3,6 +3,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
+import { formatInvoiceNumber } from "@/lib/invoiceNumber";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
 function useCvAntPageIn() {
@@ -400,7 +401,9 @@ export default function InvoiceEditLayer() {
     try {
       const publicUrl = getPublicInvoicePublicPageUrl(id);
 
-      const subject = encodeURIComponent(`Invoice ${form.no_invoice || ""}`);
+      const subject = encodeURIComponent(
+        `Invoice ${formatInvoiceNumber(form.no_invoice || "", form.tanggal)}`
+      );
       const body = encodeURIComponent(
         `Yth. ${form.nama_pelanggan},\n\n` +
           `Silakan klik berikut untuk melihat invoice:\n${publicUrl}\n\n` +
@@ -552,11 +555,14 @@ export default function InvoiceEditLayer() {
                         <label className="form-label fw-semibold">
                           Nomor Invoice
                         </label>
-                        <input
-                          className="form-control"
-                          value={form.no_invoice || ""}
-                          readOnly
-                        />
+                          <input
+                            className="form-control"
+                            value={formatInvoiceNumber(
+                              form.no_invoice || "",
+                              form.tanggal
+                            )}
+                            readOnly
+                          />
                       </div>
 
                       <div className="col-md-3">

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { api } from "@/lib/api";
+import { formatInvoiceNumber } from "@/lib/invoiceNumber";
 
 const defaultGreeting = {
   role: "assistant",
@@ -312,7 +313,12 @@ const formatArmadaDetail = (armada, title = "Detail armada") => {
 
 const formatTransactionLine = (item) => {
   const typeLabel = safeText(item?.type, "Income");
-  const no = safeText(item?.no);
+  const no = safeText(
+    formatInvoiceNumber(
+      item?.no_raw || item?.no,
+      item?.tanggal_raw || item?.tanggal_display
+    )
+  );
   const nama = safeText(item?.nama);
   const tanggal = safeText(item?.tanggal_display);
   const total = formatRupiah(item?.total);
@@ -407,7 +413,8 @@ const buildArmadaScheduleItems = (invoices, armadas) => {
   (Array.isArray(invoices) ? invoices : []).forEach((inv) => {
     const invoiceInfo = {
       type: "Income",
-      no: inv?.no_invoice,
+      no: formatInvoiceNumber(inv?.no_invoice, inv?.tanggal),
+      no_raw: inv?.no_invoice,
       nama: inv?.nama_pelanggan,
       tanggal_display: toDisplay(inv?.tanggal),
       total: inv?.total_bayar,
@@ -457,7 +464,8 @@ const buildArmadaScheduleItems = (invoices, armadas) => {
 const buildInvoiceSummaryList = (invoices) =>
   (Array.isArray(invoices) ? invoices : []).map((inv) => ({
     type: "Income",
-    no: inv?.no_invoice,
+    no: formatInvoiceNumber(inv?.no_invoice, inv?.tanggal),
+    no_raw: inv?.no_invoice,
     nama: inv?.nama_pelanggan,
     tanggal_raw: normalizeDate(inv?.tanggal),
     tanggal_display: toDisplay(inv?.tanggal),
@@ -541,7 +549,8 @@ const ChatbotWidget = () => {
       ? invoices.map((i) => ({
           ...i,
           type: "Income",
-          no: i.no_invoice,
+          no: formatInvoiceNumber(i.no_invoice, i.tanggal),
+          no_raw: i.no_invoice,
           tanggal_raw: normalizeDate(i.tanggal),
           tanggal_display: toDisplay(i.tanggal),
           total: i.total_bayar,
@@ -555,7 +564,8 @@ const ChatbotWidget = () => {
       ? expenses.map((e) => ({
           ...e,
           type: "Expense",
-          no: e.no_expense,
+          no: formatInvoiceNumber(e.no_expense, e.tanggal),
+          no_raw: e.no_expense,
           tanggal_raw: normalizeDate(e.tanggal),
           tanggal_display: toDisplay(e.tanggal),
           total: e.total_pengeluaran,
@@ -908,7 +918,12 @@ const ChatbotWidget = () => {
     const lines = [
       `${title}:`,
       `- Type: Income`,
-      `- Nomor: ${safeText(item?.no)}`,
+      `- Nomor: ${safeText(
+        formatInvoiceNumber(
+          item?.no_raw || item?.no,
+          item?.tanggal_raw || item?.tanggal_display
+        )
+      )}`,
       `- Nama: ${safeText(item?.nama)}`,
       `- Tanggal: ${safeText(item?.tanggal_display)}`,
       `- Status: ${safeText(item?.status)}`,
@@ -922,7 +937,12 @@ const ChatbotWidget = () => {
     const lines = [
       `${title}:`,
       `- Type: Expense`,
-      `- Nomor: ${safeText(item?.no)}`,
+      `- Nomor: ${safeText(
+        formatInvoiceNumber(
+          item?.no_raw || item?.no,
+          item?.tanggal_raw || item?.tanggal_display
+        )
+      )}`,
       `- Nama: ${safeText(item?.nama)}`,
       `- Tanggal: ${safeText(item?.tanggal_display)}`,
       `- Status: ${safeText(item?.status)}`,
@@ -1059,8 +1079,11 @@ const ChatbotWidget = () => {
 
       const matchByNumber = (list) =>
         (Array.isArray(list) ? list : []).find((item) => {
-          const key = normalizeKey(item?.no);
-          return key && textKey.includes(key);
+          const candidates = [item?.no_raw, item?.no].filter(Boolean);
+          return candidates.some((value) => {
+            const key = normalizeKey(value);
+            return key && textKey.includes(key);
+          });
         });
 
       const matchedIncome = matchByNumber(incomeList);

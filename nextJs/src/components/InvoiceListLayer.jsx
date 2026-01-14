@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import Link from "next/link";
 import React, { useEffect, useState, useMemo } from "react";
 import { api } from "@/lib/api";
+import { formatInvoiceNumber } from "@/lib/invoiceNumber";
 
 function useCvAntPageIn() {
   const [pageIn, setPageIn] = useState(false);
@@ -177,7 +178,7 @@ export default function InvoiceListLayer() {
               return {
                 ...i,
                 type: "Income",
-                no: i.no_invoice,
+                no: formatInvoiceNumber(i.no_invoice, i.tanggal),
                 tanggal_raw: normTanggal,
                 tanggal_display: toDisplay(i.tanggal),
                 total: i.total_bayar,
@@ -195,7 +196,7 @@ export default function InvoiceListLayer() {
               return {
                 ...e,
                 type: "Expense",
-                no: e.no_expense,
+                no: formatInvoiceNumber(e.no_expense, e.tanggal),
                 tanggal_raw: normTanggal,
                 tanggal_display: toDisplay(e.tanggal),
                 total: e.total_pengeluaran,

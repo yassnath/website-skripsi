@@ -147,7 +147,9 @@ export default function InvoiceAddPage() {
 
   const generateFallbackInvoiceNumber = () => {
     const nextNumber = "0001";
-    return `INC-${new Date().getFullYear()}-${nextNumber}`;
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    return `INC-${month}-${now.getFullYear()}-${nextNumber}`;
   };
 
   useEffect(() => {
@@ -157,9 +159,11 @@ export default function InvoiceAddPage() {
         const list = Array.isArray(invoices) ? invoices : [];
         const next = list.length + 1;
         const nextNumber = next.toString().padStart(4, "0");
+        const now = new Date();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
         setForm((prev) => ({
           ...prev,
-          no_invoice: `INC-${new Date().getFullYear()}-${nextNumber}`,
+          no_invoice: `INC-${month}-${now.getFullYear()}-${nextNumber}`,
         }));
       })
       .catch(() => {

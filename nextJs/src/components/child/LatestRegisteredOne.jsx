@@ -3,6 +3,7 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { formatInvoiceNumber } from "@/lib/invoiceNumber";
 
 /* ✅ cek mode light/dark sama seperti sistem kamu */
 function isLightModeNow() {
@@ -128,7 +129,7 @@ const LatestRegisteredOne = () => {
           const tanggalRaw = normalizeDate(i.tanggal);
           return {
             id: i.id,
-            no_invoice: i.no_invoice,
+            no_invoice: formatInvoiceNumber(i.no_invoice, i.tanggal),
             nama_pelanggan: i.nama_pelanggan,
             tanggal: toDisplay(i.tanggal),
             tanggal_raw: tanggalRaw,
@@ -148,7 +149,7 @@ const LatestRegisteredOne = () => {
       const invoiceData = invoices.map((i) => ({
         id: i.id,
         type: "invoice",
-        no: i.no_invoice,
+        no: formatInvoiceNumber(i.no_invoice, i.tanggal),
         customer: i.nama_pelanggan || "-",
         tanggal: toDisplay(i.tanggal),
         total: Number(i.total_bayar),
@@ -159,7 +160,7 @@ const LatestRegisteredOne = () => {
       const expenseData = expenses.map((e) => ({
         id: e.id,
         type: "expense",
-        no: e.no_expense,
+        no: formatInvoiceNumber(e.no_expense, e.tanggal),
         customer: "-",
         tanggal: toDisplay(e.tanggal),
         total: Number(e.total_pengeluaran),

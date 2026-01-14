@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
+import { formatInvoiceNumber } from "@/lib/invoiceNumber";
 import Image from "next/image";
 
 function useCvAntPageIn() {
@@ -279,7 +280,11 @@ export default function InvoicePreviewLayer() {
       // ✅ Kirim LINK halaman publik (preview PDF)
       const publicUrl = getPublicInvoicePublicPageUrl(invoice.id);
 
-      const subject = encodeURIComponent(`Invoice ${invoice.no_invoice}`);
+      const invoiceNumber = formatInvoiceNumber(
+        invoice.no_invoice,
+        invoice.tanggal
+      );
+      const subject = encodeURIComponent(`Invoice ${invoiceNumber}`);
       const body = encodeURIComponent(
         `Yth. ${invoice.nama_pelanggan},\n\n` +
           `Silakan klik berikut untuk melihat invoice:\n${publicUrl}\n\n` +
@@ -394,7 +399,8 @@ export default function InvoicePreviewLayer() {
                     INVOICE
                   </h4>
                   <div className="invoice-info-line">
-                    <strong>No. Invoice:</strong> {invoice.no_invoice}
+                    <strong>No. Invoice:</strong>{" "}
+                    {formatInvoiceNumber(invoice.no_invoice, invoice.tanggal)}
                   </div>
                   <div className="invoice-info-line">
                     <strong>Tanggal:</strong> {formatDate(invoice.tanggal)}

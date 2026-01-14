@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@iconify/react";
 import { api } from "@/lib/api";
+import { formatInvoiceNumber } from "@/lib/invoiceNumber";
 
 /* ✅ cek mode light/dark sama seperti sistem kamu */
 function isLightModeNow() {
@@ -114,7 +115,7 @@ const RecentTransactions = () => {
         const incomeList = invoices.map((i) => ({
           id: i.id,
           type: "Income",
-          nomor: i.no_invoice,
+          nomor: formatInvoiceNumber(i.no_invoice, i.tanggal),
           customer: i.nama_pelanggan,
           tanggal: formatDate(i.tanggal),
           total: Number(i.total_bayar ?? i.total_biaya ?? 0),
@@ -126,7 +127,7 @@ const RecentTransactions = () => {
         const expenseList = expenses.map((e) => ({
           id: e.id,
           type: "Expense",
-          nomor: e.no_expense,
+          nomor: formatInvoiceNumber(e.no_expense, e.tanggal),
           customer: "-",
           tanggal: formatDate(e.tanggal),
           total: Number(e.total_pengeluaran ?? 0),

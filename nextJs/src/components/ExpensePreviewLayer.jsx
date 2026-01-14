@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { formatInvoiceNumber } from "@/lib/invoiceNumber";
 import Image from "next/image";
 
 function useCvAntPageIn() {
@@ -121,7 +122,8 @@ export default function ExpensePreviewLayer() {
               <div className="text-end expense-header-right">
                 <h4 className="fw-bold text-dark mb-2">EXPENSE</h4>
                 <div>
-                  <strong>No. Expense:</strong> {expense.no_expense}
+                  <strong>No. Expense:</strong>{" "}
+                  {formatInvoiceNumber(expense.no_expense, expense.tanggal)}
                 </div>
                 <div>
                   <strong>Tanggal:</strong> {formatDate(expense.tanggal)}

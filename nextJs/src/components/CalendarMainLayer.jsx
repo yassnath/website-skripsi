@@ -5,6 +5,7 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import { api } from "@/lib/api";
+import { formatInvoiceNumber } from "@/lib/invoiceNumber";
 
 export default function CalendarMainLayer() {
   // ✅ efek masuk (tanpa ubah style existing)
@@ -224,7 +225,7 @@ export default function CalendarMainLayer() {
       invoices?.map((inv) => ({
         id: `inv-${inv.id}`,
         type: "income",
-        title: inv.no_invoice,
+        title: formatInvoiceNumber(inv.no_invoice, inv.tanggal),
         date: normalizeDate(inv.tanggal),
         total: inv.total_bayar,
         textColor: "#0d6efd",
@@ -234,7 +235,7 @@ export default function CalendarMainLayer() {
       expenses?.map((exp) => ({
         id: `exp-${exp.id}`,
         type: "expense",
-        title: exp.no_expense,
+        title: formatInvoiceNumber(exp.no_expense, exp.tanggal),
         date: normalizeDate(exp.tanggal),
         total: exp.total_pengeluaran,
         textColor: "#dc3545",
@@ -347,7 +348,7 @@ export default function CalendarMainLayer() {
       const list = map.get(dateISO) || [];
       list.push({
         type: "income",
-        title: inv.no_invoice,
+        title: formatInvoiceNumber(inv.no_invoice, inv.tanggal),
         total: Number(inv.total_bayar || 0),
         id: inv.id,
         color: "#0d6efd",
@@ -361,7 +362,7 @@ export default function CalendarMainLayer() {
       const list = map.get(dateISO) || [];
       list.push({
         type: "expense",
-        title: exp.no_expense,
+        title: formatInvoiceNumber(exp.no_expense, exp.tanggal),
         total: Number(exp.total_pengeluaran || 0),
         id: exp.id,
         color: "#dc3545",
@@ -693,7 +694,9 @@ export default function CalendarMainLayer() {
                         className="fw-semibold d-block mt-2"
                         style={{ color: isIncome ? "#0d6efd" : "#dc3545" }}
                       >
-                        {isIncome ? item.no_invoice : item.no_expense}
+                        {isIncome
+                          ? formatInvoiceNumber(item.no_invoice, item.tanggal)
+                          : formatInvoiceNumber(item.no_expense, item.tanggal)}
                       </span>
 
                       <span className="text-secondary-light text-xs d-block mt-2">

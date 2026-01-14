@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
+import { formatInvoiceNumber } from "@/lib/invoiceNumber";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
 function useCvAntPageIn() {
@@ -424,7 +425,10 @@ export default function InvoiceExpenseEditPage() {
                     <label className="form-label fw-semibold">Nomor Expense</label>
                     <input
                       className="form-control"
-                      value={form.no_expense}
+                      value={formatInvoiceNumber(
+                        form.no_expense,
+                        form.tanggal
+                      )}
                       readOnly
                     />
                   </div>
